@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from datetime import datetime
@@ -14,12 +14,21 @@ compras_bp = Blueprint("compras", __name__, url_prefix="/compras")
 # ======================
 def cargar_compras():
     conn = get_db()
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS compras (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        producto_id INTEGER,
+        cantidad INTEGER,
+        costo REAL,
+        tipo_pago TEXT,
+        fecha TEXT
+    )
+    """)
     compras = conn.execute(
         "SELECT * FROM compras ORDER BY id DESC"
     ).fetchall()
     conn.close()
-    return [dict(c) for c in compras]
-
+    return compras
 # ======================
 # LISTAR
 # ======================
@@ -34,10 +43,10 @@ def index():
     filtro_nombre = request.args.get("nombre", "").lower()
     filtro_categoria = request.args.get("categoria", "")
     filtro_item = request.args.get("item", "")
-    filtro_tipo_pago = request.args.get("tipo_pago", "")  # 🔥 NUEVO
+    filtro_tipo_pago = request.args.get("tipo_pago", "")  # ?? NUEVO
 
     # ----------------------
-    # FILTRO DE PRODUCTOS
+    # FILTRO FROM PRODUCTOS
     # ----------------------
     productos_filtrados = []
     for p in productos:
@@ -50,7 +59,7 @@ def index():
         productos_filtrados.append(p)
 
     # ----------------------
-    # FILTRO DE COMPRAS
+    # FILTRO FROM COMPRAS
     # ----------------------
     compras_filtradas = []
     for c in compras:
@@ -65,11 +74,11 @@ def index():
         filtro_nombre=filtro_nombre,
         filtro_categoria=filtro_categoria,
         filtro_item=filtro_item,
-        filtro_tipo_pago=filtro_tipo_pago  # 🔥 NUEVO
+        filtro_tipo_pago=filtro_tipo_pago  # ?? NUEVO
     )
 
 # ======================
-# AGREGAR (CONTADO / CRÉDITO)
+# AGREGAR (CONTADO / CR DITO)
 # ======================
 @compras_bp.route("/agregar", methods=["POST"])
 def agregar():
@@ -265,3 +274,8 @@ def actualizar(id):
     )
 
     return redirect(url_for("compras.index"))
+
+
+
+
+
