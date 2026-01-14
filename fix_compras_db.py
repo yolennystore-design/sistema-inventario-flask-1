@@ -1,6 +1,7 @@
 import sqlite3
 
-DB_PATH = "app/database.db"
+DB_PATH = "app/data/inventario.db"
+
 
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
