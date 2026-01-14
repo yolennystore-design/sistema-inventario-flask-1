@@ -21,18 +21,17 @@ def crear_tablas():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS productos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT NOT NULL,
-        categoria TEXT,
-        subcategoria TEXT,
-        item TEXT,
-        precio REAL NOT NULL,
-        cantidad INTEGER DEFAULT 0,
-        foto TEXT
-    )
-    """)
+    conn.execute("""
+	CREATE TABLE IF NOT EXISTS compras (
+    	id INTEGER PRIMARY KEY AUTOINCREMENT,
+    	id_producto INTEGER NOT NULL,
+    	proveedor TEXT,
+    	cantidad INTEGER NOT NULL,
+    	precio REAL NOT NULL,
+    	total REAL NOT NULL,
+    	fecha TEXT NOT NULL
+	)
+	""")
 
 
     # 🔹 Agregar columnas si no existen (SQLite safe)
