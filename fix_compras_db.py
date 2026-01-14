@@ -1,22 +1,26 @@
 import sqlite3
+from pathlib import Path
 
-DB_PATH = "app/data/inventario.db"
+db_path = Path("app/data/inventario.db")
 
+print("Usando base de datos:", db_path.resolve())
 
-conn = sqlite3.connect(DB_PATH)
-cursor = conn.cursor()
+conn = sqlite3.connect(db_path)
+cur = conn.cursor()
 
 # Ver columnas actuales
-cursor.execute("PRAGMA table_info(compras)")
-cols = [c[1] for c in cursor.fetchall()]
+cur.execute("PRAGMA table_info(compras)")
+columns = [c[1] for c in cur.fetchall()]
+print("Columnas actuales:", columns)
 
-if "id_producto" not in cols:
-    print("➕ Agregando columna id_producto...")
-    cursor.execute("ALTER TABLE compras ADD COLUMN id_producto INTEGER")
+# Agregar columna faltante
+if "id_producto" not in columns:
+    print("Agregando columna id_producto...")
+    cur.execute("ALTER TABLE compras ADD COLUMN id_producto INTEGER")
+    conn.commit()
+    print("Columna agregada ✅")
 else:
-    print("✅ La columna id_producto ya existe")
+    print("La columna id_producto ya existe ✅")
 
-conn.commit()
 conn.close()
-
-print("✔ Base de datos actualizada correctamente")
+print("Proceso terminado")
