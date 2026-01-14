@@ -1,37 +1,27 @@
-import sqlite3
-from pathlib import Path
 from flask import Flask
+from app.db import fix_compras_table
 
-# Función que se encarga de arreglar la base de datos
-def fix_compras_table():
-    db_path = Path("app/data/inventario.db")
-    if not db_path.exists():
-        return
-
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-
-    # Comprobamos las columnas de la tabla 'compras'
-    cur.execute("PRAGMA table_info(compras)")
-    columns = [c[1] for c in cur.fetchall()]
-
-    # Si no existe la columna 'id_producto', la agregamos
-    if "id_producto" not in columns:
-        cur.execute("ALTER TABLE compras ADD COLUMN id_producto INTEGER")
-        conn.commit()
-
-    conn.close()
-
-# Función para crear la aplicación
 def create_app():
     app = Flask(__name__)
+    app.secret_key = "super-secret-key"
 
-    # Llamamos a la función que arregla la tabla 'compras' en la base de datos
+    # 🔧 MIGRACIÓN AUTOMÁTICA
     fix_compras_table()
 
-    # Registros de otros blueprints o configuraciones que tu app necesite
-    # Ejemplo de un blueprint para la ruta de 'compras'
+    # Importar blueprints
+    from app.routes.productos import productos_bp
     from app.routes.compras import compras_bp
+    from app.routes.ventas import ventas_bp
+    from app.routes.clientes import clientes_bp
+    from app.routes.resumen import resumen_bp
+    from app.routes.auth import auth_bp
+
+    app.register_blueprint(productos_bp)
     app.register_blueprint(compras_bp)
+    app.register_blueprint(ventas_bp)
+    app.register_blueprint(clientes_bp)
+    app.register_blueprint(resumen_bp)
+    app.register_blueprint(auth_bp)
 
     return app
+
