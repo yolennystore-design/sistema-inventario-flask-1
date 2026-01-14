@@ -24,11 +24,16 @@ def crear_tablas():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS productos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        precio REAL,
-        stock INTEGER DEFAULT 0
+        nombre TEXT NOT NULL,
+        categoria TEXT,
+        subcategoria TEXT,
+        item TEXT,
+        precio REAL NOT NULL,
+        cantidad INTEGER DEFAULT 0,
+        foto TEXT
     )
     """)
+
 
     # 🔹 Agregar columnas si no existen (SQLite safe)
     try:

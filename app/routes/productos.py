@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from flask import Blueprint, render_template, request, redirect, url_for, session
 import os
@@ -11,7 +11,7 @@ from app.db import get_db
 productos_bp = Blueprint("productos", __name__, url_prefix="/productos")
 
 # ======================
-# CONFIGURACIÓN FOTOS
+# CONFIGURACI?N FOTOS
 # ======================
 UPLOAD_FOLDER = "app/static/uploads/productos"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
@@ -25,12 +25,20 @@ def archivo_permitido(filename):
 # CONSULTAS DB
 # ======================
 def cargar_productos():
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS productos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT,
+            precio REAL,
+            stock INTEGER
+        )
+    """)
     productos = conn.execute(
         "SELECT * FROM productos ORDER BY id DESC"
     ).fetchall()
     conn.close()
-    return [dict(p) for p in productos]
+    return productos
 
 # ======================
 # LISTAR PRODUCTOS
@@ -84,7 +92,7 @@ def agregar():
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Agregó producto: {request.form['nombre']}",
+        accion=f"Agreg? producto: {request.form['nombre']}",
         modulo="Productos"
     )
 
@@ -161,7 +169,7 @@ def actualizar(id):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Editó producto ID {id}",
+        accion=f"Edit? producto ID {id}",
         modulo="Productos"
     )
 
@@ -191,8 +199,13 @@ def eliminar(id):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Eliminó producto ID {id}",
+        accion=f"Elimin? producto ID {id}",
         modulo="Productos"
     )
 
     return redirect(url_for("productos.index"))
+
+
+
+
+
