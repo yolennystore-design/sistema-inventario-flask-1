@@ -5,3 +5,8 @@ def requiere_login():
 
 def requiere_admin():
     return session.get("rol") == "admin"
+
+
+
+
+

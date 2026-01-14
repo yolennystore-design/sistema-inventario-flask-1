@@ -1,4 +1,5 @@
-﻿import json
+# -*- coding: utf-8 -*-
+import json
 import sqlite3
 import os
 
@@ -6,7 +7,7 @@ JSON_FILE = "app/data/compras.json"
 DB_PATH = "app/data/inventario.db"
 
 if not os.path.exists(JSON_FILE):
-    print("❌ compras.json no existe")
+    print("? compras.json no existe")
     exit()
 
 with open(JSON_FILE, encoding="utf-8") as f:
@@ -31,4 +32,9 @@ for c in compras:
 conn.commit()
 conn.close()
 
-print("✅ Compras migradas correctamente")
+print("? Compras migradas correctamente")
+
+
+
+
+

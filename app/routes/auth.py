@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, redirect, url_for, session
 import json
 import os
@@ -34,3 +35,8 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))
+
+
+
+
+

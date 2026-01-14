@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, redirect, url_for
 import json
 import os
@@ -52,3 +53,7 @@ def eliminar(username):
     usuarios = [u for u in usuarios if u["username"] != username]
     guardar_usuarios(usuarios)
     return redirect(url_for("usuarios.index"))
+
+
+
+

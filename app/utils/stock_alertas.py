@@ -9,3 +9,8 @@ def estado_stock(cantidad):
         return "bajo"
     else:
         return "normal"
+
+
+
+
+

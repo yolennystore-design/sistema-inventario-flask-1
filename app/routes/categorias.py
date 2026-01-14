@@ -72,3 +72,8 @@ def eliminar(id):
     )
 
     return redirect(url_for("categorias.index"))
+
+
+
+
+

@@ -1,10 +1,11 @@
-﻿import sqlite3
+# -*- coding: utf-8 -*-
+import sqlite3
 import os
 
 DB_PATH = "../data/inventario.db"
 
 if not os.path.exists(DB_PATH):
-    print("❌ inventario.db no existe")
+    print("? inventario.db no existe")
     exit()
 
 conn = sqlite3.connect(DB_PATH)
@@ -25,4 +26,9 @@ CREATE TABLE IF NOT EXISTS compras (
 conn.commit()
 conn.close()
 
-print("✅ Tabla compras creada correctamente")
+print("? Tabla compras creada correctamente")
+
+
+
+
+

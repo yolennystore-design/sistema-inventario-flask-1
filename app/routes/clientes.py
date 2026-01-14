@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, redirect, url_for, session
 import json, os
 from app.utils.auditoria import registrar_log
@@ -53,3 +54,8 @@ def eliminar(id):
     clientes = [c for c in clientes if c["id"] != id]
     guardar_clientes(clientes)
     return redirect(url_for("clientes.index"))
+
+
+
+
+

@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, render_template, session, redirect, url_for, request
+from flask import Blueprint, render_template, session, redirect, url_for, request
 import json
 import os
 import math
@@ -32,7 +32,7 @@ def guardar_logs(registros):
         json.dump(registros, f, ensure_ascii=False, indent=4)
 
 # =========================
-# LISTADO + FILTROS + PAGINACIÓN
+# LISTADO + FILTROS + PAGINACI�N
 # =========================
 @auditoria_bp.route("/")
 def index():
@@ -44,7 +44,7 @@ def index():
 
     registros = cargar_logs()
 
-    # 🔍 Filtros
+    # ?? Filtros
     usuario = request.args.get("usuario", "").lower()
     modulo = request.args.get("modulo", "").lower()
     fecha = request.args.get("fecha", "")
@@ -61,7 +61,7 @@ def index():
         r["_index"] = i
         filtrados.append(r)
 
-    # 📄 Paginación
+    # ?? Paginaci�n
     pagina = int(request.args.get("pagina", 1))
     total = len(filtrados)
     total_paginas = max(1, math.ceil(total / REGISTROS_POR_PAGINA))
@@ -114,6 +114,11 @@ def eliminar_todo():
     if session.get("rol") != "admin":
         return "Acceso denegado", 403
 
-    guardar_logs([])  # Vacía el archivo JSON
+    guardar_logs([])  # Vac�a el archivo JSON
 
     return redirect(url_for("auditoria.index"))
+
+
+
+
+

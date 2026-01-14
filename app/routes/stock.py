@@ -7,7 +7,7 @@ from app.utils.auditoria import registrar_log
 
 stock_bp = Blueprint("stock", __name__, url_prefix="/stock")
 
-STOCK_MINIMO = 5  # 🔔 alerta de stock bajo
+STOCK_MINIMO = 5  # 🔔 alerta FROM stock bajo
 
 
 # ======================
@@ -106,9 +106,9 @@ def imprimir_stock():
     c.setFont("Helvetica", 12)
 
     # Agregar un título
-    c.drawString(100, 750, "Stock de Productos")
+    c.drawString(100, 750, "Stock FROM Productos")
 
-    # Obtener los productos de la base de datos
+    # Obtener los productos FROM la base FROM datos
     conn = get_db()
     productos_db = conn.execute("SELECT * FROM productos").fetchall()
     conn.close()
@@ -132,7 +132,7 @@ def imprimir_stock():
         c.drawString(550, y_position, str(p['cantidad']))
         y_position -= 20
 
-        if y_position < 100:  # Si llegamos al final de la página, creamos una nueva página
+        if y_position < 100:  # Si llegamos al final FROM la página, creamos una nueva página
             c.showPage()
             y_position = 750
             c.drawString(100, y_position, "ID")
@@ -148,3 +148,7 @@ def imprimir_stock():
     # Regresar al navegador como archivo PDF
     buffer.seek(0)
     return Response(buffer, mimetype="application/pdf", headers={"Content-Disposition": "attachment;filename=stock_productos.pdf"})
+
+
+
+

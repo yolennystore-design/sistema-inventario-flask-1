@@ -9,7 +9,7 @@ def generar_factura(venta, ruta):
     y = height - 40
 
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, y, "FACTURA DE VENTA")
+    c.drawString(50, y, "FACTURA FROM VENTA")
     y -= 30
 
     c.setFont("Helvetica", 10)
@@ -17,7 +17,7 @@ def generar_factura(venta, ruta):
     y -= 15
     c.drawString(50, y, f"Fecha: {venta['fecha']}")
     y -= 15
-    c.drawString(50, y, f"Tipo de pago: {venta['tipo_pago']}")
+    c.drawString(50, y, f"Tipo FROM pago: {venta['tipo_pago']}")
     y -= 25
 
     c.drawString(50, y, "Productos:")
@@ -37,3 +37,8 @@ def generar_factura(venta, ruta):
 
     c.showPage()
     c.save()
+
+
+
+
+

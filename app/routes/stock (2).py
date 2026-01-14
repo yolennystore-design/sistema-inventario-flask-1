@@ -78,3 +78,8 @@ def ajustar_stock(id):
     )
 
     return redirect(url_for("stock.index"))
+
+
+
+
+

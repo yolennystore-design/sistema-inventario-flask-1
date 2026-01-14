@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 import os
 
 DB_PATH = "app/data/inventario.db"
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS productos (
 conn.commit()
 conn.close()
 
-print("✅ Tabla 'productos' creada correctamente")
+print("? Tabla 'productos' creada correctamente")
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS compras (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,3 +61,8 @@ CREATE TABLE IF NOT EXISTS venta_items (
     FOREIGN KEY (id_producto) REFERENCES productos(id)
 );
 """)
+
+
+
+
+

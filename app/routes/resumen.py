@@ -140,7 +140,7 @@ def index():
 
         resumen.append(fila)
 
-    # ================= ORDENAR POR FECHA =================
+    # ================= ORDER BY FECHA =================
     resumen.sort(key=lambda x: x["fecha"])
 
     registrar_log(
@@ -154,3 +154,8 @@ def index():
         resumen=resumen,
         totales=totales
     )
+
+
+
+
+

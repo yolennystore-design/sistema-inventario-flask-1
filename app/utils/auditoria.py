@@ -22,3 +22,8 @@ def registrar_log(usuario, accion, modulo):
 
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(logs, f, indent=4, ensure_ascii=False)
+
+
+
+
+

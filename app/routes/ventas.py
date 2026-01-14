@@ -4,6 +4,7 @@ from flask import (Blueprint,render_template,request,redirect,url_for,session,se
 import json
 import os
 import tempfile
+import sqlite3
 from datetime import datetime
 from app.routes.productos import cargar_productos
 from app.routes.clientes import cargar_clientes
@@ -78,7 +79,7 @@ def index():
     # ---------- Filtros ventas ----------
     f_cliente = request.args.get("f_cliente", "").lower()
     f_producto = request.args.get("f_producto", "").lower()
-    f_desde = request.args.get("f_desde", "")
+    f_FROM = request.args.get("f_FROM", "")
     f_hasta = request.args.get("f_hasta", "")
 
     ventas_filtradas = []
@@ -96,7 +97,7 @@ def index():
                 continue
 
         fecha_venta = v.get("fecha", "")[:10]
-        if f_desde and fecha_venta < f_desde:
+        if f_FROM and fecha_venta < f_FROM:
             continue
         if f_hasta and fecha_venta > f_hasta:
             continue
@@ -120,7 +121,7 @@ def index():
         filtro_item=filtro_item,
         f_cliente=f_cliente,
         f_producto=f_producto,
-        f_desde=f_desde,
+        f_FROM=f_FROM,
         f_hasta=f_hasta
     )
 
@@ -301,7 +302,7 @@ def eliminar_venta(index):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Eliminó venta de {venta['cliente']} por ${venta['total']}",
+        accion=f"Eliminó venta FROM {venta['cliente']} por ${venta['total']}",
         modulo="Ventas"
     )
 
@@ -367,8 +368,13 @@ def solicitar_precio():
 
     registrar_log(
         usuario=session["usuario"],
-        accion="Envió solicitud de cambio de precio",
+        accion="Envió solicitud FROM cambio FROM precio",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
+
+
+
+
+

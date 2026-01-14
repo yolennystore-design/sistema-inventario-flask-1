@@ -41,7 +41,7 @@ def index():
     creditos = cargar_creditos()
 
     # ======================
-    # LISTA DE CLIENTES ÚNICOS
+    # LISTA FROM CLIENTES ÚNICOS
     # ======================
     clientes = sorted({
         c.get("cliente", "").strip()
@@ -100,7 +100,7 @@ def abonar(index):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Abono de ${monto:.2f} al crédito de {credito.get('cliente','')}",
+        accion=f"Abono FROM ${monto:.2f} al crédito FROM {credito.get('cliente','')}",
         modulo="Créditos"
     )
 
@@ -132,7 +132,7 @@ def pdf_credito(index):
     abonado = credito.get("abonado", 0)
     pendiente = credito.get("pendiente", 0)
 
-    # 👉 NÚMERO DE FACTURA
+    # 👉 NÚMERO FROM FACTURA
     numero_factura = credito.get("numero_factura", f"YS-{index+1:05d}")
 
     filepath = "temp_credito.pdf"
@@ -156,7 +156,7 @@ def pdf_credito(index):
     # TÍTULOS
     # =========================
     elementos.append(Paragraph("<b>Yolenny Store</b>", styles["Heading1"]))
-    elementos.append(Paragraph("<b>COMPROBANTE DE CRÉDITO</b><br/>", styles["Heading2"]))
+    elementos.append(Paragraph("<b>COMPROBANTE FROM CRÉDITO</b><br/>", styles["Heading2"]))
 
     # =========================
     # DATOS DEL CRÉDITO
@@ -178,7 +178,7 @@ def pdf_credito(index):
     ]))
     elementos.append(tabla_credito)
 
-    elementos.append(Paragraph("<br/><b>Detalle de Productos</b><br/><br/>", styles["Heading3"]))
+    elementos.append(Paragraph("<br/><b>Detalle FROM Productos</b><br/><br/>", styles["Heading3"]))
 
     # =========================
     # PRODUCTOS
@@ -240,8 +240,13 @@ def eliminar(index):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Eliminó crédito de {eliminado.get('cliente','')}",
+        accion=f"Eliminó crédito FROM {eliminado.get('cliente','')}",
         modulo="Créditos"
     )
 
     return redirect(url_for("creditos.index"))
+
+
+
+
+
