@@ -25,15 +25,7 @@ def archivo_permitido(filename):
 # CONSULTAS DB
 # ======================
 def cargar_productos():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS productos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT,
-            precio REAL,
-            stock INTEGER
-        )
-    """)
+    conn = get_db()
     productos = conn.execute(
         "SELECT * FROM productos ORDER BY id DESC"
     ).fetchall()
