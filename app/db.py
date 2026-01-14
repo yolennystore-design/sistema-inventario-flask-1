@@ -22,25 +22,6 @@ def crear_tablas():
     cursor = conn.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        usuario TEXT,
-        password TEXT,
-        rol TEXT
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS clientes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        telefono TEXT,
-        direccion TEXT
-    )
-    """)
-
-    cursor.execute("""
     CREATE TABLE IF NOT EXISTS productos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT,
@@ -49,35 +30,16 @@ def crear_tablas():
     )
     """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS compras (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        producto_id INTEGER,
-        cantidad INTEGER,
-        costo REAL,
-        fecha TEXT,
-        tipo_pago TEXT
-    )
-    """)
+    # 🔹 Agregar columnas si no existen (SQLite safe)
+    try:
+        cursor.execute("ALTER TABLE productos ADD COLUMN categoria TEXT")
+    except sqlite3.OperationalError:
+        pass
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS ventas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        producto_id INTEGER,
-        cantidad INTEGER,
-        total REAL,
-        fecha TEXT
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS creditos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        cliente TEXT,
-        monto REAL,
-        estado TEXT
-    )
-    """)
+    try:
+        cursor.execute("ALTER TABLE productos ADD COLUMN nombre_foto TEXT")
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()
