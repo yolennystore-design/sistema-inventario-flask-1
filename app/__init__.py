@@ -1,4 +1,5 @@
 from flask import Flask, render_template, session, redirect, url_for
+from app.db import crear_tablas
 
 def create_app():
     app = Flask(
@@ -9,8 +10,11 @@ def create_app():
 
     app.secret_key = "secret"
 
+    # 🔥 ESTO ES LO QUE FALTABA
+    crear_tablas()
+
     # ======================
-    # IMPORTAR BLUEPRINTS
+    # BLUEPRINTS
     # ======================
     from app.routes.auth import auth_bp
     from app.routes.clientes import clientes_bp
@@ -24,9 +28,6 @@ def create_app():
     from app.routes.categorias import categorias_bp
     from app.routes.resumen import resumen_bp
 
-    # ======================
-    # REGISTRAR BLUEPRINTS
-    # ======================
     app.register_blueprint(auth_bp)
     app.register_blueprint(clientes_bp)
     app.register_blueprint(productos_bp)
@@ -39,9 +40,6 @@ def create_app():
     app.register_blueprint(categorias_bp)
     app.register_blueprint(resumen_bp)
 
-    # ======================
-    # RUTA PRINCIPAL (ESTO ARREGLA EL 404)
-    # ======================
     @app.route("/")
     def dashboard():
         if "usuario" not in session:
