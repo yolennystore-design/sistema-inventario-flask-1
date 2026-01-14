@@ -1,0 +1,199 @@
+{% extends "layout/base.html" %}
+{% block title %}Productos{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">📦 Productos</h2>
+
+<!-- =========================
+     FORMULARIO AGREGAR PRODUCTO
+========================= -->
+<form method="POST"
+      action="/productos/agregar"
+      enctype="multipart/form-data"
+      class="row g-3 mb-4">
+
+    <div class="col-md-3">
+        <label class="form-label">Nombre</label>
+        <input name="nombre"
+               class="form-control"
+               placeholder="Nombre del producto"
+               required>
+    </div>
+
+    <!-- CATEGORÍA -->
+    <div class="col-md-2">
+        <label class="form-label">Categoría</label>
+        <select id="categoria" name="categoria" class="form-select" required>
+            <option value="">Seleccione</option>
+            {% for c in categorias %}
+            <option value="{{ c.nombre }}">{{ c.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- SUBCATEGORÍA -->
+    <div class="col-md-2">
+        <label class="form-label">Subcategoría</label>
+        <select id="subcategoria" name="subcategoria" class="form-select" required>
+            <option value="">Seleccione categoría primero</option>
+        </select>
+    </div>
+
+    <!-- TIPO / ITEM -->
+    <div class="col-md-2">
+        <label class="form-label">Tipo</label>
+        <select id="item" name="item" class="form-select" required>
+            <option value="">Seleccione subcategoría primero</option>
+        </select>
+    </div>
+
+    <!-- PRECIO -->
+    <div class="col-md-1">
+        <label class="form-label">Precio</label>
+        <input name="precio"
+               class="form-control"
+               type="number"
+               step="0.01"
+               min="0"
+               required>
+    </div>
+
+    <!-- FOTO -->
+    <div class="col-md-2">
+        <label class="form-label">Foto</label>
+        <input type="file"
+               name="foto"
+               class="form-control"
+               accept="image/*">
+    </div>
+
+    <div class="col-md-12 d-flex justify-content-end">
+        <button class="btn btn-primary">
+            Agregar producto
+        </button>
+    </div>
+</form>
+
+<hr>
+
+<!-- =========================
+     TABLA DE PRODUCTOS
+========================= -->
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>Foto</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Subcategoría</th>
+            <th>Tipo</th>
+            <th>Precio</th>
+            {% if session.rol == "admin" %}
+            <th>Acción</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in productos %}
+        <tr>
+            <td>{{ p.id }}</td>
+
+            <!-- FOTO -->
+            <td>
+                {% if p.foto %}
+                <img src="{{ url_for('static',
+                        filename='uploads/productos/' ~ p.foto) }}"
+                     width="50"
+                     height="50"
+                     style="object-fit:cover;border-radius:6px">
+                {% else %}
+                —
+                {% endif %}
+            </td>
+
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.categoria }}</td>
+            <td>{{ p.subcategoria }}</td>
+            <td>{{ p.item }}</td>
+            <td>${{ p.precio }}</td>
+
+            {% if session.rol == "admin" %}
+            <td>
+                <a href="/productos/editar/{{ p.id }}"
+                   class="btn btn-warning btn-sm me-1">
+                    ✏️ Editar
+                </a>
+
+                <a href="/productos/eliminar/{{ p.id }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar producto?')">
+                    🗑 Eliminar
+                </a>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="/" class="btn btn-outline-secondary mt-3">
+    ⬅ Volver al Inicio
+</a>
+
+<!-- =========================
+     SCRIPT CATEGORÍAS
+========================= -->
+<script>
+const categorias = {{ categorias | tojson }};
+
+const categoriaSelect = document.getElementById("categoria");
+const subcategoriaSelect = document.getElementById("subcategoria");
+const itemSelect = document.getElementById("item");
+
+// Al cambiar categoría
+categoriaSelect.addEventListener("change", () => {
+    subcategoriaSelect.innerHTML =
+        "<option value=''>Seleccione</option>";
+    itemSelect.innerHTML =
+        "<option value=''>Seleccione subcategoría primero</option>";
+
+    const categoria = categorias.find(
+        c => c.nombre === categoriaSelect.value
+    );
+    if (!categoria) return;
+
+    categoria.subcategorias.forEach(sub => {
+        const option = document.createElement("option");
+        option.value = sub.nombre;
+        option.textContent = sub.nombre;
+        subcategoriaSelect.appendChild(option);
+    });
+});
+
+// Al cambiar subcategoría
+subcategoriaSelect.addEventListener("change", () => {
+    itemSelect.innerHTML =
+        "<option value=''>Seleccione</option>";
+
+    const categoria = categorias.find(
+        c => c.nombre === categoriaSelect.value
+    );
+    if (!categoria) return;
+
+    const subcategoria = categoria.subcategorias.find(
+        s => s.nombre === subcategoriaSelect.value
+    );
+
+    if (subcategoria) {
+        subcategoria.items.forEach(it => {
+            const option = document.createElement("option");
+            option.value = it;
+            option.textContent = it;
+            itemSelect.appendChild(option);
+        });
+    }
+});
+</script>
+
+{% endblock %}

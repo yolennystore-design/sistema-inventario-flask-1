@@ -1,0 +1,174 @@
+{% extends "layout/base.html" %}
+{% block title %}Auditoría{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+
+            <h2 class="mb-4 text-center">🕵️ Auditoría del Sistema</h2>
+
+            <!-- =========================
+                 FILTROS
+            ========================= -->
+            <form method="get" class="row g-2 mb-4 justify-content-center no-print">
+                <div class="col-md-3">
+                    <input type="text"
+                           name="usuario"
+                           class="form-control"
+                           placeholder="Usuario"
+                           value="{{ filtros.usuario }}">
+                </div>
+
+                <div class="col-md-3">
+                    <input type="text"
+                           name="modulo"
+                           class="form-control"
+                           placeholder="Módulo"
+                           value="{{ filtros.modulo }}">
+                </div>
+
+                <div class="col-md-3">
+                    <input type="date"
+                           name="fecha"
+                           class="form-control"
+                           value="{{ filtros.fecha }}">
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-primary w-100">
+                        🔍 Filtrar
+                    </button>
+                    <a href="{{ url_for('auditoria.index') }}"
+                       class="btn btn-secondary w-100">
+                        Limpiar
+                    </a>
+                </div>
+            </form>
+
+            <!-- =========================
+                 TABLA
+            ========================= -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:5%">#</th>
+                            <th style="width:15%">Usuario</th>
+                            <th>Acción</th>
+                            <th style="width:12%">Módulo</th>
+                            <th style="width:15%">Fecha</th>
+                            <th style="width:8%" class="no-print">Acción</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for r in registros %}
+                        <tr>
+                            <td>{{ r._index }}</td>
+                            <td>{{ r.usuario }}</td>
+                            <td class="text-start">{{ r.accion }}</td>
+                            <td>{{ r.modulo }}</td>
+                            <td>{{ r.fecha }}</td>
+                            <td class="no-print">
+                                <form method="POST"
+                                      action="{{ url_for('auditoria.eliminar', index=r._index) }}"
+                                      onsubmit="return confirm('¿Eliminar este registro?');">
+                                    <button class="btn btn-outline-danger btn-sm">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                No hay registros de auditoría
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- =========================
+                 PAGINACIÓN
+            ========================= -->
+            <nav class="no-print">
+                <ul class="pagination justify-content-center">
+
+                    {% if pagina > 1 %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for(
+                               'auditoria.index',
+                               usuario=filtros.usuario,
+                               modulo=filtros.modulo,
+                               fecha=filtros.fecha,
+                               pagina=pagina-1
+                           ) }}">
+                            ⬅ Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Página {{ pagina }} de {{ total_paginas }}
+                        </span>
+                    </li>
+
+                    {% if pagina < total_paginas %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for(
+                               'auditoria.index',
+                               usuario=filtros.usuario,
+                               modulo=filtros.modulo,
+                               fecha=filtros.fecha,
+                               pagina=pagina+1
+                           ) }}">
+                            Siguiente ➡
+                        </a>
+                    </li>
+                    {% endif %}
+
+                </ul>
+            </nav>
+
+            <!-- =========================
+                 BOTONES INFERIORES
+            ========================= -->
+            <div class="d-flex justify-content-center gap-2 mt-3 no-print">
+                <button onclick="window.print()" class="btn btn-outline-primary">
+                    🖨️ Imprimir
+                </button>
+                <form method="POST"
+                      action="{{ url_for('auditoria.eliminar_todo') }}"
+                      onsubmit="return confirm('⚠️ ¿Seguro que deseas eliminar TODOS los registros de auditoría? Esta acción no se puede deshacer.');"
+                      class="no-print text-center mt-3">
+
+                    <button class="btn btn-danger">
+                        🗑️ Eliminar todos los registros
+                    </button>
+                </form>
+
+                <a href="/" class="btn btn-outline-secondary">
+                    ⬅ Volver
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+{% endblock %}

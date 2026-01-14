@@ -1,0 +1,12 @@
+[
+  {
+    "username": "Yolenny Osoria",
+    "password": "lisandyeloise",
+    "rol": "admin"
+  },
+  {
+    "username": "empleado",
+    "password": "empleado",
+    "rol": "empleado"
+  }
+]

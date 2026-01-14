@@ -1,0 +1,145 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Stock{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">📦 Stock de Productos</h2>
+
+<!-- =========================
+     FILTROS
+========================= -->
+<form method="GET" action="/stock" class="row g-2 mb-4">
+
+    <div class="col-md-4">
+        <input type="text"
+               name="nombre"
+               class="form-control"
+               placeholder="Buscar por nombre"
+               value="{{ filtro_nombre }}">
+    </div>
+
+    <div class="col-md-4">
+        <select name="categoria" class="form-select">
+            <option value="">Todas las categorías</option>
+            {% for cat in categorias %}
+            <option value="{{ cat.nombre }}"
+                    {% if filtro_categoria == cat.nombre %}selected{% endif %}>
+                {{ cat.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="item" class="form-select">
+            <option value="">Todos los items</option>
+            {% for p in productos | unique(attribute='item') %}
+            <option value="{{ p.item }}"
+                    {% if filtro_item == p.item %}selected{% endif %}>
+                {{ p.item }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-1">
+        <button class="btn btn-secondary w-100">🔍</button>
+        <!-- Botón para imprimir stock -->
+        <button class="btn btn-outline-info mt-3" onclick="window.print();">
+            🖨️ Imprimir Stock
+        </button>
+    </div>
+</form>
+
+<!-- =========================
+     TABLA DE STOCK
+========================= -->
+<div class="tabla-stock">
+    <table class="table table-striped table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Item</th>
+                <th>Stock</th>
+                {% if session.rol == "admin" %}
+                <th>Ajustar</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+
+            {% if productos %}
+            {% for p in productos %}
+            <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.nombre }}</td>
+                <td>{{ p.categoria }}</td>
+                <td>{{ p.item }}</td>
+
+                <td>
+                    {% if p.estado_stock == "agotado" %}
+                    <span class="badge bg-dark">Agotado</span>
+                    {% elif p.estado_stock == "bajo" %}
+                    <span class="badge bg-danger">Stock bajo ({{ p.cantidad }})</span>
+                    {% else %}
+                    <span class="badge bg-success">{{ p.cantidad }}</span>
+                    {% endif %}
+                </td>
+
+                {% if session.rol == "admin" %}
+                <td>
+                    <form method="POST"
+                          action="/stock/ajustar/{{ p.id }}"
+                          class="d-flex">
+                        <input type="number"
+                               name="cantidad"
+                               value="{{ p.cantidad }}"
+                               min="0"
+                               class="form-control form-control-sm me-1"
+                               style="width:90px"
+                               required>
+                        <button class="btn btn-sm btn-warning">💾</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    No hay productos para mostrar
+                </td>
+            </tr>
+            {% endif %}
+
+        </tbody>
+    </table>
+</div>
+
+<a href="/" class="btn btn-outline-secondary mt-3">
+    ⬅ Volver al Inicio
+</a>
+
+{% endblock %}
+
+<!-- =========================
+     CSS PARA IMPRESIÓN
+========================= -->
+<style>
+    @media print {
+        body * {
+            visibility: hidden; /* Oculta todo en la página */
+        }
+
+        .tabla-stock, .tabla-stock * {
+            visibility: visible; /* Muestra solo la tabla de productos */
+        }
+
+        .tabla-stock {
+            position: absolute;
+            top: 0;
+        }
+    }
+</style>

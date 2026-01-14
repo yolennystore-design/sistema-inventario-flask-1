@@ -1,0 +1,11 @@
+[
+    {
+        "id": 1,
+        "nombre": "coach",
+        "categoria": "Mujer",
+        "subcategoria": "Accesorios y lociones",
+        "item": "Carteras",
+        "precio": 800.0,
+        "cantidad": 0
+    }
+]

@@ -1,0 +1,50 @@
+﻿{% extends "layout/base.html" %}
+{% block title %}Editar Compra{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">✏️ Editar Compra</h3>
+
+<form method="POST"
+      action="{{ url_for('compras.actualizar', id=compra.id) }}"
+      class="col-md-6">
+
+    <div class="mb-3">
+        <label class="form-label">Producto</label>
+        <input type="text"
+               class="form-control"
+               value="{{ compra.producto }}"
+               disabled>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad</label>
+        <input type="number"
+               name="cantidad"
+               class="form-control"
+               min="1"
+               value="{{ compra.cantidad }}"
+               required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Costo Unitario</label>
+        <input type="number"
+               name="costo"
+               step="0.01"
+               min="0"
+               class="form-control"
+               value="{{ compra.costo }}"
+               required>
+    </div>
+
+    <button class="btn btn-success">
+        💾 Guardar Cambios
+    </button>
+
+    <a href="{{ url_for('compras.index') }}"
+       class="btn btn-secondary ms-2">
+        Cancelar
+    </a>
+
+</form>
+{% endblock %}

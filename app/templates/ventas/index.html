@@ -1,0 +1,301 @@
+{% extends "layout/base.html" %}
+{% block title %}Ventas{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">🛒 Ventas</h2>
+
+<!-- ========================= FILTROS PRODUCTOS ========================= -->
+<form method="GET" action="/ventas" class="row g-2 mb-4">
+    <div class="col-md-3">
+        <input name="nombre" class="form-control"
+               placeholder="Buscar por nombre"
+               value="{{ filtro_nombre }}">
+    </div>
+
+    <div class="col-md-3">
+        <select name="categoria" class="form-select">
+            <option value="">Todas las categorías</option>
+            {% for cat in categorias %}
+            <option value="{{ cat.nombre }}"
+                    {% if filtro_categoria == cat.nombre %}selected{% endif %}>
+                {{ cat.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="item" class="form-select">
+            <option value="">Todos los items</option>
+            {% for p in productos | unique(attribute='item') %}
+            <option value="{{ p.item }}"
+                    {% if filtro_item == p.item %}selected{% endif %}>
+                {{ p.item }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button class="btn btn-secondary w-100">Filtrar</button>
+    </div>
+</form>
+
+<!-- ========================= PRODUCTOS ========================= -->
+<h4>📦 Productos</h4>
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Agregar</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in productos %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.nombre }}</td>
+            <td>${{ p.precio }}</td>
+            <td>
+                {% if p.cantidad <= 0 %}
+                <span class="badge bg-danger">AGOTADO</span>
+                {% elif p.cantidad <= 5 %}
+                <span class="badge bg-warning text-dark">
+                    STOCK BAJO ({{ p.cantidad }})
+                </span>
+                {% else %}
+                <span class="badge bg-success">{{ p.cantidad }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if p.cantidad <= 0 %}
+                <button class="btn btn-sm btn-secondary" disabled>🚫</button>
+                {% else %}
+                <form method="POST" action="/ventas/agregar_carrito" class="d-flex">
+                    <input type="hidden" name="id" value="{{ p.id }}">
+                    <input type="number" name="cantidad"
+                           min="1" max="{{ p.cantidad }}"
+                           class="form-control me-1"
+                           style="width:80px" required>
+                    <button type="submit" class="btn btn-sm btn-primary">+</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ========================= CARRITO ========================= -->
+<h4 class="mt-4">🧾 Carrito</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Total</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if carrito %}
+        {% for i in carrito %}
+        <tr>
+            <td>{{ i.id }}</td>
+            <td>{{ i.nombre }}</td>
+            <td>{{ i.cantidad }}</td>
+
+            <!-- PRECIO CON CONTROL DE ROL -->
+            <td>
+                {% if session.rol == "admin" %}
+                <!-- ADMIN -->
+                <form method="POST" action="/ventas/actualizar_precio" class="d-flex">
+                    <input type="hidden" name="id" value="{{ i.id }}">
+                    <input type="number"
+                           name="precio"
+                           value="{{ i.precio }}"
+                           min="0"
+                           step="0.01"
+                           class="form-control form-control-sm me-1"
+                           style="width:90px"
+                           required>
+                    <button class="btn btn-sm btn-warning" title="Modificar precio">💲</button>
+                </form>
+                {% else %}
+                <!-- EMPLEADO -->
+                <span>${{ i.precio }}</span>
+                <button class="btn btn-sm btn-outline-primary ms-1"
+                        data-bs-toggle="modal"
+                        data-bs-target="#solicitudPrecio{{ i.id }}"
+                        title="Solicitar cambio de precio">
+                    ✉
+                </button>
+
+                <!-- MODAL SOLICITUD -->
+                <div class="modal fade" id="solicitudPrecio{{ i.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form method="POST" action="/ventas/solicitar_precio" class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Solicitud de cambio de precio</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <input type="hidden" name="id" value="{{ i.id }}">
+
+                                <p><strong>{{ i.nombre }}</strong></p>
+
+                                <label class="form-label">Precio solicitado</label>
+                                <input type="number"
+                                       name="precio_solicitado"
+                                       step="0.01"
+                                       min="0"
+                                       class="form-control"
+                                       required>
+
+                                <label class="form-label mt-2">Motivo</label>
+                                <textarea name="motivo"
+                                          class="form-control"
+                                          rows="2"
+                                          required></textarea>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    Enviar solicitud
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </td>
+
+            <td>${{ i.total }}</td>
+            <td>
+                <a href="/ventas/eliminar_item/{{ i.id }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar este producto?')">
+                    ❌
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="6" class="text-center text-muted">
+                🛒 El carrito está vacío
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- ========================= CONFIRMAR VENTA ========================= -->
+<form method="POST" action="/ventas/confirmar">
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Cliente</label>
+            <select name="cliente" class="form-select" required>
+                <option value="Público General">Público General</option>
+                {% for c in clientes %}
+                <option value="{{ c.nombre }}">{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Tipo de Pago</label><br>
+            <input type="radio" name="tipo_pago" value="contado" checked> Contado
+            <input type="radio" name="tipo_pago" value="credito" class="ms-3"> Crédito
+        </div>
+    </div>
+
+    <h3>Total: ${{ total }}</h3>
+
+    <button type="submit" class="btn btn-success"
+            {% if not carrito %}disabled{% endif %}>
+        Generar Venta
+    </button>
+
+    <a href="/ventas/cancelar" class="btn btn-secondary ms-2">Cancelar Venta</a>
+    <a href="/" class="btn btn-outline-primary ms-2">Volver al Inicio</a>
+</form>
+
+<hr>
+
+<!-- ========================= VENTAS REALIZADAS ========================= -->
+<h4>🖨 Ventas Realizadas</h4>
+
+{% if session.rol == "admin" %}
+<div class="mb-3">
+    <a href="/ventas/eliminar_todas"
+       class="btn btn-danger"
+       onclick="return confirm(
+            '⚠️ ATENCIÓN\n\n' +
+            'Esto eliminará TODAS las ventas,\n' +
+            'devolverá el stock y borrará los créditos.\n\n' +
+            '¿Deseas continuar?'
+       )">
+        🗑 Eliminar TODAS las Ventas
+    </a>
+</div>
+{% endif %}
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>#</th>
+            <th>Cliente</th>
+            <th>Tipo Pago</th>
+            <th>Productos</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in range(ventas|length) %}
+        <tr>
+            <td>{{ v + 1 }}</td>
+            <td>{{ ventas[v]["cliente"] }}</td>
+            <td>
+                {% if ventas[v]["tipo_pago"] == "credito" %}
+                <span class="badge bg-warning text-dark">Crédito</span>
+                {% else %}
+                <span class="badge bg-success">Contado</span>
+                {% endif %}
+            </td>
+            <td>
+                <ul class="mb-0">
+                    {% for item in ventas[v].get("items") or ventas[v].get("elementos") or [] %}
+                    <li>{{ item["nombre"] }} x{{ item["cantidad"] }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+            <td>{{ ventas[v]["fecha"] }}</td>
+            <td><strong>${{ ventas[v]["total"] }}</strong></td>
+            <td class="d-flex gap-1">
+                <a href="/ventas/factura/{{ v }}" target="_blank"
+                   class="btn btn-sm btn-secondary">🖨</a>
+                {% if session.rol == "admin" %}
+                <a href="/ventas/eliminar/{{ v }}"
+                   class="btn btn-sm btn-danger"
+                   onclick="return confirm('¿Eliminar esta venta y devolver stock?')">
+                    🗑
+                </a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

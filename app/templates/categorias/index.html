@@ -1,0 +1,53 @@
+﻿{% extends "layout/base.html" %}
+{% block title %}Categorías{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">📁 Categorías</h2>
+
+<form method="POST" action="/categorias/agregar" class="row g-3 mb-4">
+    <div class="col-md-6">
+        <input name="nombre" class="form-control"
+               placeholder="Nombre de la categoría" required>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100">
+            Agregar
+        </button>
+    </div>
+</form>
+
+<hr>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            {% if session.rol == "admin" %}
+            <th>Acción</th>
+            {% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in categorias %}
+        <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.nombre }}</td>
+            {% if session.rol == "admin" %}
+            <td>
+                <a href="/categorias/eliminar/{{ c.id }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar categoría?')">
+                    Eliminar
+                </a>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="/" class="btn btn-outline-primary mt-3">
+    Volver al Inicio
+</a>
+{% endblock %}

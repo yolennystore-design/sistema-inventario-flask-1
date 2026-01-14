@@ -1,0 +1,59 @@
+{% extends "layout/base.html" %}
+{% block title %}Clientes{% endblock %}
+
+{% block content %}
+<h2>👤 Gestión de Clientes</h2>
+
+<form method="POST" action="/clientes/agregar" class="row g-2 mt-3">
+    <div class="col-md-4">
+        <input name="nombre" class="form-control" placeholder="Nombre" required>
+    </div>
+    <div class="col-md-4">
+        <input name="direccion" class="form-control" placeholder="Dirección">
+    </div>
+    <div class="col-md-3">
+        <input name="telefono" class="form-control" placeholder="Teléfono">
+    </div>
+    <div class="col-md-1">
+        <button class="btn btn-primary w-100">Agregar</button>
+    </div>
+</form>
+
+<hr>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Dirección</th>
+            <th>Teléfono</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in clientes %}
+        <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.direccion }}</td>
+            <td>{{ c.telefono }}</td>
+            <td>
+                {% if session.rol == "admin" %}
+                <a href="/clientes/eliminar/{{ c.id }}"
+                   class="btn btn-sm btn-danger"
+                   onclick="return confirm('¿Eliminar cliente?')">
+                    Eliminar
+                </a>
+                {% else %}
+                <span class="text-muted">Sin permisos</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="/" class="btn btn-outline-secondary mt-3">
+    ⬅ Volver al Inicio
+</a>
+{% endblock %}

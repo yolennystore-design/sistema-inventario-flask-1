@@ -1,0 +1,143 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background-color: #f8f9fc; /* Fondo claro para el cuerpo */
+    color: #333;
+    font-size: 16px;
+}
+
+header {
+    background-color: #f7a9c9; /* Rosado pastel debajo del logo */
+    color: #fff;
+    padding: 20px 30px;
+    text-align: center;
+}
+
+    header .logo img {
+        width: 120px;
+        margin-bottom: 10px;
+    }
+
+h2 {
+    font-size: 28px;
+    margin-top: 10px;
+}
+
+p {
+    font-size: 18px;
+}
+
+/* Estilo para el contenedor de los botones en 3 columnas */
+.module-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columnas iguales */
+    gap: 30px;
+    justify-items: center;
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Estilo de cada módulo (botón) */
+.module {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: #ffffff; /* Fondo claro de los botones */
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    width: 200px;
+    text-align: center;
+}
+
+    .module:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+.module-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 10px;
+}
+
+.module-link {
+    text-decoration: none;
+    color: #4fa3f7; /* Azul claro */
+    font-weight: 500;
+    font-size: 18px;
+}
+
+    .module-link:hover {
+        color: #3a8cc3;
+    }
+
+/* Barra de navegación estilo Windows 11 */
+ul.navbar {
+    display: flex;
+    justify-content: center;
+    background-color: #f9f9f9; /* Fondo claro para la barra */
+    padding: 20px;
+    list-style: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+    ul.navbar li {
+        margin: 0 15px;
+    }
+
+        ul.navbar li a {
+            text-decoration: none;
+            color: #4fa3f7;
+            font-weight: 500;
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: block;
+            transition: background-color 0.3s, color 0.3s, transform 0.2s;
+        }
+
+            ul.navbar li a:hover {
+                background-color: #4fa3f7;
+                color: white;
+                transform: scale(1.05);
+            }
+
+    ul.navbar .logout {
+        background-color: #ff5959;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 10px;
+        width: 100%; /* Esto asegura que el botón se ubique en la columna */
+        text-align: center;
+    }
+
+        ul.navbar .logout:hover {
+            background-color: #cc4f4f;
+            transform: scale(1.05);
+        }
+
+/* Footer */
+footer {
+    text-align: center;
+    background-color: #f7a9c9; /* Rosado pastel */
+    color: white;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    font-size: 14px;
+}
+
+    footer p {
+        margin-top: 10px;
+    }

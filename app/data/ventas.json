@@ -1,0 +1,47 @@
+[
+    {
+        "cliente": "Público General",
+        "tipo_pago": "contado",
+        "items": [
+            {
+                "id": 2,
+                "nombre": "Cinturon Coach",
+                "cantidad": 1,
+                "precio": 2000.0,
+                "total": 2000.0
+            }
+        ],
+        "total": 2000.0,
+        "fecha": "2026-01-13 16:20"
+    },
+    {
+        "cliente": "Público General",
+        "tipo_pago": "contado",
+        "items": [
+            {
+                "id": 2,
+                "nombre": "Cinturon Coach",
+                "cantidad": 1,
+                "precio": 1500.0,
+                "total": 1500.0
+            }
+        ],
+        "total": 1500.0,
+        "fecha": "2026-01-13 16:30"
+    },
+    {
+        "cliente": "jose",
+        "tipo_pago": "contado",
+        "items": [
+            {
+                "id": 2,
+                "nombre": "Cinturon Coach",
+                "cantidad": 1,
+                "precio": 1100.0,
+                "total": 1100.0
+            }
+        ],
+        "total": 1100.0,
+        "fecha": "2026-01-13 16:38"
+    }
+]

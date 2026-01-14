@@ -1,0 +1,110 @@
+[
+  {
+    "nombre": "Mujer",
+    "subcategorias": [
+      {
+        "nombre": "Ropa",
+        "items": [
+          "Vestidos",
+          "Blusas",
+          "Camisas",
+          "Pantalones",
+          "Jeans",
+          "Faldas",
+          "Shorts",
+          "Conjuntos",
+          "Monos",
+          "Ropa deportiva",
+          "Ropa interior",
+          "Pijamas",
+          "Abrigos y chaquetas",
+          "Suéteres y cardigans"
+        ]
+      },
+      {
+        "nombre": "Calzado",
+        "items": [
+          "Tacones",
+          "Sandalias",
+          "Zapatillas deportivas",
+          "Zapatos casuales"
+        ]
+      },
+      {
+        "nombre": "Accesorios y lociones",
+        "items": [
+          "Carteras",
+          "Bolsos",
+          "Mochilas",
+          "Cinturones",
+          "Gafas de sol",
+          "Sombreros",
+          "Joyas",
+          "Relojes",
+          "Colonias",
+          "Cremas",
+          "Perfumes"
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "Hombre",
+    "subcategorias": [
+      {
+        "nombre": "Ropa",
+        "items": [
+          "Camisetas",
+          "Camisas",
+          "Polos",
+          "Pantalones",
+          "Jeans",
+          "Bermudas",
+          "Conjuntos",
+          "Ropa deportiva",
+          "Ropa interior",
+          "Pijamas",
+          "Chaquetas",
+          "Abrigos",
+          "Suéteres"
+        ]
+      },
+      {
+        "nombre": "Calzado",
+        "items": [
+          "Zapatos formales",
+          "Zapatos casuales",
+          "Zapatillas deportivas",
+          "Botas",
+          "Sandalias"
+        ]
+      },
+      {
+        "nombre": "Accesorios y lociones",
+        "items": [
+          "Relojes",
+          "Cinturones",
+          "Gorras",
+          "Billeteras",
+          "Gafas de sol",
+          "Pulseras",
+          "Collares",
+          "Colonias",
+          "Cremas",
+          "Perfumes"
+        ]
+      }
+    ]
+  },
+  {
+    "nombre": "General",
+    "subcategorias": [
+      {
+        "nombre": "Otros",
+        "items": [
+          "Velas aromáticas"
+        ]
+      }
+    ]
+  }
+]

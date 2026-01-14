@@ -1,0 +1,193 @@
+{% extends "layout/base.html" %}
+{% block title %}Compras{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">🚚 Compras</h2>
+
+<!-- =========================
+     FILTROS DE PRODUCTOS
+========================= -->
+<form method="GET" action="/compras" class="row g-2 mb-4">
+
+    <div class="col-md-3">
+        <input type="text"
+               name="nombre"
+               class="form-control"
+               placeholder="Buscar por nombre"
+               value="{{ filtro_nombre }}">
+    </div>
+
+    <div class="col-md-3">
+        <select name="categoria" class="form-select">
+            <option value="">Todas las categorías</option>
+            {% for p in productos | unique(attribute='categoria') %}
+            <option value="{{ p.categoria }}"
+                    {% if filtro_categoria == p.categoria %}selected{% endif %}>
+                {{ p.categoria }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="item" class="form-select">
+            <option value="">Todos los items</option>
+            {% for p in productos | unique(attribute='item') %}
+            <option value="{{ p.item }}"
+                    {% if filtro_item == p.item %}selected{% endif %}>
+                {{ p.item }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- 🔥 NUEVO FILTRO POR TIPO DE PAGO -->
+    <div class="col-md-3">
+        <select name="tipo_pago" class="form-select">
+            <option value="">Todos los pagos</option>
+            <option value="contado"
+                    {% if filtro_tipo_pago == 'contado' %}selected{% endif %}>
+                Contado
+            </option>
+            <option value="credito"
+                    {% if filtro_tipo_pago == 'credito' %}selected{% endif %}>
+                Crédito
+            </option>
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <button class="btn btn-secondary w-100">
+            Filtrar
+        </button>
+    </div>
+</form>
+
+<!-- =========================
+     REGISTRAR COMPRA
+========================= -->
+<form method="POST" action="/compras/agregar" class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <label class="form-label">Producto</label>
+        <select name="id" class="form-select" required>
+            {% for p in productos %}
+            <option value="{{ p.id }}">
+                {{ p.nombre }} (Stock: {{ p.cantidad }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">Cantidad</label>
+        <input type="number"
+               name="cantidad"
+               min="1"
+               class="form-control"
+               required>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">Costo Unitario</label>
+        <input type="number"
+               name="costo"
+               step="0.01"
+               min="0"
+               class="form-control"
+               required>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">Tipo de Pago</label>
+        <select name="tipo_pago" class="form-select">
+            <option value="contado">Contado</option>
+            <option value="credito">Crédito</option>
+        </select>
+    </div>
+
+    <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-primary w-100">
+            Registrar Compra
+        </button>
+    </div>
+</form>
+
+<hr>
+
+<!-- =========================
+     HISTORIAL DE COMPRAS
+========================= -->
+<h4>📑 Historial de Compras</h4>
+
+<table class="table table-striped table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Total</th>
+            <th>Pago</th>
+            <th>Abonado</th>
+            <th>Pendiente</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for c in compras %}
+        <tr>
+            <td>{{ c.get('producto', '') }}</td>
+            <td>{{ c.get('cantidad', 0) }}</td>
+            <td>${{ c.get('total', 0) }}</td>
+
+            <td>
+                {% if c.get('tipo_pago', 'contado') == 'credito' %}
+                <span class="badge bg-warning text-dark">Crédito</span>
+                {% else %}
+                <span class="badge bg-success">Contado</span>
+                {% endif %}
+            </td>
+
+            <td>${{ c.get('abonado', 0) }}</td>
+            <td>${{ c.get('pendiente', 0) }}</td>
+            <td>{{ c.get('fecha', '') }}</td>
+
+            <td class="text-center">
+
+                <a href="{{ url_for('compras.editar', id=c.get('id')) }}"
+                   class="btn btn-sm btn-warning mb-1">✏️</a>
+
+                {% if c.get('pendiente', 0) > 0 %}
+                <form method="POST"
+                      action="{{ url_for('compras.abonar', id=c.get('id')) }}"
+                      class="d-flex mb-1">
+                    <input type="number"
+                           name="monto"
+                           step="0.01"
+                           min="0.01"
+                           max="{{ c.get('pendiente', 0) }}"
+                           class="form-control form-control-sm me-1"
+                           placeholder="Abono"
+                           required>
+                    <button class="btn btn-sm btn-success">💵</button>
+                </form>
+                {% endif %}
+
+                <form method="POST"
+                      action="{{ url_for('compras.eliminar', id=c.get('id')) }}"
+                      onsubmit="return confirm('¿Eliminar esta compra?');">
+                    <button class="btn btn-sm btn-danger">🗑</button>
+                </form>
+
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="/" class="btn btn-outline-secondary mt-3">
+    ⬅ Volver al Inicio
+</a>
+
+{% endblock %}

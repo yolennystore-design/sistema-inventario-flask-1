@@ -1,0 +1,18 @@
+[
+  {
+    "proveedor": "Proveedor A",
+    "producto": "Producto 1",
+    "cantidad": 50,
+    "precio": 10.0,
+    "total": 500.0,
+    "fecha": "2026-01-08"
+  },
+  {
+    "proveedor": "Proveedor B",
+    "producto": "Producto 2",
+    "cantidad": 20,
+    "precio": 15.0,
+    "total": 300.0,
+    "fecha": "2026-01-07"
+  }
+]

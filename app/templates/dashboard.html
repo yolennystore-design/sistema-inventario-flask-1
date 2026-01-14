@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Sistema de Inventario</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> <!-- Archivo de estilos externo -->
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la Empresa"> <!-- Logo de la Empresa -->
+        </div>
+        <h2>Bienvenido {{ session.usuario }}</h2>
+        <p>Rol: {{ session.rol }}</p>
+    </header>
+
+    <main>
+        <!-- Contenedor de los botones con íconos -->
+        <div class="module-container">
+            <!-- Cada módulo tiene un ícono representativo y el nombre del botón -->
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/clientes.png') }}" alt="Clientes" class="module-icon"> <!-- Ícono de clientes --> 
+                <a href="/clientes" class="module-link">Clientes</a>
+            </div>
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/productos.png') }}" alt="Productos" class="module-icon"> <!-- Ícono de productos -->
+                <a href="/productos" class="module-link">Productos</a>
+            </div>
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/ventas.png') }}" alt="Ventas" class="module-icon"> <!-- Ícono de ventas -->
+                <a href="/ventas" class="module-link">Ventas</a>
+            </div>
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/compras.png') }}" alt="Compras" class="module-icon"> <!-- Ícono de compras -->
+                <a href="/compras" class="module-link">Compras</a>
+            </div>
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/creditos.png') }}" alt="Créditos" class="module-icon"> <!-- Ícono de créditos -->
+                <a href="/creditos" class="module-link">Créditos</a>
+            </div>
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/stock.png') }}" alt="Stock" class="module-icon"> <!-- Ícono de stock -->
+                <a href="/stock" class="module-link">Stock</a>
+            </div>
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/resumen.png') }}" alt="Resumen Detallado" class="module-icon"> <!-- Ícono de resumen -->
+                <a href="{{ url_for('resumen.index') }}" class="module-link">📊 Resumen Detallado</a>
+            </div>
+            {% if session.rol == "admin" %}
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/usuarios.png') }}" alt="Usuarios" class="module-icon"> <!-- Ícono de usuarios -->
+                <a href="/usuarios" class="module-link">Usuarios</a>
+            </div>
+            <div class="module">
+                <img src="{{ url_for('static', filename='icons/auditoria.png') }}" alt="Auditoría" class="module-icon"> <!-- Ícono de auditoría -->
+                <a href="/auditoria" class="module-link">Auditoría</a>
+            </div>
+            {% endif %}
+            <div class="module">
+                <a href="/logout" class="module-link logout">Salir</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+
+        <p>&copy; “Moda y estilo que te acompaña”.</p>
+    </footer>
+</body>
+</html>

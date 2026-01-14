@@ -1,0 +1,112 @@
+﻿{% extends "layout/base.html" %}
+{% block title %}Resumen Detallado{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">📊 Resumen Detallado (Ventas y Compras)</h2>
+<div class="mb-3 d-print-none">
+    <button class="btn btn-success" onclick="window.print()">
+        🖨 Imprimir Resumen
+    </button>
+
+    <a href="/" class="btn btn-outline-secondary ms-2">
+        ⬅ Volver al Inicio
+    </a>
+</div>
+
+<table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark text-center">
+        <tr>
+            <th>Tipo</th>
+            <th>Mes</th>
+            <th>Fecha</th>
+            <th>Inv. Total</th>
+            <th>Inv. Contado</th>
+            <th>Inv. Crédito</th>
+            <th>Inv. Prod. Vendidos</th>
+            <th>Ventas Contado</th>
+            <th>Ventas Crédito</th>
+            <th>Artículos</th>
+            <th>Ganancia</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for r in resumen %}
+        <tr class="{% if r.tipo == 'COMPRA' %}table-primary{% else %}table-success{% endif %}">
+            <td class="fw-bold text-center">{{ r.tipo }}</td>
+            <td>{{ r.mes }}</td>
+            <td>{{ r.fecha }}</td>
+            <td>${{ "%.2f"|format(r.inversion_total) }}</td>
+            <td>${{ "%.2f"|format(r.inversion_contado) }}</td>
+            <td>${{ "%.2f"|format(r.inversion_credito) }}</td>
+            <td>${{ "%.2f"|format(r.inv_prod_vendidos) }}</td>
+            <td>${{ "%.2f"|format(r.ventas_contado) }}</td>
+            <td>${{ "%.2f"|format(r.ventas_credito) }}</td>
+            <td class="text-center">{{ r.articulos_vendidos }}</td>
+            <td class="fw-bold text-success">
+                ${{ "%.2f"|format(r.ganancia) }}
+            </td>
+        </tr>
+
+        {% if loop.last or resumen[loop.index].mes != r.mes %}
+        <tr class="table-warning fw-bold text-center">
+            <td colspan="3">TOTALES {{ r.mes }}</td>
+            <td>${{ "%.2f"|format(totales[r.mes].inversion_total) }}</td>
+            <td>${{ "%.2f"|format(totales[r.mes].inversion_contado) }}</td>
+            <td>${{ "%.2f"|format(totales[r.mes].inversion_credito) }}</td>
+            <td>${{ "%.2f"|format(totales[r.mes].inv_prod_vendidos) }}</td>
+            <td>${{ "%.2f"|format(totales[r.mes].ventas_contado) }}</td>
+            <td>${{ "%.2f"|format(totales[r.mes].ventas_credito) }}</td>
+            <td>{{ totales[r.mes].articulos_vendidos }}</td>
+            <td>${{ "%.2f"|format(totales[r.mes].ganancia) }}</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="/" class="btn btn-outline-secondary mt-3">
+    ⬅ Volver al Inicio
+</a>
+<style>
+    @media print {
+
+        body {
+            font-size: 11px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #000 !important;
+            padding: 4px !important;
+        }
+
+        .table-dark {
+            background-color: #ddd !important;
+            color: #000 !important;
+        }
+
+        .table-primary,
+        .table-success,
+        .table-warning {
+            background-color: #fff !important;
+        }
+
+        .btn,
+        nav,
+        footer {
+            display: none !important;
+        }
+    }
+</style>
+
+{% endblock %}

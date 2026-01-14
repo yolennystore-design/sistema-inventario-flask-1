@@ -1,0 +1,32 @@
+[
+    {
+        "cliente": "Cliente A",
+        "tipo_pago": "contado",
+        "total": 150.0,
+        "fecha": "2026-01-08 00:00",
+        "items": [
+            {
+                "id": null,
+                "nombre": "Producto 1",
+                "cantidad": 10,
+                "precio": 15.0,
+                "total": 150.0
+            }
+        ]
+    },
+    {
+        "cliente": "Cliente B",
+        "tipo_pago": "contado",
+        "total": 100.0,
+        "fecha": "2026-01-07 00:00",
+        "items": [
+            {
+                "id": null,
+                "nombre": "Producto 2",
+                "cantidad": 5,
+                "precio": 20.0,
+                "total": 100.0
+            }
+        ]
+    }
+]
