@@ -15,20 +15,25 @@ compras_bp = Blueprint("compras", __name__, url_prefix="/compras")
 def cargar_compras():
     conn = get_db()
     conn.execute("""
-    CREATE TABLE IF NOT EXISTS compras (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        producto_id INTEGER,
-        cantidad INTEGER,
-        costo REAL,
-        tipo_pago TEXT,
-        fecha TEXT
-    )
+        CREATE TABLE IF NOT EXISTS compras (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_producto INTEGER,
+            producto TEXT,
+            cantidad INTEGER,
+            costo REAL,
+            total REAL,
+            tipo_pago TEXT,
+            abonado REAL,
+            pendiente REAL,
+            fecha TEXT
+        )
     """)
     compras = conn.execute(
         "SELECT * FROM compras ORDER BY id DESC"
     ).fetchall()
     conn.close()
     return compras
+
 # ======================
 # LISTAR
 # ======================
@@ -40,27 +45,8 @@ def index():
     productos = cargar_productos()
     compras = cargar_compras()
 
-    filtro_nombre = request.args.get("nombre", "").lower()
-    filtro_categoria = request.args.get("categoria", "")
-    filtro_item = request.args.get("item", "")
-    filtro_tipo_pago = request.args.get("tipo_pago", "")  # ?? NUEVO
+    filtro_tipo_pago = request.args.get("tipo_pago", "")
 
-    # ----------------------
-    # FILTRO FROM PRODUCTOS
-    # ----------------------
-    productos_filtrados = []
-    for p in productos:
-        if filtro_nombre and filtro_nombre not in p["nombre"].lower():
-            continue
-        if filtro_categoria and p["categoria"] != filtro_categoria:
-            continue
-        if filtro_item and p["item"] != filtro_item:
-            continue
-        productos_filtrados.append(p)
-
-    # ----------------------
-    # FILTRO FROM COMPRAS
-    # ----------------------
     compras_filtradas = []
     for c in compras:
         if filtro_tipo_pago and c["tipo_pago"] != filtro_tipo_pago:
@@ -69,16 +55,13 @@ def index():
 
     return render_template(
         "compras/index.html",
-        productos=productos_filtrados,
+        productos=productos,
         compras=compras_filtradas,
-        filtro_nombre=filtro_nombre,
-        filtro_categoria=filtro_categoria,
-        filtro_item=filtro_item,
-        filtro_tipo_pago=filtro_tipo_pago  # ?? NUEVO
+        filtro_tipo_pago=filtro_tipo_pago
     )
 
 # ======================
-# AGREGAR (CONTADO / CR DITO)
+# AGREGAR
 # ======================
 @compras_bp.route("/agregar", methods=["POST"])
 def agregar():
@@ -95,13 +78,8 @@ def agregar():
     producto = next((p for p in productos if p["id"] == producto_id), None)
 
     total = cantidad * costo
-
-    if tipo_pago == "contado":
-        abonado = total
-        pendiente = 0
-    else:
-        abonado = 0
-        pendiente = total
+    abonado = total if tipo_pago == "contado" else 0
+    pendiente = 0 if tipo_pago == "contado" else total
 
     conn = get_db()
 
@@ -148,23 +126,19 @@ def abonar(id):
         return redirect(url_for("auth.login"))
 
     monto = float(request.form["monto"])
-
     conn = get_db()
+
     compra = conn.execute(
         "SELECT * FROM compras WHERE id = ?",
         (id,)
     ).fetchone()
 
-    if not compra or compra["pendiente"] <= 0:
+    if not compra:
         conn.close()
         return redirect(url_for("compras.index"))
 
     nuevo_abonado = compra["abonado"] + monto
-    nuevo_pendiente = compra["total"] - nuevo_abonado
-
-    if nuevo_pendiente < 0:
-        nuevo_pendiente = 0
-        nuevo_abonado = compra["total"]
+    nuevo_pendiente = max(0, compra["total"] - nuevo_abonado)
 
     conn.execute("""
         UPDATE compras
@@ -214,68 +188,3 @@ def eliminar(id):
     )
 
     return redirect(url_for("compras.index"))
-
-# ======================
-# EDITAR
-# ======================
-@compras_bp.route("/editar/<int:id>")
-def editar(id):
-    if "usuario" not in session:
-        return redirect(url_for("auth.login"))
-
-    conn = get_db()
-    compra = conn.execute(
-        "SELECT * FROM compras WHERE id = ?",
-        (id,)
-    ).fetchone()
-    conn.close()
-
-    return render_template("compras/editar.html", compra=dict(compra))
-
-# ======================
-# ACTUALIZAR
-# ======================
-@compras_bp.route("/actualizar/<int:id>", methods=["POST"])
-def actualizar(id):
-    if "usuario" not in session:
-        return redirect(url_for("auth.login"))
-
-    nueva_cantidad = int(request.form["cantidad"])
-    nuevo_costo = float(request.form["costo"])
-    nuevo_total = nueva_cantidad * nuevo_costo
-
-    conn = get_db()
-    compra = conn.execute(
-        "SELECT * FROM compras WHERE id = ?",
-        (id,)
-    ).fetchone()
-
-    diferencia = nueva_cantidad - compra["cantidad"]
-
-    conn.execute("""
-        UPDATE productos
-        SET cantidad = cantidad + ?
-        WHERE id = ?
-    """, (diferencia, compra["id_producto"]))
-
-    conn.execute("""
-        UPDATE compras
-        SET cantidad = ?, costo = ?, total = ?
-        WHERE id = ?
-    """, (nueva_cantidad, nuevo_costo, nuevo_total, id))
-
-    conn.commit()
-    conn.close()
-
-    registrar_log(
-        usuario=session["usuario"],
-        accion=f"Compra modificada: {compra['producto']}",
-        modulo="Compras"
-    )
-
-    return redirect(url_for("compras.index"))
-
-
-
-
-
