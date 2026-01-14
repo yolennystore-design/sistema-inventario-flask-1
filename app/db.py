@@ -12,6 +12,11 @@ def get_connection():
     return conn
 
 
+# ✅ ALIAS PARA COMPATIBILIDAD CON LAS RUTAS
+def get_db():
+    return get_connection()
+
+
 def crear_tablas():
     conn = get_connection()
     cursor = conn.cursor()
