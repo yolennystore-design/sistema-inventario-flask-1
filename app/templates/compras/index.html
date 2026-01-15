@@ -19,7 +19,7 @@
             <option value="">Todas las categorías</option>
             {% for p in productos | unique(attribute='categoria') %}
             <option value="{{ p.categoria }}"
-                    {% if filtro_categoria= =p.categoria %}selected{% endif %}>
+                    {% if filtro_categoria == p.categoria %}selected{% endif %}>
                 {{ p.categoria }}
             </option>
             {% endfor %}
@@ -31,7 +31,7 @@
             <option value="">Todos los items</option>
             {% for p in productos | unique(attribute='item') %}
             <option value="{{ p.item }}"
-                    {% if filtro_item= =p.item %}selected{% endif %}>
+                    {% if filtro_item == p.item %}selected{% endif %}>
                 {{ p.item }}
             </option>
             {% endfor %}
@@ -41,8 +41,8 @@
     <div class="col-md-3">
         <select name="tipo_pago" class="form-select">
             <option value="">Todos los pagos</option>
-            <option value="contado" {% if filtro_tipo_pago= ='contado' %}selected{% endif %}>Contado</option>
-            <option value="credito" {% if filtro_tipo_pago= ='credito' %}selected{% endif %}>Crédito</option>
+            <option value="contado" {% if filtro_tipo_pago == 'contado' %}selected{% endif %}>Contado</option>
+            <option value="credito" {% if filtro_tipo_pago == 'credito' %}selected{% endif %}>Crédito</option>
         </select>
     </div>
 
