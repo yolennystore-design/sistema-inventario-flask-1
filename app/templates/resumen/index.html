@@ -1,4 +1,5 @@
 ﻿{% extends "layout/base.html" %}
+
 {% block title %}Resumen Detallado{% endblock %}
 
 {% block content %}
@@ -8,9 +9,19 @@
         🖨 Imprimir Resumen
     </button>
 
-    <a href="/" class="btn btn-outline-secondary ms-2">
-        ⬅ Volver al Inicio
+    <a href="{{ url_for('resumen.index') }}" class="btn btn-primary me-2">
+        🔄 Refrescar Resumen
     </a>
+
+    <!-- Botón para Eliminar Resumen -->
+    <form method="POST"
+          action="{{ url_for('resumen.eliminar_resumen') }}"
+          class="d-inline"
+          onsubmit="return confirm('⚠️ ¿Seguro que deseas eliminar TODO el resumen? Esta acción no se puede deshacer.')">
+        <button class="btn btn-danger">
+            🗑 Eliminar Resumen
+        </button>
+    </form>
 </div>
 
 <table class="table table-bordered table-striped align-middle">
@@ -68,6 +79,7 @@
 <a href="/" class="btn btn-outline-secondary mt-3">
     ⬅ Volver al Inicio
 </a>
+
 <style>
     @media print {
 

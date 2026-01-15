@@ -154,6 +154,26 @@ def index():
         resumen=resumen,
         totales=totales
     )
+@resumen_bp.route("/eliminar", methods=["POST"])
+def eliminar_resumen():
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
+
+    conn = get_db()
+
+    conn.execute("DELETE FROM ventas")
+    conn.execute("DELETE FROM compras")
+
+    conn.commit()
+    conn.close()
+
+    registrar_log(
+        usuario=session["usuario"],
+        accion="Eliminó todas las ventas y compras del resumen",
+        modulo="Resumen"
+    )
+
+    return redirect(url_for("resumen.index"))
 
 
 
