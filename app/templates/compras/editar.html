@@ -8,14 +8,16 @@
       action="{{ url_for('compras.actualizar', id=compra.id) }}"
       class="col-md-6">
 
+    <!-- PRODUCTO (SOLO INFORMATIVO) -->
     <div class="mb-3">
-        <label class="form-label">Producto</label>
+        <label class="form-label">ID Producto</label>
         <input type="text"
                class="form-control"
-               value="{{ compra.producto }}"
+               value="{{ compra.id_producto }}"
                disabled>
     </div>
 
+    <!-- CANTIDAD -->
     <div class="mb-3">
         <label class="form-label">Cantidad</label>
         <input type="number"
@@ -26,6 +28,7 @@
                required>
     </div>
 
+    <!-- COSTO -->
     <div class="mb-3">
         <label class="form-label">Costo Unitario</label>
         <input type="number"
