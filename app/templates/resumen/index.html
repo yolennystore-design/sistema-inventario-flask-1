@@ -13,16 +13,16 @@
         🔄 Refrescar Resumen
     </a>
 
-    <!-- Botón para Eliminar Resumen -->
     <form method="POST"
           action="{{ url_for('resumen.eliminar_resumen') }}"
           class="d-inline"
-          onsubmit="return confirm('⚠️ ¿Seguro que deseas eliminar TODO el resumen? Esta acción no se puede deshacer.')">
+          onsubmit="return confirm('¿Seguro que deseas eliminar TODO el resumen?');">
         <button class="btn btn-danger">
             🗑 Eliminar Resumen
         </button>
     </form>
 </div>
+
 
 <table class="table table-bordered table-striped align-middle">
     <thead class="table-dark text-center">
