@@ -188,3 +188,79 @@ def eliminar(id):
     )
 
     return redirect(url_for("compras.index"))
+@compras_bp.route("/editar/<int:id>")
+def editar(id):
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
+
+    conn = get_db()
+    compra = conn.execute(
+        "SELECT * FROM compras WHERE id = ?",
+        (id,)
+    ).fetchone()
+    conn.close()
+
+    return render_template("compras/editar.html", compra=dict(compra))
+# ======================
+# ACTUALIZAR COMPRA
+# ======================
+@compras_bp.route("/actualizar/<int:id>", methods=["POST"])
+def actualizar(id):
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
+
+    nueva_cantidad = int(request.form["cantidad"])
+    nuevo_costo = float(request.form["costo"])
+    nuevo_total = nueva_cantidad * nuevo_costo
+
+    conn = get_db()
+
+    compra = conn.execute(
+        "SELECT * FROM compras WHERE id = ?",
+        (id,)
+    ).fetchone()
+
+    if not compra:
+        conn.close()
+        return redirect(url_for("compras.index"))
+
+    # Ajustar stock según diferencia
+    diferencia = nueva_cantidad - compra["cantidad"]
+
+    conn.execute("""
+        UPDATE productos
+        SET cantidad = cantidad + ?
+        WHERE id = ?
+    """, (diferencia, compra["id_producto"]))
+
+    # Recalcular pagos
+    if compra["tipo_pago"] == "contado":
+        abonado = nuevo_total
+        pendiente = 0
+    else:
+        abonado = min(compra["abonado"], nuevo_total)
+        pendiente = nuevo_total - abonado
+
+    conn.execute("""
+        UPDATE compras
+        SET cantidad = ?, costo = ?, total = ?, abonado = ?, pendiente = ?
+        WHERE id = ?
+    """, (
+        nueva_cantidad,
+        nuevo_costo,
+        nuevo_total,
+        abonado,
+        pendiente,
+        id
+    ))
+
+    conn.commit()
+    conn.close()
+
+    registrar_log(
+        usuario=session["usuario"],
+        accion=f"Compra actualizada #{id}",
+        modulo="Compras"
+    )
+
+    return redirect(url_for("compras.index"))
