@@ -155,20 +155,29 @@ def index():
         totales=totales
     )
 @resumen_bp.route("/eliminar", methods=["POST"])
+@resumen_bp.route("/eliminar", methods=["POST"])
 def eliminar_resumen():
-    from app.db import get_db
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
 
     conn = get_db()
 
-    # ⚠️ Ajusta si quieres borrar solo un mes
-    conn.execute("DELETE FROM ventas")
+    # 🔥 BORRAR COMPRAS (BD)
     conn.execute("DELETE FROM compras")
-
     conn.commit()
     conn.close()
 
-    return redirect(url_for("resumen.index"))
+    # 🔥 BORRAR VENTAS (JSON)
+    if os.path.exists(VENTAS_FILE):
+        os.remove(VENTAS_FILE)
 
+    registrar_log(
+        usuario=session["usuario"],
+        accion="Eliminó TODO el resumen (ventas y compras)",
+        modulo="Resumen"
+    )
+
+    return redirect(url_for("resumen.index"))
 
 
 
