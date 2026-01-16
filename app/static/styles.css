@@ -127,79 +127,101 @@ alt="Auditoría" class="module-icon" >
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
 }
 
 /* =========================
    FONDO GENERAL
    ========================= */
 body {
-    background: #fde9ef; /* rosado pastel */
-    text-align: center;
+    background: #f3f3f3; /* Windows 11 background */
+    color: #1f1f1f;
 }
 
 /* =========================
-   HEADER (FRANJA ROSADA)
+   HEADER
    ========================= */
 .header {
-    background: linear-gradient(to bottom, #f7a6c7, #f9bfd6);
-    padding: 40px 20px;
-    color: white;
+    background: linear-gradient(180deg, #f7a6c7, #f9bfd6);
+    padding: 35px 20px;
+    text-align: center;
 }
 
 .logo {
-    width: 120px;
-    margin-bottom: 15px;
+    width: 110px;
+    margin-bottom: 10px;
 }
 
 .header h2 {
-    font-size: 26px;
-    font-weight: 500;
-    margin-bottom: 5px;
+    font-size: 24px;
+    font-weight: 600;
+    color: white;
 }
 
 .header p {
     font-size: 14px;
+    color: #fdfdfd;
     opacity: 0.9;
 }
 
 /* =========================
-   MENU / BOTONES
+   GRID DE BOTONES (WINDOWS 11)
    ========================= */
 .menu {
+    max-width: 1100px;
+    margin: auto;
+    padding: 60px 30px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 80px;
-    padding: 70px 40px;
-    background: #fde9ef;
+    gap: 30px;
 }
 
+    /* =========================
+   TARJETA / BOTÓN
+   ========================= */
     .menu a {
+        background: white;
+        border-radius: 16px;
+        padding: 35px 20px;
         text-decoration: none;
-        text-align: center;
+        color: #1f1f1f;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
+        transition: all 0.25s ease;
     }
 
-        /* ICONOS SUAVES (CLAVE DEL ESTILO) */
+        /* HOVER WINDOWS 11 */
+        .menu a:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
+        }
+
+        /* =========================
+   ICONOS
+   ========================= */
         .menu a img {
-            width: 70px;
+            width: 56px;
             height: auto;
-            opacity: 0.45; /* efecto apagado */
+            margin-bottom: 14px;
         }
 
-        /* TEXTO DEBAJO DEL ICONO */
+        /* TEXTO */
         .menu a span {
-            display: block;
-            margin-top: 12px;
-            font-size: 14px;
-            color: #7a7a7a;
+            font-size: 15px;
+            font-weight: 500;
         }
 
-    /* BOTÓN SALIR */
+    /* =========================
+   BOTÓN SALIR
+   ========================= */
     .menu .salir {
         grid-column: span 3;
-        font-size: 15px;
-        color: #8a3d5c;
-        margin-top: 20px;
+        background: #fff0f4;
+        color: #b00040;
+        font-weight: 600;
     }
 
 /* =========================
@@ -208,6 +230,7 @@ body {
 footer {
     background: #f7a6c7;
     color: white;
+    text-align: center;
     padding: 15px;
     font-size: 14px;
 }
@@ -218,7 +241,6 @@ footer {
 @media (max-width: 1024px) {
     .menu {
         grid-template-columns: repeat(2, 1fr);
-        gap: 60px;
     }
 
         .menu .salir {
@@ -232,12 +254,11 @@ footer {
 @media (max-width: 600px) {
     .menu {
         grid-template-columns: 1fr;
-        gap: 50px;
-        padding: 50px 20px;
+        padding: 40px 20px;
     }
 
-        .menu a img {
-            width: 60px;
+        .menu a {
+            padding: 30px 20px;
         }
 
         .menu .salir {
