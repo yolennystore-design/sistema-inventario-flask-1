@@ -121,102 +121,130 @@ alt="Auditoría" class="module-icon" >
 </body >
 </html >
 /* =========================
-   ESTILO ORIGINAL (MENÚ CLÁSICO)
+   RESET Y FUENTE
    ========================= */
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
     font-family: 'Roboto', sans-serif;
 }
 
+/* =========================
+   FONDO GENERAL
+   ========================= */
 body {
-    margin: 0;
-    background: #f7b2cc; /* rosado principal */
+    background: #fde9ef; /* rosado pastel */
     text-align: center;
 }
 
-/* HEADER */
+/* =========================
+   HEADER (FRANJA ROSADA)
+   ========================= */
 .header {
-    padding: 25px;
-    background: linear-gradient(#f6a9c6, #f7b2cc);
+    background: linear-gradient(to bottom, #f7a6c7, #f9bfd6);
+    padding: 40px 20px;
+    color: white;
 }
 
 .logo {
-    width: 90px;
-    margin-bottom: 10px;
+    width: 120px;
+    margin-bottom: 15px;
 }
 
 .header h2 {
-    margin: 5px 0;
-    color: white;
+    font-size: 26px;
+    font-weight: 500;
+    margin-bottom: 5px;
 }
 
 .header p {
-    color: white;
-    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
 }
 
-/* MENÚ (igual a la foto) */
+/* =========================
+   MENU / BOTONES
+   ========================= */
 .menu {
-    background: #fde8f0; /* franja clara central */
-    padding: 40px 20px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
+    gap: 80px;
+    padding: 70px 40px;
+    background: #fde9ef;
 }
 
     .menu a {
         text-decoration: none;
-        color: #7a0040;
-        font-weight: 500;
+        text-align: center;
     }
 
-    .menu img {
-        width: 70px;
-        display: block;
-        margin: auto;
+        /* ICONOS SUAVES (CLAVE DEL ESTILO) */
+        .menu a img {
+            width: 70px;
+            height: auto;
+            opacity: 0.45; /* efecto apagado */
+        }
+
+        /* TEXTO DEBAJO DEL ICONO */
+        .menu a span {
+            display: block;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #7a7a7a;
+        }
+
+    /* BOTÓN SALIR */
+    .menu .salir {
+        grid-column: span 3;
+        font-size: 15px;
+        color: #8a3d5c;
+        margin-top: 20px;
     }
 
-    .menu span {
-        display: block;
-        margin-top: 10px;
-    }
-
-/* SALIR */
-.salir {
-    grid-column: span 3;
-    font-weight: bold;
-    margin-top: 20px;
-}
-
-/* FOOTER */
+/* =========================
+   FOOTER
+   ========================= */
 footer {
-    background: #f7a0c0;
+    background: #f7a6c7;
     color: white;
     padding: 15px;
+    font-size: 14px;
 }
 
-/* 📱 TABLET */
+/* =========================
+   TABLETS
+   ========================= */
 @media (max-width: 1024px) {
     .menu {
         grid-template-columns: repeat(2, 1fr);
+        gap: 60px;
     }
 
-    .salir {
-        grid-column: span 2;
-    }
+        .menu .salir {
+            grid-column: span 2;
+        }
 }
 
-/* 📱 CELULAR */
+/* =========================
+   CELULARES
+   ========================= */
 @media (max-width: 600px) {
     .menu {
         grid-template-columns: 1fr;
+        gap: 50px;
+        padding: 50px 20px;
     }
 
-    .salir {
-        grid-column: span 1;
-    }
+        .menu a img {
+            width: 60px;
+        }
 
-    .menu img {
-        width: 60px;
+        .menu .salir {
+            grid-column: span 1;
+        }
+
+    .header h2 {
+        font-size: 20px;
     }
 }
