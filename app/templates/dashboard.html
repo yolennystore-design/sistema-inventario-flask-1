@@ -58,15 +58,21 @@
         </a>
 
         {% if session.rol == "admin" %}
+
         <a href="/usuarios" class="card">
-            <img src="{{ url_for('static', filename='icons/usuarios.png') }}" alt="Usuarios">
+            <img src="{{ url_for('static', filename='icons/usuarios.png') }}"
+                 alt="Usuarios"
+                 class="icon">
             <span>Usuarios</span>
         </a>
 
         <a href="/auditoria" class="card">
-            <img src="{{ url_for('static', filename='icons/auditoria.png') }}" alt="Auditoría">
+            <img src="{{ url_for('static', filename='icons/auditoria.png') }}"
+                 alt="Auditoría"
+                 class="icon">
             <span>Auditoría</span>
         </a>
+
         {% endif %}
 
 
