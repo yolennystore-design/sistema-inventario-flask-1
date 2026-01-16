@@ -1,4 +1,5 @@
-﻿* {
+﻿/* RESET */
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -17,7 +18,7 @@ body {
     text-align: center;
 }
 
-.logo {
+.logo img {
     width: 110px;
     margin-bottom: 10px;
 }
@@ -33,7 +34,7 @@ body {
 }
 
 /* GRID WINDOWS 11 */
-.menu {
+.module-container {
     max-width: 1100px;
     margin: auto;
     padding: 60px 30px;
@@ -42,38 +43,39 @@ body {
     gap: 30px;
 }
 
-    /* TARJETAS */
-    .menu a {
-        background: white;
-        border-radius: 16px;
-        padding: 35px 20px;
-        text-decoration: none;
-        color: #1f1f1f;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
-        transition: all 0.25s ease;
+/* TARJETAS */
+.module {
+    display: flex;
+}
+
+.module-link {
+    width: 100%;
+    background: white;
+    border-radius: 16px;
+    padding: 35px 20px;
+    text-decoration: none;
+    color: #1f1f1f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.08);
+    transition: all .25s ease;
+}
+
+    .module-link:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 8px rgba(0,0,0,.08), 0 16px 40px rgba(0,0,0,.12);
     }
 
-        .menu a:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
-        }
-
-    .menu img {
-        width: 56px;
-        margin-bottom: 14px;
-    }
-
-    .menu span {
-        font-size: 15px;
-        font-weight: 500;
-    }
+/* ICONOS */
+.module-icon {
+    width: 56px;
+    margin-bottom: 14px;
+}
 
 /* BOTÓN SALIR */
-.salir {
+.logout {
     grid-column: span 3;
     background: #fff0f4;
     color: #b00040;
@@ -81,7 +83,7 @@ body {
 }
 
 /* FOOTER */
-footer {
+.footer {
     background: #f7a6c7;
     color: white;
     text-align: center;
@@ -90,21 +92,21 @@ footer {
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
-    .menu {
+    .module-container {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .salir {
+    .logout {
         grid-column: span 2;
     }
 }
 
 @media (max-width: 600px) {
-    .menu {
+    .module-container {
         grid-template-columns: 1fr;
     }
 
-    .salir {
+    .logout {
         grid-column: span 1;
     }
 }
