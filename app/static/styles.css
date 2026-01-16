@@ -123,105 +123,83 @@ alt="Auditoría" class="module-icon" >
 /* =========================
    ESTILO ORIGINAL
    ========================= */
-body {
-    margin: 0;
+* {
+    box-sizing: border-box;
     font-family: 'Roboto', sans-serif;
-    background: #fde4ec;
 }
 
-/* HEADER */
-.header {
-    background: #f7b7d2;
-    padding: 20px;
+body {
+    margin: 0;
+    background: #f7b2cc; /* ROSADO ORIGINAL */
     text-align: center;
 }
 
-.logo img {
-    width: 80px;
+.header {
+    padding: 20px;
+}
+
+.logo {
+    width: 120px;
     margin-bottom: 10px;
 }
 
-.header-text h2 {
-    margin: 0;
-    font-weight: 500;
-}
-
-.header-text p {
-    margin: 5px 0 0;
-}
-
-/* CONTENEDOR DE MÓDULOS */
-.module-container {
+.menu {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
-    padding: 40px;
+    padding: 30px;
 }
 
-/* TARJETAS */
-.module {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    text-align: center;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease;
-}
-
-    .module:hover {
-        transform: translateY(-5px);
+    .menu a {
+        text-decoration: none;
+        color: #4b0082;
+        font-weight: 500;
     }
 
-/* ICONOS */
-.module-icon {
-    width: 90px;
-    margin-bottom: 15px;
+    .menu img {
+        width: 80px;
+        display: block;
+        margin: auto;
+    }
+
+    .menu span {
+        display: block;
+        margin-top: 10px;
+    }
+
+.salir {
+    grid-column: span 3;
+    font-weight: bold;
 }
 
-/* LINKS */
-.module-link {
-    text-decoration: none;
-    color: #2b6cff;
-    font-weight: 500;
-    font-size: 16px;
-}
-
-/* LOGOUT */
-.logout {
-    color: #d10000;
-}
-
-/* FOOTER */
-.footer {
-    background: #f7b7d2;
-    text-align: center;
+footer {
+    background: #f7a0c0;
     padding: 15px;
-    font-weight: 500;
+    color: white;
 }
 
-/* =========================
-   RESPONSIVE (SIN CAMBIAR ESTILO)
-   ========================= */
-
-/* Tablets */
+/* 📱 TABLETS */
 @media (max-width: 1024px) {
-    .module-container {
+    .menu {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .salir {
+        grid-column: span 2;
+    }
 }
 
-/* Celulares */
+/* 📱 CELULARES */
 @media (max-width: 600px) {
-    .module-container {
+    .menu {
         grid-template-columns: 1fr;
-        padding: 20px;
     }
 
-    .module-icon {
+    .salir {
+        grid-column: span 1;
+    }
+
+    .menu img {
         width: 70px;
-    }
-
-    .header-text h2 {
-        font-size: 18px;
     }
 }
