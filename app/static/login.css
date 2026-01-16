@@ -2,68 +2,89 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: "Segoe UI", Roboto, system-ui, sans-serif;
 }
 
 body {
-    background: linear-gradient(135deg, #f7a6c7, #f3f3f3);
-    height: 100vh;
+    background: linear-gradient(135deg, #f7a6c7, #f9bfd6);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* CONTENEDOR */
 .login-container {
+    width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    padding: 20px;
 }
 
+/* TARJETA */
 .login-card {
-    background: white;
-    padding: 40px 30px;
+    background: #ffffff;
     width: 100%;
     max-width: 380px;
-    border-radius: 18px;
+    padding: 40px 35px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     text-align: center;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
 }
 
+/* LOGO */
 .login-logo {
-    width: 90px;
-    margin-bottom: 15px;
+    width: 110px;
+    margin-bottom: 20px;
 }
 
+/* TÍTULO */
 .login-card h2 {
     margin-bottom: 25px;
+    font-size: 24px;
+    color: #333;
 }
 
+/* INPUTS */
 .login-card input {
     width: 100%;
     padding: 14px;
     margin-bottom: 15px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
+    border-radius: 12px;
+    border: 1px solid #ccc;
     font-size: 15px;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
 }
 
     .login-card input:focus {
-        outline: none;
-        border-color: #f7a6c7;
+        border-color: #f58bb3;
+        box-shadow: 0 0 0 3px rgba(245,139,179,0.25);
     }
 
+/* BOTÓN */
 .login-card button {
     width: 100%;
     padding: 14px;
-    border-radius: 12px;
+    margin-top: 10px;
+    border-radius: 14px;
     border: none;
-    background: #f7a6c7;
+    background: linear-gradient(135deg, #f58bb3, #f7a6c7);
     color: white;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: 0.25s;
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 
     .login-card button:hover {
-        background: #f48fb1;
         transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
+
+/* ERROR */
+.login-error {
+    color: #c62828;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
