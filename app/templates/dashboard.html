@@ -2,8 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-
-    <!-- ✅ CLAVE PARA MÓVILES -->
+    <!-- CLAVE para móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Dashboard | Sistema de Inventario</title>
@@ -19,8 +18,7 @@
 
     <header class="header">
         <div class="logo">
-            <img src="{{ url_for('static', filename='logo.png') }}"
-                 alt="Logo de la Empresa">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo de la Empresa">
         </div>
 
         <div class="header-text">
@@ -30,7 +28,6 @@
     </header>
 
     <main>
-        <!-- ✅ GRID RESPONSIVE -->
         <div class="module-container">
 
             <div class="module">
@@ -65,9 +62,7 @@
 
             <div class="module">
                 <img src="{{ url_for('static', filename='icons/resumen.png') }}" class="module-icon">
-                <a href="{{ url_for('resumen.index') }}" class="module-link">
-                    📊 Resumen Detallado
-                </a>
+                <a href="{{ url_for('resumen.index') }}" class="module-link">📊 Resumen Detallado</a>
             </div>
 
             {% if session.rol == "admin" %}

@@ -123,65 +123,37 @@ alt="Auditoría" class="module-icon" >
 /* =========================
    RESPONSIVE SIN CAMBIAR ESTILO
    ========================= */
-/* Evita desbordes */
 * {
     box-sizing: border-box;
 }
 
-body {
-    margin: 0;
-    padding: 0;
+img {
+    max-width: 100%;
+    height: auto;
 }
 
-/* Header adaptable */
-.header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 15px;
-    flex-wrap: wrap;
+/* Tablets */
+@media (max-width: 1024px) {
+    .module-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-    .header img {
-        max-width: 120px;
-        height: auto;
+/* Celulares */
+@media (max-width: 600px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
     }
 
-.header-text h2 {
-    font-size: 22px;
-}
+    .module-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
 
-.header-text p {
-    margin: 0;
-    font-size: 14px;
-}
-
-/* Grid original mejorado */
-.module-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
-
-/* Tarjetas */
-.module {
-    text-align: center;
-    padding: 15px;
-}
-
-/* Iconos controlados */
-.module-icon {
-    max-width: 90px;
-    height: auto;
-    margin-bottom: 10px;
-}
-
-/* Links */
-.module-link {
-    display: block;
-    margin-top: 8px;
-    font-size: 16px;
+    .module-icon {
+        width: 70px;
+    }
 }
 
 /* =========================
