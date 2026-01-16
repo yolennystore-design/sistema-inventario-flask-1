@@ -121,30 +121,87 @@ alt="Auditoría" class="module-icon" >
 </body >
 </html >
 /* =========================
-   RESPONSIVE (NO cambia diseño)
+   ESTILO ORIGINAL
    ========================= */
-* {
-    box-sizing: border-box;
+body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background: #fde4ec;
 }
 
-img {
-    max-width: 100%;
-    height: auto;
-}
-
-/* Grid flexible */
-.module-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 25px;
+/* HEADER */
+.header {
+    background: #f7b7d2;
     padding: 20px;
+    text-align: center;
 }
 
-/* Iconos controlados */
-.module-icon {
-    max-width: 90px;
+.logo img {
+    width: 80px;
     margin-bottom: 10px;
 }
+
+.header-text h2 {
+    margin: 0;
+    font-weight: 500;
+}
+
+.header-text p {
+    margin: 5px 0 0;
+}
+
+/* CONTENEDOR DE MÓDULOS */
+.module-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    padding: 40px;
+}
+
+/* TARJETAS */
+.module {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+    .module:hover {
+        transform: translateY(-5px);
+    }
+
+/* ICONOS */
+.module-icon {
+    width: 90px;
+    margin-bottom: 15px;
+}
+
+/* LINKS */
+.module-link {
+    text-decoration: none;
+    color: #2b6cff;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+/* LOGOUT */
+.logout {
+    color: #d10000;
+}
+
+/* FOOTER */
+.footer {
+    background: #f7b7d2;
+    text-align: center;
+    padding: 15px;
+    font-weight: 500;
+}
+
+/* =========================
+   RESPONSIVE (SIN CAMBIAR ESTILO)
+   ========================= */
 
 /* Tablets */
 @media (max-width: 1024px) {
@@ -155,17 +212,16 @@ img {
 
 /* Celulares */
 @media (max-width: 600px) {
-
-    header {
-        text-align: center;
-        padding: 15px;
-    }
-
     .module-container {
         grid-template-columns: 1fr;
+        padding: 20px;
     }
 
     .module-icon {
-        max-width: 70px;
+        width: 70px;
+    }
+
+    .header-text h2 {
+        font-size: 18px;
     }
 }
