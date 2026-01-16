@@ -5,38 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Sistema de Inventario</title>
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
 
-<header class="header">
-    <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
-    <h2>Bienvenido {{ session.usuario }}</h2>
-    <p>Rol: {{ session.rol }}</p>
-</header>
+    <header class="header">
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
 
-<main class="menu">
-    <a href="/clientes"><img src="{{ url_for('static','icons/clientes.png') }}"><span>Clientes</span></a>
-    <a href="/productos"><img src="{{ url_for('static','icons/productos.png') }}"><span>Productos</span></a>
-    <a href="/ventas"><img src="{{ url_for('static','icons/ventas.png') }}"><span>Ventas</span></a>
-    <a href="/compras"><img src="{{ url_for('static','icons/compras.png') }}"><span>Compras</span></a>
-    <a href="/creditos"><img src="{{ url_for('static','icons/creditos.png') }}"><span>Créditos</span></a>
-    <a href="/stock"><img src="{{ url_for('static','icons/stock.png') }}"><span>Stock</span></a>
-    <a href="{{ url_for('resumen.index') }}"><img src="{{ url_for('static','icons/resumen.png') }}"><span>Resumen</span></a>
+        <h2>Bienvenido {{ session.usuario }}</h2>
+        <p>Rol: {{ session.rol }}</p>
+    </header>
 
-    {% if session.rol == "admin" %}
+    <main class="menu">
+        <a href="/clientes"><img src="{{ url_for('static','icons/clientes.png') }}"><span>Clientes</span></a>
+        <a href="/productos"><img src="{{ url_for('static','icons/productos.png') }}"><span>Productos</span></a>
+        <a href="/ventas"><img src="{{ url_for('static','icons/ventas.png') }}"><span>Ventas</span></a>
+        <a href="/compras"><img src="{{ url_for('static','icons/compras.png') }}"><span>Compras</span></a>
+        <a href="/creditos"><img src="{{ url_for('static','icons/creditos.png') }}"><span>Créditos</span></a>
+        <a href="/stock"><img src="{{ url_for('static','icons/stock.png') }}"><span>Stock</span></a>
+        <a href="{{ url_for('resumen.index') }}"><img src="{{ url_for('static','icons/resumen.png') }}"><span>Resumen</span></a>
+
+        {% if session.rol == "admin" %}
         <a href="/usuarios"><img src="{{ url_for('static','icons/usuarios.png') }}"><span>Usuarios</span></a>
         <a href="/auditoria"><img src="{{ url_for('static','icons/auditoria.png') }}"><span>Auditoría</span></a>
-    {% endif %}
+        {% endif %}
 
-    <a href="/logout" class="salir">Salir</a>
-</main>
+        <a href="/logout" class="salir">Salir</a>
+    </main>
 
-<footer>
-    © Moda y estilo que te acompaña
-</footer>
+    <footer>
+        © Moda y estilo que te acompaña
+    </footer>
 
 </body>
 </html>
