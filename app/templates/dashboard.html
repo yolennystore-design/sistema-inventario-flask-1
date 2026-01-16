@@ -20,60 +20,69 @@
         <p>Rol: {{ session.rol }}</p>
     </header>
 
-    <main class="menu">
+    <main>
+        <div class="menu">
 
-        <a href="/clientes">
-            <img src="{{ url_for('static', filename='icons/clientes.png') }}">
-            <span>Clientes</span>
-        </a>
+            <a href="/clientes">
+                <img src="{{ url_for('static', filename='icons/clientes.png') }}">
+                <span>Clientes</span>
+            </a>
 
-        <a href="/productos">
-            <img src="{{ url_for('static', filename='icons/productos.png') }}">
-            <span>Productos</span>
-        </a>
+            <a href="/productos">
+                <img src="{{ url_for('static', filename='icons/productos.png') }}">
+                <span>Productos</span>
+            </a>
 
-        <a href="/ventas">
-            <img src="{{ url_for('static', filename='icons/ventas.png') }}">
-            <span>Ventas</span>
-        </a>
+            <a href="/ventas">
+                <img src="{{ url_for('static', filename='icons/ventas.png') }}">
+                <span>Ventas</span>
+            </a>
 
-        <a href="/compras">
-            <img src="{{ url_for('static', filename='icons/compras.png') }}">
-            <span>Compras</span>
-        </a>
+            <a href="/compras">
+                <img src="{{ url_for('static', filename='icons/compras.png') }}">
+                <span>Compras</span>
+            </a>
 
-        <a href="/creditos">
-            <img src="{{ url_for('static', filename='icons/creditos.png') }}">
-            <span>Créditos</span>
-        </a>
+            <a href="/creditos">
+                <img src="{{ url_for('static', filename='icons/creditos.png') }}">
+                <span>Créditos</span>
+            </a>
 
-        <a href="/stock">
-            <img src="{{ url_for('static', filename='icons/stock.png') }}">
-            <span>Stock</span>
-        </a>
+            <a href="/stock">
+                <img src="{{ url_for('static', filename='icons/stock.png') }}">
+                <span>Stock</span>
+            </a>
 
-        <a href="{{ url_for('resumen.index') }}">
-            <img src="{{ url_for('static', filename='icons/resumen.png') }}">
-            <span>Resumen Detallado</span>
-        </a>
+            <a href="{{ url_for('resumen.index') }}">
+                <img src="{{ url_for('static', filename='icons/resumen.png') }}">
+                <span>Resumen Detallado</span>
+            </a>
 
-        {% if session.rol == "admin" %}
+            {% if session.rol == "admin" %}
 
-        <a href="/usuarios">
-            <img src="{{ url_for('static', filename='icons/usuarios.png') }}" alt="Usuarios">
-            <span>Usuarios</span>
-        </a>
+            <a href="/usuarios">
+                <img src="{{ url_for('static', filename='icons/usuarios.png') }}">
+                <span>Usuarios</span>
+            </a>
 
-        <a href="/auditoria">
-            <img src="{{ url_for('static', filename='icons/auditoria.png') }}" alt="Auditoría">
-            <span>Auditoría</span>
-        </a>
+            <a href="/auditoria">
+                <img src="{{ url_for('static', filename='icons/auditoria.png') }}">
+                <span>Auditoría</span>
+            </a>
 
-        {% endif %}
+            {% endif %}
 
-        <a href="/logout" class="salir">
-            <span>Salir</span>
-        </a>
+            <a href="/logout" class="salir">
+                <span>Salir</span>
+            </a>
+
+        </div>
+    </main>
+
+
+    <a href="/logout" class="salir">
+        <span>Salir</span>
+    </a>
 
     </main>
 
