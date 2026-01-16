@@ -1,146 +1,16 @@
-﻿<!DOCTYPE html >
-<html lang="es" >
-<head >
-<meta charset="UTF-8" >
-<!-- CLAVE para móviles y tablets -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0" >
-
-<title > Dashboard | Sistema de Inventario</title >
-
-<link rel="stylesheet"
-href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" >
-
-<link rel="stylesheet"
-href="{{ url_for('static', filename='styles.css') }}" >
-</head >
-
-<body >
-
-<header class="header" >
-<div class="logo" >
-<img src="{{ url_for('static', filename='logo.png') }}"
-alt="Logo de la Empresa" >
-</div >
-
-<div class="header-text" >
-<h2 > Bienvenido {
-
-{
-    session .usuario
-}
-
-}
-
-</h2 >
-<p > Rol: {
-
-{
-    session .rol
-}
-
-}
-
-</p >
-</div >
-</header >
-
-<main >
-<!-- GRID RESPONSIVE -->
-<div class="module-container" >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/clientes.png') }}"
-alt="Clientes" class="module-icon" >
-<a href="/clientes" class="module-link" > Clientes</a >
-</div >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/productos.png') }}"
-alt="Productos" class="module-icon" >
-<a href="/productos" class="module-link" > Productos</a >
-</div >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/ventas.png') }}"
-alt="Ventas" class="module-icon" >
-<a href="/ventas" class="module-link" > Ventas</a >
-</div >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/compras.png') }}"
-alt="Compras" class="module-icon" >
-<a href="/compras" class="module-link" > Compras</a >
-</div >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/creditos.png') }}"
-alt="Créditos" class="module-icon" >
-<a href="/creditos" class="module-link" > Créditos</a >
-</div >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/stock.png') }}"
-alt="Stock" class="module-icon" >
-<a href="/stock" class="module-link" > Stock</a >
-</div >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/resumen.png') }}"
-alt="Resumen" class="module-icon" >
-<a href="{{ url_for('resumen.index') }}"
-class="module-link" > 📊 Resumen Detallado</a >
-</div > {
-    % if session.rol == "admin" %
-}
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/usuarios.png') }}"
-alt="Usuarios" class="module-icon" >
-<a href="/usuarios" class="module-link" > Usuarios</a >
-</div >
-
-<div class="module" >
-<img src="{{ url_for('static', filename='icons/auditoria.png') }}"
-alt="Auditoría" class="module-icon" >
-<a href="/auditoria" class="module-link" > Auditoría</a >
-</div > {
-    % endif %
-}
-
-<div class="module" >
-<a href="/logout" class="module-link logout" > Salir</a >
-</div >
-
-</div >
-</main >
-
-<footer class="footer" >
-<p > &copy; Moda y estilo que te acompaña.</p >
-</footer >
-
-</body >
-</html >
-/* =========================
-   RESET Y FUENTE
-   ========================= */
-* {
+﻿* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
 }
 
-/* =========================
-   FONDO GENERAL
-   ========================= */
 body {
-    background: #f3f3f3; /* Windows 11 background */
+    background: #f3f3f3;
     color: #1f1f1f;
 }
 
-/* =========================
-   HEADER
-   ========================= */
+/* HEADER */
 .header {
     background: linear-gradient(180deg, #f7a6c7, #f9bfd6);
     padding: 35px 20px;
@@ -154,19 +24,15 @@ body {
 
 .header h2 {
     font-size: 24px;
-    font-weight: 600;
     color: white;
 }
 
 .header p {
     font-size: 14px;
-    color: #fdfdfd;
-    opacity: 0.9;
+    color: #fff;
 }
 
-/* =========================
-   GRID DE BOTONES (WINDOWS 11)
-   ========================= */
+/* GRID WINDOWS 11 */
 .menu {
     max-width: 1100px;
     margin: auto;
@@ -176,9 +42,7 @@ body {
     gap: 30px;
 }
 
-    /* =========================
-   TARJETA / BOTÓN
-   ========================= */
+    /* TARJETAS */
     .menu a {
         background: white;
         border-radius: 16px;
@@ -193,79 +57,54 @@ body {
         transition: all 0.25s ease;
     }
 
-        /* HOVER WINDOWS 11 */
         .menu a:hover {
             transform: translateY(-4px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
         }
 
-        /* =========================
-   ICONOS
-   ========================= */
-        .menu a img {
-            width: 56px;
-            height: auto;
-            margin-bottom: 14px;
-        }
-
-        /* TEXTO */
-        .menu a span {
-            font-size: 15px;
-            font-weight: 500;
-        }
-
-    /* =========================
-   BOTÓN SALIR
-   ========================= */
-    .menu .salir {
-        grid-column: span 3;
-        background: #fff0f4;
-        color: #b00040;
-        font-weight: 600;
+    .menu img {
+        width: 56px;
+        margin-bottom: 14px;
     }
 
-/* =========================
-   FOOTER
-   ========================= */
+    .menu span {
+        font-size: 15px;
+        font-weight: 500;
+    }
+
+/* BOTÓN SALIR */
+.salir {
+    grid-column: span 3;
+    background: #fff0f4;
+    color: #b00040;
+    font-weight: 600;
+}
+
+/* FOOTER */
 footer {
     background: #f7a6c7;
     color: white;
     text-align: center;
     padding: 15px;
-    font-size: 14px;
 }
 
-/* =========================
-   TABLETS
-   ========================= */
+/* RESPONSIVE */
 @media (max-width: 1024px) {
     .menu {
         grid-template-columns: repeat(2, 1fr);
     }
 
-        .menu .salir {
-            grid-column: span 2;
-        }
+    .salir {
+        grid-column: span 2;
+    }
 }
 
-/* =========================
-   CELULARES
-   ========================= */
 @media (max-width: 600px) {
     .menu {
         grid-template-columns: 1fr;
-        padding: 40px 20px;
     }
 
-        .menu a {
-            padding: 30px 20px;
-        }
-
-        .menu .salir {
-            grid-column: span 1;
-        }
-
-    .header h2 {
-        font-size: 20px;
+    .salir {
+        grid-column: span 1;
     }
 }
