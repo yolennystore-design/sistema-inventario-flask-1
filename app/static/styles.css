@@ -1,4 +1,7 @@
-﻿* {
+﻿/* =========================
+   RESET Y FUENTE
+========================= */
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -10,30 +13,36 @@ body {
     color: #1f1f1f;
 }
 
-/* HEADER */
+/* =========================
+   HEADER
+========================= */
 .header {
     background: linear-gradient(180deg, #f7a6c7, #f9bfd6);
     padding: 35px 20px;
     text-align: center;
 }
 
-.logo {
+.logo img {
     width: 110px;
     margin-bottom: 10px;
 }
 
 .header h2 {
     font-size: 24px;
-    color: white;
+    font-weight: 600;
+    color: #fff;
 }
 
 .header p {
     font-size: 14px;
     color: #fff;
+    opacity: .9;
 }
 
-/* GRID WINDOWS 11 */
-.menu {
+/* =========================
+   GRID WINDOWS 11
+========================= */
+.module-container {
     max-width: 1100px;
     margin: auto;
     padding: 60px 30px;
@@ -42,69 +51,89 @@ body {
     gap: 30px;
 }
 
-    /* TARJETAS */
-    .menu a {
-        background: white;
-        border-radius: 16px;
-        padding: 35px 20px;
-        text-decoration: none;
-        color: #1f1f1f;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08);
-        transition: all 0.25s ease;
+/* =========================
+   TARJETAS / BOTONES
+========================= */
+.module {
+    display: flex;
+}
+
+.module-link {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: #1f1f1f;
+    font-size: 15px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 10px 30px rgba(0,0,0,.08);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+
+    .module-link:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 12px rgba(0,0,0,.10), 0 20px 45px rgba(0,0,0,.14);
     }
 
-        .menu a:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
-        }
+/* =========================
+   ICONOS
+========================= */
+.module-icon {
+    width: 56px;
+    height: auto;
+    margin-bottom: 14px;
+}
 
-    .menu img {
-        width: 56px;
-        margin-bottom: 14px;
-    }
-
-    .menu span {
-        font-size: 15px;
-        font-weight: 500;
-    }
-
-/* BOTÓN SALIR */
-.salir {
+/* =========================
+   BOTÓN SALIR
+========================= */
+.logout {
     grid-column: span 3;
     background: #fff0f4;
     color: #b00040;
     font-weight: 600;
 }
 
-/* FOOTER */
-footer {
+/* =========================
+   FOOTER
+========================= */
+.footer {
     background: #f7a6c7;
     color: white;
     text-align: center;
     padding: 15px;
+    font-size: 14px;
 }
 
-/* RESPONSIVE */
+/* =========================
+   RESPONSIVE
+========================= */
 @media (max-width: 1024px) {
-    .menu {
+    .module-container {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .salir {
+    .logout {
         grid-column: span 2;
     }
 }
 
 @media (max-width: 600px) {
-    .menu {
+    .module-container {
         grid-template-columns: 1fr;
+        padding: 40px 20px;
     }
 
-    .salir {
+    .logout {
         grid-column: span 1;
+    }
+
+    .header h2 {
+        font-size: 20px;
     }
 }
