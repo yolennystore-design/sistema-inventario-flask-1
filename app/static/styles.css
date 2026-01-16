@@ -121,7 +121,7 @@ alt="Auditoría" class="module-icon" >
 </body >
 </html >
 /* =========================
-   RESPONSIVE SIN CAMBIAR ESTILO
+   RESPONSIVE (NO cambia diseño)
    ========================= */
 * {
     box-sizing: border-box;
@@ -130,6 +130,20 @@ alt="Auditoría" class="module-icon" >
 img {
     max-width: 100%;
     height: auto;
+}
+
+/* Grid flexible */
+.module-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 25px;
+    padding: 20px;
+}
+
+/* Iconos controlados */
+.module-icon {
+    max-width: 90px;
+    margin-bottom: 10px;
 }
 
 /* Tablets */
@@ -141,54 +155,17 @@ img {
 
 /* Celulares */
 @media (max-width: 600px) {
-    .header {
-        flex-direction: column;
+
+    header {
         text-align: center;
+        padding: 15px;
     }
 
     .module-container {
         grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    .module-icon {
-        width: 70px;
-    }
-}
-
-/* =========================
-   TABLETS
-   ========================= */
-@media (max-width: 1024px) {
-    .module-container {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* =========================
-   CELULARES
-   ========================= */
-@media (max-width: 600px) {
-
-    .header {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .header-text h2 {
-        font-size: 18px;
-    }
-
-    .module-container {
-        grid-template-columns: 1fr;
-        gap: 15px;
     }
 
     .module-icon {
         max-width: 70px;
-    }
-
-    .module-link {
-        font-size: 15px;
     }
 }
