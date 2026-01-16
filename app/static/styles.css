@@ -121,12 +121,8 @@ alt="Auditoría" class="module-icon" >
 </body >
 </html >
 /* =========================
-   ESTILO ORIGINAL
+   ESTILO ORIGINAL (MENÚ CLÁSICO)
    ========================= */
-/* =========================
-   ESTILO ORIGINAL ROSADO
-   ========================= */
-
 * {
     box-sizing: border-box;
     font-family: 'Roboto', sans-serif;
@@ -134,12 +130,12 @@ alt="Auditoría" class="module-icon" >
 
 body {
     margin: 0;
-    background: #f7c1d9; /* rosado claro general */
+    background: #f7c1d9;
     text-align: center;
 }
 
 /* =========================
-   HEADER (franja rosada)
+   HEADER
    ========================= */
 .header {
     background: #f3a6c8;
@@ -153,18 +149,18 @@ body {
 
 .header h2 {
     margin: 5px 0;
+    color: white;
     font-size: 22px;
-    color: #ffffff;
 }
 
 .header p {
     margin: 0;
-    color: #ffffff;
+    color: white;
     font-size: 14px;
 }
 
 /* =========================
-   MENÚ CENTRAL
+   MENÚ (BOTONES COMO LA FOTO)
    ========================= */
 .menu {
     background: #fbe6ef;
@@ -183,31 +179,31 @@ body {
     .menu img {
         width: 80px;
         display: block;
-        margin: 0 auto 8px;
+        margin: 0 auto;
     }
 
     .menu span {
         display: block;
+        margin-top: 8px;
         font-size: 15px;
     }
 
 /* =========================
-   BOTÓN SALIR
+   SALIR
    ========================= */
 .salir {
     grid-column: span 3;
     font-weight: bold;
-    color: #6a1b4d;
+    margin-top: 10px;
 }
 
 /* =========================
-   FOOTER (franja rosada)
+   FOOTER
    ========================= */
 footer {
     background: #f3a6c8;
     padding: 15px;
     color: white;
-    font-size: 14px;
 }
 
 /* =========================
@@ -244,4 +240,3 @@ footer {
         font-size: 18px;
     }
 }
-
