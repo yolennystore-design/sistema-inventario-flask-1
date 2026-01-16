@@ -2,30 +2,24 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- CLAVE para móviles y tablets -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Dashboard | Sistema de Inventario</title>
 
-    <!-- Fuente -->
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
 
-    <!-- Estilos -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
 
-    <!-- ENCABEZADO -->
     <header class="header">
-        <img src="{{ url_for('static', filename='logo.png') }}" class="logo" alt="Logo">
-
+        <img src="{{ url_for('static', filename='logo.png') }}" class="logo">
         <h2>Bienvenido {{ session.usuario }}</h2>
         <p>Rol: {{ session.rol }}</p>
     </header>
 
-    <!-- MENÚ PRINCIPAL -->
     <main class="menu">
 
         <a href="/clientes">
@@ -79,7 +73,6 @@
 
     </main>
 
-    <!-- PIE -->
     <footer>
         © Moda y estilo que te acompaña
     </footer>

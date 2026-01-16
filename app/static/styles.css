@@ -130,85 +130,72 @@ alt="Auditoría" class="module-icon" >
 
 body {
     margin: 0;
-    background: #f7c1d9;
+    background: #f7b2cc; /* rosado principal */
     text-align: center;
 }
 
-/* =========================
-   HEADER
-   ========================= */
+/* HEADER */
 .header {
-    background: #f3a6c8;
-    padding: 25px 15px;
+    padding: 25px;
+    background: linear-gradient(#f6a9c6, #f7b2cc);
 }
 
 .logo {
-    width: 110px;
+    width: 90px;
     margin-bottom: 10px;
 }
 
 .header h2 {
     margin: 5px 0;
     color: white;
-    font-size: 22px;
 }
 
 .header p {
-    margin: 0;
     color: white;
-    font-size: 14px;
+    margin: 0;
 }
 
-/* =========================
-   MENÚ (BOTONES COMO LA FOTO)
-   ========================= */
+/* MENÚ (igual a la foto) */
 .menu {
-    background: #fbe6ef;
+    background: #fde8f0; /* franja clara central */
     padding: 40px 20px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 35px;
+    gap: 40px;
 }
 
     .menu a {
         text-decoration: none;
-        color: #6a1b4d;
+        color: #7a0040;
         font-weight: 500;
     }
 
     .menu img {
-        width: 80px;
+        width: 70px;
         display: block;
-        margin: 0 auto;
+        margin: auto;
     }
 
     .menu span {
         display: block;
-        margin-top: 8px;
-        font-size: 15px;
+        margin-top: 10px;
     }
 
-/* =========================
-   SALIR
-   ========================= */
+/* SALIR */
 .salir {
     grid-column: span 3;
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 
-/* =========================
-   FOOTER
-   ========================= */
+/* FOOTER */
 footer {
-    background: #f3a6c8;
-    padding: 15px;
+    background: #f7a0c0;
     color: white;
+    padding: 15px;
 }
 
-/* =========================
-   TABLETS
-   ========================= */
+/* 📱 TABLET */
 @media (max-width: 1024px) {
     .menu {
         grid-template-columns: repeat(2, 1fr);
@@ -219,24 +206,17 @@ footer {
     }
 }
 
-/* =========================
-   CELULARES
-   ========================= */
+/* 📱 CELULAR */
 @media (max-width: 600px) {
     .menu {
         grid-template-columns: 1fr;
-        gap: 25px;
     }
-
-        .menu img {
-            width: 70px;
-        }
 
     .salir {
         grid-column: span 1;
     }
 
-    .header h2 {
-        font-size: 18px;
+    .menu img {
+        width: 60px;
     }
 }
