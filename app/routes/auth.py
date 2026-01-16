@@ -15,21 +15,18 @@ def cargar_usuarios():
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+    if request.method == 'POST':
+        usuario = request.form['usuario']
+        password = request.form['password']
 
-        usuarios = cargar_usuarios()
+        # aquí tu lógica de autenticación
+        if usuario == 'admin' and password == 'admin':
+            session['usuario'] = usuario
+            return redirect(url_for('dashboard'))
+        else:
+            return render_template('login.html', error='Usuario o contraseña incorrectos')
 
-        for u in usuarios:
-            if u["username"] == username and u["password"] == password:
-                session["usuario"] = u["username"]
-                session["rol"] = u["rol"]
-                return redirect(url_for("dashboard"))
-
-        return render_template("auth/login.html", error="Credenciales incorrectas")
-
-    return render_template("auth/login.html")
+    return render_template('login.html')
 
 @auth_bp.route("/logout")
 def logout():
