@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, request, redirect, url_for, session
 
 auth_bp = Blueprint("auth", __name__)
@@ -9,12 +8,11 @@ def login():
         usuario = request.form.get("usuario")
         password = request.form.get("password")
 
-        # Credenciales admin
         if usuario == "admin" and password == "admin":
             session.clear()
             session["usuario"] = usuario
-            session["rol"] = "admin"   # 👈 ESTO ES CLAVE
-            return redirect(url_for("dashboard.index"))
+            session["rol"] = "admin"   # 🔥 CLAVE
+            return redirect(url_for("dashboard"))
 
         return render_template(
             "login.html",
