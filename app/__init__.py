@@ -7,8 +7,7 @@ def create_app():
         template_folder="templates",
         static_folder="static"
     )
-
-    app.secret_key = "secret"
+    app.secret_key = "super-secret-key-inventario"
 
     # 🔥 ESTO ES LO QUE FALTABA
     crear_tablas()
