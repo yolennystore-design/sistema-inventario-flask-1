@@ -19,14 +19,17 @@ def login():
         usuario = request.form['usuario']
         password = request.form['password']
 
-        # aquí tu lógica de autenticación
         if usuario == 'admin' and password == 'admin':
             session['usuario'] = usuario
-            return redirect(url_for('dashboard'))
-        else:
-            return render_template('login.html', error='Usuario o contraseña incorrectos')
+            return redirect(url_for('dashboard.index'))  # AJUSTA AQUÍ
+
+        return render_template(
+            'login.html',
+            error='Usuario o contraseña incorrectos'
+        )
 
     return render_template('login.html')
+
 
 @auth_bp.route("/logout")
 def logout():
