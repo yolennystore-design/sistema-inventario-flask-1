@@ -23,7 +23,7 @@ def login():
         usuarios = cargar_usuarios()
 
         for u in usuarios:
-            if u["Yolenny Osoria"] == usuario and u["lisandyeloise"] == password:
+            if u["username"] == usuario and u["password"] == password:
                 session.clear()
                 session["usuario"] = u["username"]
                 session["rol"] = u["rol"]
