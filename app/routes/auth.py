@@ -21,22 +21,16 @@ def login():
 
         if usuario == 'admin' and password == 'admin':
             session['usuario'] = usuario
-            return redirect(url_for('dashboard.index'))  # AJUSTA AQUÍ
+            return redirect(url_for('dashboard.index'))  # ajusta si aplica
 
         return render_template(
             'login.html',
-            error='Usuario o contraseña incorrectos'
+            error='Usuario o contraseï¿½a incorrectos'
         )
 
     return render_template('login.html')
-
 
 @auth_bp.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))
-
-
-
-
-
