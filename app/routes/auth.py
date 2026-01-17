@@ -1,6 +1,18 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
+import json
+import os
 
 auth_bp = Blueprint("auth", __name__)
+
+DATA_FILE = "app/data/usuarios.json"
+
+
+def cargar_usuarios():
+    if not os.path.exists(DATA_FILE):
+        return []
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -8,11 +20,14 @@ def login():
         usuario = request.form.get("usuario")
         password = request.form.get("password")
 
-        if usuario == "Yolenny Osoria" and password == "lisandyeloise":
-            session.clear()
-            session["usuario"] = usuario
-            session["rol"] = "admin"   # 🔥 CLAVE
-            return redirect(url_for("dashboard"))
+        usuarios = cargar_usuarios()
+
+        for u in usuarios:
+            if u["Yolenny Osoria"] == usuario and u["lisandyeloise"] == password:
+                session.clear()
+                session["usuario"] = u["username"]
+                session["rol"] = u["rol"]
+                return redirect(url_for("dashboard"))
 
         return render_template(
             "login.html",
