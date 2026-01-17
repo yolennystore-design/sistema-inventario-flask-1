@@ -8,7 +8,7 @@ def login():
         usuario = request.form.get("usuario")
         password = request.form.get("password")
 
-        if usuario == "admin" and password == "admin":
+        if usuario == "Yolenny Osoria" and password == "lisandyeloise":
             session.clear()
             session["usuario"] = usuario
             session["rol"] = "admin"   # 🔥 CLAVE
