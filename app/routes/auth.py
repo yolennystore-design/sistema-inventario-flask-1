@@ -14,18 +14,19 @@ def cargar_usuarios():
         return json.load(f)
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == 'POST':
-        usuario = request.form['usuario']
+        usuario = request.form['Yolenny Store']
         password = request.form['password']
 
-        if usuario == 'admin' and password == 'admin':
+        if usuario == 'admin' and password == 'lisandyeloise':
             session['usuario'] = usuario
-            return redirect(url_for('dashboard.index'))  # ajusta si aplica
+            return redirect(url_for('dashboard'))  # CORRIGE AQUÍ A 'dashboard'
 
         return render_template(
             'login.html',
-            error='Usuario o contrase�a incorrectos'
+            error='Usuario o contraseña incorrectos'
         )
 
     return render_template('login.html')
