@@ -13,18 +13,19 @@ def cargar_usuarios():
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-@auth_bp.route("/login", methods=["GET", "POST"])
+@auth_bp.route("/login", methods=["POST", "GET"])
 def login():
     if request.method == 'POST':
         usuario = request.form['usuario']
         password = request.form['password']
 
+        # Aquí va tu lógica de autenticación, verificando el rol
         if usuario == 'admin' and password == 'admin':
             session['usuario'] = usuario
-            return redirect(url_for('dashboard'))  # Aquí verifica que la ruta del dashboard esté correctamente definida
-
-        return render_template('login.html', error='Usuario o contraseña incorrectos')
-
+            session['rol'] = 'admin'  # Asignando el rol al admin
+            return redirect(url_for('dashboard.index'))  # Redirige al dashboard
+        else:
+            return render_template('login.html', error="Usuario o contraseña incorrectos")
     return render_template('login.html')
 
 
