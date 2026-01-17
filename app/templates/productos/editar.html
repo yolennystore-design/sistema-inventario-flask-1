@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar producto</title>
+</head>
+<body>
+
+    <h2>Editar producto</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="text" name="nombre" value="{{ producto.nombre }}" required>
+        <input type="number" name="precio" value="{{ producto.precio }}" required>
+
+        <input type="file" name="foto">
+
+        <button type="submit">Guardar</button>
+    </form>
+
+</body>
+</html>

@@ -102,8 +102,7 @@
             <!-- FOTO -->
             <td>
                 {% if p.foto %}
-                <img src="{{ url_for('static',
-                        filename='uploads/productos/' ~ p.foto) }}"
+                <img src="{{ url_for('static', filename='uploads/productos/' ~ p.foto) }}"
                      width="50"
                      height="50"
                      style="object-fit:cover;border-radius:6px">
@@ -145,7 +144,7 @@
      SCRIPT CATEGORÍAS
 ========================= -->
 <script>
-const categorias = {{ categorias | tojson }};
+const categorias = {{ categorias | tojson }};  // Convertir las categorías a JSON para manipularlas en JS
 
 const categoriaSelect = document.getElementById("categoria");
 const subcategoriaSelect = document.getElementById("subcategoria");
