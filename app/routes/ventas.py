@@ -220,13 +220,25 @@ def confirmar():
 
     if tipo_pago == "credito":
         creditos = cargar_json(CREDITOS_FILE)
-        creditos.append({
+
+        nuevo_credito = {
             "cliente": cliente,
+            "fecha": fecha,
             "monto": total,
-            "abonado": 0,
+            "abonado": 0.0,
             "pendiente": total,
-            "fecha": fecha
-        })
+            "productos": [
+                {
+                    "nombre": item["nombre"],
+                    "cantidad": item["cantidad"],
+                    "precio": item["precio"]
+                }
+                for item in carrito
+            ],
+            "numero_factura": f"YS-{len(creditos)+1:05d}"
+        }
+
+        creditos.append(nuevo_credito)
         guardar_json(CREDITOS_FILE, creditos)
 
     registrar_log(
