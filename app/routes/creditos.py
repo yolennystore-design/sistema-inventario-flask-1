@@ -1,19 +1,29 @@
 # -*- coding: utf-8 -*-
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, send_file
+from flask import (
+    Blueprint, render_template, request,
+    redirect, url_for, session, send_file
+)
 import json
 import os
 from datetime import datetime
+from io import BytesIO
+
 from app.utils.auditoria import registrar_log
 
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Image
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph,
+    Table, TableStyle, Image
+)
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+
 
 creditos_bp = Blueprint("creditos", __name__, url_prefix="/creditos")
 
 DATA_FILE = "app/data/creditos.json"
+
 
 # ======================
 # UTILIDADES
@@ -40,24 +50,18 @@ def index():
 
     creditos = cargar_creditos()
 
-    # ======================
-    # LISTA FROM CLIENTES ÚNICOS
-    # ======================
     clientes = sorted({
         c.get("cliente", "").strip()
         for c in creditos
         if c.get("cliente")
     })
 
-    # ======================
-    # FILTRO POR CLIENTE
-    # ======================
     filtro_cliente = request.args.get("cliente", "").strip()
 
     if filtro_cliente:
         creditos = [
             c for c in creditos
-            if c.get("cliente", "") == filtro_cliente
+            if c.get("cliente") == filtro_cliente
         ]
 
     return render_template(
@@ -66,7 +70,6 @@ def index():
         clientes=clientes,
         filtro_cliente=filtro_cliente
     )
-
 
 
 # ======================
@@ -100,7 +103,7 @@ def abonar(index):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Abono FROM ${monto:.2f} al crédito FROM {credito.get('cliente','')}",
+        accion=f"Abonó ${monto:.2f} al crédito de {credito.get('cliente','')}",
         modulo="Créditos"
     )
 
@@ -108,7 +111,7 @@ def abonar(index):
 
 
 # ======================
-# PDF DEL CRÉDITO
+# PDF DETALLADO DEL CRÉDITO
 # ======================
 @creditos_bp.route("/pdf/<int:index>")
 def pdf_credito(index):
@@ -123,28 +126,24 @@ def pdf_credito(index):
     credito = creditos[index]
     productos = credito.get("productos", [])
 
-    # =========================
-    # 📌 DATOS PRINCIPALES
-    # =========================
     cliente = credito.get("cliente", "")
     fecha = credito.get("fecha", "")
     monto = credito.get("monto", 0)
     abonado = credito.get("abonado", 0)
     pendiente = credito.get("pendiente", 0)
 
-    # 👉 NÚMERO FROM FACTURA
-    numero_factura = credito.get("numero_factura", f"YS-{index+1:05d}")
+    numero_factura = credito.get(
+        "numero_factura",
+        f"YS-{index+1:05d}"
+    )
 
-    filepath = "temp_credito.pdf"
-    filename = f"credito_factura_{numero_factura}.pdf"
-
+    # 🔥 PDF EN MEMORIA (Render safe)
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
-    doc = SimpleDocTemplate(filepath, pagesize=letter)
     elementos = []
 
-    # =========================
     # LOGO
-    # =========================
     logo_path = "app/static/logo.png"
     if os.path.exists(logo_path):
         logo = Image(logo_path, width=90, height=60)
@@ -152,15 +151,11 @@ def pdf_credito(index):
         elementos.append(logo)
         elementos.append(Paragraph("<br/>", styles["Normal"]))
 
-    # =========================
-    # TÍTULOS
-    # =========================
+    # TITULOS
     elementos.append(Paragraph("<b>Yolenny Store</b>", styles["Heading1"]))
-    elementos.append(Paragraph("<b>COMPROBANTE FROM CRÉDITO</b><br/>", styles["Heading2"]))
+    elementos.append(Paragraph("<b>COMPROBANTE DE CRÉDITO</b><br/>", styles["Heading2"]))
 
-    # =========================
     # DATOS DEL CRÉDITO
-    # =========================
     data_credito = [
         ["N° Factura", numero_factura],
         ["Cliente", cliente],
@@ -178,11 +173,9 @@ def pdf_credito(index):
     ]))
     elementos.append(tabla_credito)
 
-    elementos.append(Paragraph("<br/><b>Detalle FROM Productos</b><br/><br/>", styles["Heading3"]))
-
-    # =========================
     # PRODUCTOS
-    # =========================
+    elementos.append(Paragraph("<br/><b>Detalle de Productos</b><br/>", styles["Heading3"]))
+
     data_productos = [["Producto", "Cantidad", "Precio Unit.", "Subtotal"]]
     total = 0
 
@@ -197,7 +190,7 @@ def pdf_credito(index):
         ])
 
     if not productos:
-        data_productos.append(["Sin productos registrados", "", "", ""])
+        data_productos.append(["Sin productos", "", "", ""])
 
     tabla_productos = Table(data_productos, colWidths=[200, 80, 100, 100])
     tabla_productos.setStyle(TableStyle([
@@ -207,20 +200,24 @@ def pdf_credito(index):
     ]))
     elementos.append(tabla_productos)
 
-    elementos.append(Paragraph(
-        f"<br/><b>Total Productos: ${total:,.2f}</b><br/><br/>",
-        styles["Normal"]
-    ))
+    elementos.append(
+        Paragraph(f"<br/><b>Total Productos: ${total:,.2f}</b><br/>", styles["Normal"])
+    )
 
-    elementos.append(Paragraph("Firma del Cliente: ____________________________", styles["Normal"]))
+    elementos.append(
+        Paragraph("Firma del Cliente: ________________________________", styles["Normal"])
+    )
 
     doc.build(elementos)
+    buffer.seek(0)
 
     return send_file(
-        filepath,
+        buffer,
+        mimetype="application/pdf",
         as_attachment=False,
-        download_name=filename
+        download_name=f"credito_{numero_factura}.pdf"
     )
+
 
 # ======================
 # ELIMINAR CRÉDITO (ADMIN)
@@ -240,13 +237,8 @@ def eliminar(index):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Eliminó crédito FROM {eliminado.get('cliente','')}",
+        accion=f"Eliminó crédito de {eliminado.get('cliente','')}",
         modulo="Créditos"
     )
 
     return redirect(url_for("creditos.index"))
-
-
-
-
-
