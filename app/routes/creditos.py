@@ -194,11 +194,12 @@ def pdf_credito(index):
     ]
 
     tabla_credito = Table(data_credito, colWidths=[150, 300])
-    tabla_credito.setStyle(TableStyle([(
-        "GRID", (0,0), (-1,-1), 1, colors.black),
-        ("BACKGROUND", (0,0), (0,-1), colors.whitesmoke),
-        ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"),
-    )]))
+    tabla_credito.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("BACKGROUND", (0, 0), (0, -1), colors.whitesmoke),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+    ]))
+
     elementos.append(tabla_credito)
 
     # PRODUCTOS
