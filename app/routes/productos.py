@@ -102,27 +102,39 @@ def agregar():
 # ======================
 # FORMULARIO EDITAR
 # ======================
-@productos_bp.route("/editar/<int:id>", methods=["GET"])
+@productos_bp.route("/editar/<int:id>", methods=["GET", "POST"])
 def editar(id):
-    if session.get("rol") != "admin":
-        return redirect(url_for("productos.index"))
-
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM productos WHERE id = %s", (id,))
-    producto = cur.fetchone()
-    conn.close()
 
-    if not producto:
+    if request.method == "POST":
+        nombre = request.form["nombre"]
+        precio = request.form["precio"]
+        cantidad = request.form["cantidad"]
+        categoria = request.form["categoria"]
+        subcategoria = request.form["subcategoria"]
+        item = request.form["item"]
+
+        cur.execute("""
+            UPDATE productos
+            SET nombre=%s, precio=%s, cantidad=%s,
+                categoria=%s, subcategoria=%s, item=%s
+            WHERE id=%s
+        """, (nombre, precio, cantidad, categoria, subcategoria, item, id))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
         return redirect(url_for("productos.index"))
 
-    categorias = cargar_categorias()
+    # GET → mostrar formulario
+    cur.execute("SELECT * FROM productos WHERE id=%s", (id,))
+    producto = cur.fetchone()
+    cur.close()
+    conn.close()
 
-    return render_template(
-        "productos/editar.html",
-        producto=producto,
-        categorias=categorias
-    )
+    return render_template("productos/editar.html", producto=producto)
 
 
 # ======================
