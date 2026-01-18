@@ -10,14 +10,25 @@ SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 
 
 def get_db():
-    if DATABASE_URL:
-        # PRODUCCIÓN (Render - PostgreSQL)
-        return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    else:
-        # LOCAL (SQLite)
+    # PRODUCCIÓN (Render) → SOLO PostgreSQL
+    if DATABASE_URL and DATABASE_URL.startswith("postgres"):
+        return psycopg2.connect(
+            DATABASE_URL,
+            cursor_factory=RealDictCursor
+        )
+
+    # DESARROLLO LOCAL → SQLite
+    if os.getenv("FLASK_ENV") == "development":
         conn = sqlite3.connect(SQLITE_PATH)
         conn.row_factory = sqlite3.Row
         return conn
+
+    # SI LLEGA AQUÍ EN PRODUCCIÓN → ERROR CLARO
+    raise RuntimeError(
+        "DATABASE_URL no configurada. PostgreSQL es obligatorio en producción."
+    )
+
+
 def crear_tablas():
     conn = get_db()
     cur = conn.cursor()
