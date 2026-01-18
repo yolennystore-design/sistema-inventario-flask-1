@@ -11,7 +11,7 @@ from app.db import get_db
 productos_bp = Blueprint("productos", __name__, url_prefix="/productos")
 
 # ======================
-# CONFIGURACI?N FOTOS
+# CONFIGURACIÓN FOTOS
 # ======================
 UPLOAD_FOLDER = "app/static/uploads/productos"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
@@ -21,16 +21,18 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def archivo_permitido(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 # ======================
 # CONSULTAS DB
 # ======================
 def cargar_productos():
     conn = get_db()
-    productos = conn.execute(
-        "SELECT * FROM productos ORDER BY id DESC"
-    ).fetchall()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM productos ORDER BY id DESC")
+    productos = cur.fetchall()
     conn.close()
     return productos
+
 
 # ======================
 # LISTAR PRODUCTOS
@@ -49,12 +51,13 @@ def index():
         categorias=categorias
     )
 
+
 # ======================
 # AGREGAR PRODUCTO
 # ======================
 @productos_bp.route("/agregar", methods=["POST"])
 def agregar():
-    if "usuario" not in session or session.get("rol") != "admin":
+    if session.get("rol") != "admin":
         return redirect(url_for("productos.index"))
 
     foto = request.files.get("foto")
@@ -66,10 +69,13 @@ def agregar():
         foto.save(os.path.join(UPLOAD_FOLDER, nombre_foto))
 
     conn = get_db()
-    conn.execute("""
+    cur = conn.cursor()
+
+    cur.execute("""
         INSERT INTO productos
         (nombre, categoria, subcategoria, item, precio, cantidad, foto)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
     """, (
         request.form["nombre"],
         request.form["categoria"],
@@ -79,29 +85,32 @@ def agregar():
         0,
         nombre_foto
     ))
+
+    nuevo_id = cur.fetchone()["id"]
     conn.commit()
     conn.close()
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Agreg? producto: {request.form['nombre']}",
+        accion=f"Agregó producto ID {nuevo_id}",
         modulo="Productos"
     )
 
     return redirect(url_for("productos.index"))
 
+
 # ======================
 # FORMULARIO EDITAR
 # ======================
-@productos_bp.route("/editar/<int:id>", methods=["GET", "POST"], endpoint="editar")
+@productos_bp.route("/editar/<int:id>", methods=["GET"])
 def editar(id):
-    if "usuario" not in session or session.get("rol") != "admin":
+    if session.get("rol") != "admin":
         return redirect(url_for("productos.index"))
 
     conn = get_db()
-    producto = conn.execute(
-        "SELECT * FROM productos WHERE id = ?", (id,)
-    ).fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM productos WHERE id = %s", (id,))
+    producto = cur.fetchone()
     conn.close()
 
     if not producto:
@@ -111,9 +120,10 @@ def editar(id):
 
     return render_template(
         "productos/editar.html",
-        producto=dict(producto),
+        producto=producto,
         categorias=categorias
     )
+
 
 # ======================
 # ACTUALIZAR PRODUCTO
@@ -124,16 +134,15 @@ def actualizar(id):
         return redirect(url_for("productos.index"))
 
     conn = get_db()
-    actual = conn.execute(
-        "SELECT foto FROM productos WHERE id = ?", (id,)
-    ).fetchone()
+    cur = conn.cursor()
 
+    cur.execute("SELECT foto FROM productos WHERE id = %s", (id,))
+    actual = cur.fetchone()
     nombre_foto = actual["foto"] if actual else ""
 
     foto = request.files.get("foto")
 
     if foto and foto.filename and archivo_permitido(foto.filename):
-        # eliminar foto anterior
         if nombre_foto:
             ruta_anterior = os.path.join(UPLOAD_FOLDER, nombre_foto)
             if os.path.exists(ruta_anterior):
@@ -143,10 +152,11 @@ def actualizar(id):
         nombre_foto = f"{id}_{filename}"
         foto.save(os.path.join(UPLOAD_FOLDER, nombre_foto))
 
-    conn.execute("""
+    cur.execute("""
         UPDATE productos
-        SET nombre=?, categoria=?, subcategoria=?, item=?, precio=?, foto=?
-        WHERE id=?
+        SET nombre=%s, categoria=%s, subcategoria=%s,
+            item=%s, precio=%s, foto=%s
+        WHERE id=%s
     """, (
         request.form["nombre"],
         request.form["categoria"],
@@ -156,16 +166,18 @@ def actualizar(id):
         nombre_foto,
         id
     ))
+
     conn.commit()
     conn.close()
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Edit? producto ID {id}",
+        accion=f"Editó producto ID {id}",
         modulo="Productos"
     )
 
     return redirect(url_for("productos.index"))
+
 
 # ======================
 # ELIMINAR PRODUCTO
@@ -176,28 +188,24 @@ def eliminar(id):
         return redirect(url_for("productos.index"))
 
     conn = get_db()
-    producto = conn.execute(
-        "SELECT foto FROM productos WHERE id = ?", (id,)
-    ).fetchone()
+    cur = conn.cursor()
+
+    cur.execute("SELECT foto FROM productos WHERE id = %s", (id,))
+    producto = cur.fetchone()
 
     if producto and producto["foto"]:
         ruta = os.path.join(UPLOAD_FOLDER, producto["foto"])
         if os.path.exists(ruta):
             os.remove(ruta)
 
-    conn.execute("DELETE FROM productos WHERE id = ?", (id,))
+    cur.execute("DELETE FROM productos WHERE id = %s", (id,))
     conn.commit()
     conn.close()
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Elimin? producto ID {id}",
+        accion=f"Eliminó producto ID {id}",
         modulo="Productos"
     )
 
     return redirect(url_for("productos.index"))
-
-
-
-
-
