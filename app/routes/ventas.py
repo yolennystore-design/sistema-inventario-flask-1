@@ -225,33 +225,94 @@ def factura(index):
     items = obtener_items(venta)
 
     archivo = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    c = canvas.Canvas(archivo.name, pagesize=letter)
 
-    y = 750
-    c.setFont("Helvetica-Bold", 18)
-    c.drawCentredString(300, y, NOMBRE_EMPRESA)
+    ANCHO = 165  # 58mm
+    ALTO = 800   # alto dinámico
+    c = canvas.Canvas(archivo.name, pagesize=(ANCHO, ALTO))
 
-    y -= 40
-    c.setFont("Helvetica", 10)
-    c.drawString(50, y, f"Cliente: {venta['cliente']}")
+    y = ALTO - 20
+
+    # =========================
+    # ENCABEZADO
+    # =========================
+    c.setFont("Helvetica-Bold", 10)
+    c.drawCentredString(ANCHO / 2, y, "Yolenny Store")
+    y -= 12
+
+    c.setFont("Helvetica", 8)
+    c.drawCentredString(ANCHO / 2, y, "COMPROBANTE DE CRÉDITO")
     y -= 15
-    c.drawString(50, y, f"Fecha: {venta['fecha']}")
-    y -= 25
 
+    c.line(5, y, ANCHO - 5, y)
+    y -= 10
+
+    # =========================
+    # DATOS DE LA FACTURA
+    # =========================
+    c.setFont("Helvetica", 7)
+    c.drawString(5, y, f"Factura: {venta['numero']}")
+    y -= 10
+    c.drawString(5, y, f"Cliente: {venta['cliente']}")
+    y -= 10
+    c.drawString(5, y, f"Fecha: {venta['fecha']}")
+    y -= 12
+
+    c.line(5, y, ANCHO - 5, y)
+    y -= 10
+
+    # =========================
+    # DETALLE DE PRODUCTOS
+    # =========================
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(5, y, "Producto")
+    c.drawRightString(ANCHO - 5, y, "Total")
+    y -= 10
+
+    c.setFont("Helvetica", 7)
     for item in items:
-        c.drawString(
-            50, y,
-            f"{item['nombre']} x{item['cantidad']} - ${item['total']}"
-        )
-        y -= 15
+        nombre = item["nombre"][:18]
+        c.drawString(5, y, f"{nombre}")
+        y -= 9
+        c.drawString(10, y, f"{item['cantidad']} x ${item['precio']}")
+        c.drawRightString(ANCHO - 5, y, f"${item['total']}")
+        y -= 10
 
-    y -= 20
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(50, y, f"TOTAL: ${venta['total']}")
+    c.line(5, y, ANCHO - 5, y)
+    y -= 12
+
+    # =========================
+    # TOTALES
+    # =========================
+    c.setFont("Helvetica", 8)
+    c.drawString(5, y, "TOTAL:")
+    c.drawRightString(ANCHO - 5, y, f"${venta['total']}")
+    y -= 10
+
+    c.drawString(5, y, "ABONADO:")
+    c.drawRightString(ANCHO - 5, y, f"${venta.get('abonado', 0)}")
+    y -= 10
+
+    c.setFont("Helvetica-Bold", 8)
+    c.drawString(5, y, "PENDIENTE:")
+    c.drawRightString(
+        ANCHO - 5, y, f"${venta['total'] - venta.get('abonado', 0)}"
+    )
+    y -= 15
+
+    c.line(5, y, ANCHO - 5, y)
+    y -= 15
+
+    # =========================
+    # PIE
+    # =========================
+    c.setFont("Helvetica", 7)
+    c.drawCentredString(ANCHO / 2, y, "Gracias por su compra")
+    y -= 10
+    c.drawCentredString(ANCHO / 2, y, "Conserve este comprobante")
 
     c.save()
-    return send_file(archivo.name, as_attachment=False)
 
+    return send_file(archivo.name, as_attachment=False)
 
 # ======================
 # ELIMINAR VENTA
