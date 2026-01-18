@@ -119,6 +119,7 @@
 
             {% if session.rol == "admin" %}
             <td>
+                {% if p['id'] %}
                 <a href="{{ url_for('productos.editar', id=p['id']) }}"
                    class="btn btn-warning btn-sm me-1">
                     ✏️ Editar
@@ -129,6 +130,10 @@
                    onclick="return confirm('¿Eliminar producto?')">
                     🗑 Eliminar
                 </a>
+                {% else %}
+                <span class="text-muted">Sin ID</span>
+                {% endif %}
+
             </td>
             {% endif %}
         </tr>

@@ -2,158 +2,130 @@
 {% block title %}Compras{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">🚚 Compras</h2>
+<h2 class="mb-3">🛒 Compras</h2>
 
-<form method="GET" action="/compras" class="row g-2 mb-4">
+<!-- =========================
+     FORMULARIO AGREGAR COMPRA
+========================= -->
+<form method="POST"
+      action="{{ url_for('compras.agregar') }}"
+      class="row g-3 mb-4">
 
-    <div class="col-md-3">
-        <input type="text"
-               name="nombre"
-               class="form-control"
-               placeholder="Buscar por nombre"
-               value="{{ filtro_nombre }}">
-    </div>
-
-    <div class="col-md-3">
-        <select name="categoria" class="form-select">
-            <option value="">Todas las categorías</option>
-            {% for p in productos | unique(attribute='categoria') %}
-            <option value="{{ p.categoria }}"
-                    {% if filtro_categoria == p.categoria %}selected{% endif %}>
-                {{ p.categoria }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div class="col-md-3">
-        <select name="item" class="form-select">
-            <option value="">Todos los items</option>
-            {% for p in productos | unique(attribute='item') %}
-            <option value="{{ p.item }}"
-                    {% if filtro_item == p.item %}selected{% endif %}>
-                {{ p.item }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div class="col-md-3">
-        <select name="tipo_pago" class="form-select">
-            <option value="">Todos los pagos</option>
-            <option value="contado" {% if filtro_tipo_pago == 'contado' %}selected{% endif %}>Contado</option>
-            <option value="credito" {% if filtro_tipo_pago == 'credito' %}selected{% endif %}>Crédito</option>
-        </select>
-    </div>
-
-    <div class="col-md-2">
-        <button class="btn btn-secondary w-100">Filtrar</button>
-    </div>
-</form>
-
-<form method="POST" action="/compras/agregar" class="row g-3 mb-4">
-
+    <!-- PRODUCTO -->
     <div class="col-md-4">
         <label class="form-label">Producto</label>
-        <select name="id" class="form-select" required>
+        <select name="id_producto" id="productoSelect" class="form-select" required>
+            <option value="">Seleccione producto</option>
             {% for p in productos %}
-            <option value="{{ p.id }}">
+            <option value="{{ p.id }}"
+                    data-nombre="{{ p.nombre }}"
+                    data-stock="{{ p.cantidad }}">
                 {{ p.nombre }} (Stock: {{ p.cantidad }})
             </option>
             {% endfor %}
         </select>
+
+        <!-- nombre del producto (hidden) -->
+        <input type="hidden" name="producto" id="productoNombre">
     </div>
 
+    <!-- CANTIDAD -->
     <div class="col-md-2">
         <label class="form-label">Cantidad</label>
-        <input type="number" name="cantidad" min="1" class="form-control" required>
+        <input type="number"
+               name="cantidad"
+               class="form-control"
+               min="1"
+               required>
     </div>
 
+    <!-- COSTO -->
     <div class="col-md-2">
-        <label class="form-label">Costo Unitario</label>
-        <input type="number" name="costo" step="0.01" min="0" class="form-control" required>
+        <label class="form-label">Costo unitario</label>
+        <input type="number"
+               name="costo"
+               class="form-control"
+               step="0.01"
+               min="0"
+               required>
     </div>
 
+    <!-- TIPO DE PAGO -->
     <div class="col-md-2">
-        <label class="form-label">Tipo de Pago</label>
-        <select name="tipo_pago" class="form-select">
-            <option value="contado">Contado</option>
-            <option value="credito">Crédito</option>
+        <label class="form-label">Tipo de pago</label>
+        <select name="tipo_pago" class="form-select" required>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Transferencia">Transferencia</option>
+            <option value="Crédito">Crédito</option>
         </select>
     </div>
 
     <div class="col-md-2 d-flex align-items-end">
-        <button class="btn btn-primary w-100">Registrar Compra</button>
+        <button class="btn btn-primary w-100">
+            Registrar compra
+        </button>
     </div>
 </form>
 
 <hr>
 
-<h4>📑 Historial de Compras</h4>
-
-<table class="table table-striped table-bordered align-middle">
+<!-- =========================
+     TABLA DE COMPRAS
+========================= -->
+<table class="table table-striped table-hover align-middle">
     <thead class="table-light">
         <tr>
+            <th>ID</th>
             <th>Producto</th>
             <th>Cantidad</th>
+            <th>Costo</th>
             <th>Total</th>
             <th>Pago</th>
-            <th>Abonado</th>
-            <th>Pendiente</th>
             <th>Fecha</th>
-            <th>Acciones</th>
+            {% if session.rol == "admin" %}
+            <th>Acción</th>
+            {% endif %}
         </tr>
     </thead>
-
     <tbody>
         {% for c in compras %}
         <tr>
-            <td>{{ c["producto"] }}</td>
-            <td>{{ c["cantidad"] }}</td>
-            <td>${{ c["total"] }}</td>
-
+            <td>{{ c.id }}</td>
+            <td>{{ c.producto }}</td>
+            <td>{{ c.cantidad }}</td>
+            <td>${{ c.costo }}</td>
+            <td>${{ c.total }}</td>
+            <td>{{ c.tipo_pago }}</td>
+            <td>{{ c.fecha }}</td>
+            {% if session.rol == "admin" %}
             <td>
-                {% if c["tipo_pago"] == "credito" %}
-                <span class="badge bg-warning text-dark">Crédito</span>
-                {% else %}
-                <span class="badge bg-success">Contado</span>
-                {% endif %}
+                <a href="{{ url_for('compras.eliminar', id=c.id) }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar compra?')">
+                    🗑 Eliminar
+                </a>
             </td>
-
-            <td>${{ c["abonado"] }}</td>
-            <td>${{ c["pendiente"] }}</td>
-            <td>{{ c["fecha"] }}</td>
-
-            <td class="text-center">
-                <a href="{{ url_for('compras.editar', id=c['id']) }}"
-                   class="btn btn-sm btn-warning mb-1">✏️</a>
-
-                {% if c["pendiente"] > 0 %}
-                <form method="POST"
-                      action="{{ url_for('compras.abonar', id=c['id']) }}"
-                      class="d-flex mb-1">
-                    <input type="number"
-                           name="monto"
-                           step="0.01"
-                           min="0.01"
-                           max="{{ c['pendiente'] }}"
-                           class="form-control form-control-sm me-1"
-                           required>
-                    <button class="btn btn-sm btn-success">💵</button>
-                </form>
-                {% endif %}
-
-                <form method="POST"
-                      action="{{ url_for('compras.eliminar', id=c['id']) }}"
-                      onsubmit="return confirm('¿Eliminar esta compra?');">
-                    <button class="btn btn-sm btn-danger">🗑</button>
-                </form>
-            </td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-<a href="/" class="btn btn-outline-secondary mt-3">⬅ Volver al Inicio</a>
+<a href="/" class="btn btn-outline-secondary mt-3">
+    ⬅ Volver al Inicio
+</a>
+
+<!-- =========================
+     SCRIPT PRODUCTO
+========================= -->
+<script>
+    const selectProducto = document.getElementById("productoSelect");
+    const inputNombre = document.getElementById("productoNombre");
+
+    selectProducto.addEventListener("change", () => {
+        const option = selectProducto.options[selectProducto.selectedIndex];
+        inputNombre.value = option.dataset.nombre || "";
+    });
+</script>
 
 {% endblock %}
