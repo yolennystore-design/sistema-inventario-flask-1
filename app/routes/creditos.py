@@ -217,11 +217,14 @@ def pdf_credito(index):
         data_productos.append(["Sin productos", "", "", ""])
 
     tabla_productos = Table(data_productos, colWidths=[200, 80, 100, 100])
-    tabla_productos.setStyle(TableStyle((
-        "GRID", (0,0), (-1,-1), 1, colors.black),
-        ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
-        ("ALIGN", (1,1), (-1,-1), "CENTER"),
-    ))
+    tabla_productos.setStyle(TableStyle([  # <- Cambio a lista
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+    ]))
+
+   
+
     elementos.append(tabla_productos)
 
     elementos.append(
