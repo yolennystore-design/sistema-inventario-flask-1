@@ -15,7 +15,6 @@ from app.routes.categorias import cargar_categorias
 from app.utils.auditoria import registrar_log
 from app.db import get_db
 
-from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
 
@@ -79,7 +78,6 @@ def index():
             continue
         productos_filtrados.append(p)
 
-    ventas_filtradas = ventas
     total = sum(i["total"] for i in carrito)
 
     return render_template(
@@ -88,7 +86,7 @@ def index():
         categorias=categorias,
         clientes=clientes,
         carrito=carrito,
-        ventas=ventas_filtradas,
+        ventas=ventas,
         total=total
     )
 
@@ -180,20 +178,24 @@ def confirmar():
     cur.close()
     conn.close()
 
-    ventas.append({
+    numero_factura = f"YS-{len(ventas)+1:05d}"
+
+    venta = {
         "cliente": cliente,
         "tipo_pago": tipo_pago,
         "items": carrito,
         "total": total,
-        "fecha": fecha
-    })
+        "fecha": fecha,
+        "numero_factura": numero_factura
+    }
+
+    ventas.append(venta)
 
     guardar_json(VENTAS_FILE, ventas)
     guardar_json(CARRITO_FILE, [])
 
     if tipo_pago == "credito":
         creditos = cargar_json(CREDITOS_FILE)
-
         creditos.append({
             "cliente": cliente,
             "fecha": fecha,
@@ -201,9 +203,8 @@ def confirmar():
             "abonado": 0.0,
             "pendiente": total,
             "productos": carrito,
-            "numero_factura": f"YS-{len(creditos)+1:05d}"
+            "numero_factura": numero_factura
         })
-
         guardar_json(CREDITOS_FILE, creditos)
 
     registrar_log(
@@ -216,7 +217,7 @@ def confirmar():
 
 
 # ======================
-# FACTURA PDF
+# FACTURA PDF TÉRMICA
 # ======================
 @ventas_bp.route("/factura/<int:index>")
 def factura(index):
@@ -227,30 +228,28 @@ def factura(index):
     archivo = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
 
     ANCHO = 165  # 58mm
-    ALTO = 800   # alto dinámico
+    ALTO = 800
     c = canvas.Canvas(archivo.name, pagesize=(ANCHO, ALTO))
-
     y = ALTO - 20
 
-    # =========================
+    titulo = "COMPROBANTE DE CRÉDITO" if venta["tipo_pago"] == "credito" else "COMPROBANTE DE VENTA"
+    numero = venta.get("numero_factura", f"{index + 1}")
+
     # ENCABEZADO
-    # =========================
     c.setFont("Helvetica-Bold", 10)
-    c.drawCentredString(ANCHO / 2, y, "Yolenny Store")
+    c.drawCentredString(ANCHO / 2, y, NOMBRE_EMPRESA)
     y -= 12
 
     c.setFont("Helvetica", 8)
-    c.drawCentredString(ANCHO / 2, y, "COMPROBANTE DE CRÉDITO")
+    c.drawCentredString(ANCHO / 2, y, titulo)
     y -= 15
 
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # =========================
-    # DATOS DE LA FACTURA
-    # =========================
+    # DATOS
     c.setFont("Helvetica", 7)
-    c.drawString(5, y, f"Factura: {venta['numero']}")
+    c.drawString(5, y, f"Factura: {numero}")
     y -= 10
     c.drawString(5, y, f"Cliente: {venta['cliente']}")
     y -= 10
@@ -260,9 +259,7 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # =========================
-    # DETALLE DE PRODUCTOS
-    # =========================
+    # PRODUCTOS
     c.setFont("Helvetica-Bold", 7)
     c.drawString(5, y, "Producto")
     c.drawRightString(ANCHO - 5, y, "Total")
@@ -270,8 +267,7 @@ def factura(index):
 
     c.setFont("Helvetica", 7)
     for item in items:
-        nombre = item["nombre"][:18]
-        c.drawString(5, y, f"{nombre}")
+        c.drawString(5, y, item["nombre"][:18])
         y -= 9
         c.drawString(10, y, f"{item['cantidad']} x ${item['precio']}")
         c.drawRightString(ANCHO - 5, y, f"${item['total']}")
@@ -280,42 +276,39 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 12
 
-    # =========================
     # TOTALES
-    # =========================
+    abonado = venta.get("abonado", 0)
+    pendiente = venta["total"] - abonado
+
     c.setFont("Helvetica", 8)
     c.drawString(5, y, "TOTAL:")
     c.drawRightString(ANCHO - 5, y, f"${venta['total']}")
     y -= 10
 
     c.drawString(5, y, "ABONADO:")
-    c.drawRightString(ANCHO - 5, y, f"${venta.get('abonado', 0)}")
+    c.drawRightString(ANCHO - 5, y, f"${abonado}")
     y -= 10
 
     c.setFont("Helvetica-Bold", 8)
     c.drawString(5, y, "PENDIENTE:")
-    c.drawRightString(
-        ANCHO - 5, y, f"${venta['total'] - venta.get('abonado', 0)}"
-    )
+    c.drawRightString(ANCHO - 5, y, f"${pendiente}")
     y -= 15
 
     c.line(5, y, ANCHO - 5, y)
     y -= 15
 
-    # =========================
     # PIE
-    # =========================
     c.setFont("Helvetica", 7)
     c.drawCentredString(ANCHO / 2, y, "Gracias por su compra")
     y -= 10
     c.drawCentredString(ANCHO / 2, y, "Conserve este comprobante")
 
     c.save()
-
     return send_file(archivo.name, as_attachment=False)
 
+
 # ======================
-# ELIMINAR VENTA
+# ELIMINAR / CANCELAR
 # ======================
 @ventas_bp.route("/eliminar/<int:index>")
 def eliminar_venta(index):
@@ -324,12 +317,11 @@ def eliminar_venta(index):
 
     ventas = cargar_json(VENTAS_FILE)
     venta = ventas[index]
-    items = obtener_items(venta)
 
     conn = get_db()
     cur = conn.cursor()
 
-    for item in items:
+    for item in obtener_items(venta):
         cur.execute(
             "UPDATE productos SET cantidad = cantidad + %s WHERE id = %s",
             (item["cantidad"], item["id"])
@@ -351,18 +343,12 @@ def eliminar_venta(index):
     return redirect(url_for("ventas.index"))
 
 
-# ======================
-# CANCELAR VENTA
-# ======================
 @ventas_bp.route("/cancelar")
 def cancelar():
     guardar_json(CARRITO_FILE, [])
     return redirect(url_for("ventas.index"))
 
 
-# ======================
-# ELIMINAR TODAS
-# ======================
 @ventas_bp.route("/eliminar_todas")
 def eliminar_todas_las_ventas():
     if session.get("rol") != "admin":
