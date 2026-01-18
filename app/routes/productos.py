@@ -108,34 +108,57 @@ def editar(id):
     cur = conn.cursor()
 
     if request.method == "POST":
-        nombre = request.form["nombre"]
-        precio = request.form["precio"]
-        cantidad = request.form["cantidad"]
-        categoria = request.form["categoria"]
-        subcategoria = request.form["subcategoria"]
-        item = request.form["item"]
+        try:
+            nombre = request.form.get("nombre", "").strip()
+            precio = float(request.form.get("precio", 0))
 
-        cur.execute("""
-            UPDATE productos
-            SET nombre=%s, precio=%s, cantidad=%s,
-                categoria=%s, subcategoria=%s, item=%s
-            WHERE id=%s
-        """, (nombre, precio, cantidad, categoria, subcategoria, item, id))
+            if not nombre:
+                raise ValueError("Nombre vacío")
 
-        conn.commit()
+            # Manejo de foto
+            foto = request.files.get("foto")
+            nombre_foto = None
+
+            if foto and foto.filename:
+                nombre_foto = foto.filename
+                ruta = os.path.join(
+                    "app/static/uploads/productos",
+                    nombre_foto
+                )
+                foto.save(ruta)
+
+                cur.execute("""
+                    UPDATE productos
+                    SET nombre=%s, precio=%s, foto=%s
+                    WHERE id=%s
+                """, (nombre, precio, nombre_foto, id))
+            else:
+                cur.execute("""
+                    UPDATE productos
+                    SET nombre=%s, precio=%s
+                    WHERE id=%s
+                """, (nombre, precio, id))
+
+            conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            print("ERROR EDITAR PRODUCTO:", e)
+            cur.close()
+            conn.close()
+            return redirect(url_for("productos.editar", id=id))
+
         cur.close()
         conn.close()
+        return redirect(url_for("productos.listar"))
 
-        return redirect(url_for("productos.index"))
-
-    # GET → mostrar formulario
+    # GET
     cur.execute("SELECT * FROM productos WHERE id=%s", (id,))
     producto = cur.fetchone()
     cur.close()
     conn.close()
 
     return render_template("productos/editar.html", producto=producto)
-
 
 # ======================
 # ACTUALIZAR PRODUCTO
