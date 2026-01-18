@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from flask import (
     Blueprint, render_template, request,
     redirect, url_for, session, send_file
@@ -10,7 +9,6 @@ from datetime import datetime
 from io import BytesIO
 
 from app.utils.auditoria import registrar_log
-
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph,
@@ -19,11 +17,9 @@ from reportlab.platypus import (
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 
-
 creditos_bp = Blueprint("creditos", __name__, url_prefix="/creditos")
 
 DATA_FILE = "app/data/creditos.json"
-
 
 # ======================
 # UTILIDADES
@@ -34,11 +30,45 @@ def cargar_creditos():
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-
 def guardar_creditos(creditos):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(creditos, f, indent=4, ensure_ascii=False)
 
+# ======================
+# CREAR CRÉDITO
+# ======================
+@creditos_bp.route("/crear", methods=["POST"])
+def crear_credito():
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
+
+    creditos = cargar_creditos()
+
+    cliente = request.form.get("cliente")
+    productos = json.loads(request.form.get("productos"))  # viene del frontend
+
+    monto = sum(p["cantidad"] * p["precio"] for p in productos)
+
+    nuevo_credito = {
+        "cliente": cliente,
+        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "monto": monto,
+        "abonado": 0.0,
+        "pendiente": monto,
+        "productos": productos,
+        "numero_factura": f"YS-{len(creditos)+1:05d}"
+    }
+
+    creditos.append(nuevo_credito)
+    guardar_creditos(creditos)
+
+    registrar_log(
+        usuario=session["usuario"],
+        accion=f"Creó crédito para {cliente}",
+        modulo="Créditos"
+    )
+
+    return redirect(url_for("creditos.index"))
 
 # ======================
 # LISTAR + FILTRAR CRÉDITOS
@@ -70,7 +100,6 @@ def index():
         clientes=clientes,
         filtro_cliente=filtro_cliente
     )
-
 
 # ======================
 # ABONAR CRÉDITO
@@ -108,7 +137,6 @@ def abonar(index):
     )
 
     return redirect(url_for("creditos.index"))
-
 
 # ======================
 # PDF DETALLADO DEL CRÉDITO
@@ -166,11 +194,11 @@ def pdf_credito(index):
     ]
 
     tabla_credito = Table(data_credito, colWidths=[150, 300])
-    tabla_credito.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 1, colors.black),
+    tabla_credito.setStyle(TableStyle([(
+        "GRID", (0,0), (-1,-1), 1, colors.black),
         ("BACKGROUND", (0,0), (0,-1), colors.whitesmoke),
         ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"),
-    ]))
+    )]))
     elementos.append(tabla_credito)
 
     # PRODUCTOS
@@ -182,22 +210,17 @@ def pdf_credito(index):
     for p in productos:
         subtotal = p["cantidad"] * p["precio"]
         total += subtotal
-        data_productos.append([
-            p["nombre"],
-            str(p["cantidad"]),
-            f"${p['precio']:,.2f}",
-            f"${subtotal:,.2f}"
-        ])
+        data_productos.append([p["nombre"], str(p["cantidad"]), f"${p['precio']:,.2f}", f"${subtotal:,.2f}"])
 
     if not productos:
         data_productos.append(["Sin productos", "", "", ""])
 
     tabla_productos = Table(data_productos, colWidths=[200, 80, 100, 100])
-    tabla_productos.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 1, colors.black),
+    tabla_productos.setStyle(TableStyle([(
+        "GRID", (0,0), (-1,-1), 1, colors.black),
         ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
         ("ALIGN", (1,1), (-1,-1), "CENTER"),
-    ]))
+    )]))
     elementos.append(tabla_productos)
 
     elementos.append(
@@ -217,7 +240,6 @@ def pdf_credito(index):
         as_attachment=False,
         download_name=f"credito_{numero_factura}.pdf"
     )
-
 
 # ======================
 # ELIMINAR CRÉDITO (ADMIN)
