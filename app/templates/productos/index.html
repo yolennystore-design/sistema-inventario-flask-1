@@ -119,14 +119,14 @@
 
             {% if session.rol == "admin" %}
             <td>
-                <a href="{{ url_for('productos.editar_producto', id=p['id']) }}">
-                    class="btn btn-warning btn-sm me-1">
+                <a href="{{ url_for('productos.editar', id=p['id']) }}"
+                   class="btn btn-warning btn-sm me-1">
                     ✏️ Editar
                 </a>
 
-                <a href="{{ url_for('productos.eliminar_producto', id=p['id']) }}">
-                    class="btn btn-danger btn-sm"
-                    onclick="return confirm('¿Eliminar producto?')">
+                <a href="{{ url_for('productos.eliminar', id=p['id']) }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar producto?')">
                     🗑 Eliminar
                 </a>
             </td>
