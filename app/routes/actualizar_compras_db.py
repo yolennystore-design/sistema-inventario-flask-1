@@ -1,7 +1,7 @@
 import sys
 import os
 
-# ?? Forzar la raíz del proyecto al PYTHONPATH
+# ?? Forzar la raï¿½z del proyecto al PYTHONPATH
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, BASE_DIR)
 

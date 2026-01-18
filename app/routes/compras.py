@@ -224,7 +224,7 @@ def actualizar(id):
         conn.close()
         return redirect(url_for("compras.index"))
 
-    # Ajustar stock según diferencia
+    # Ajustar stock segï¿½n diferencia
     diferencia = nueva_cantidad - compra["cantidad"]
 
     conn.execute("""

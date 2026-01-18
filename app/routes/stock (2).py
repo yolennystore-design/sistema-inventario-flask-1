@@ -73,7 +73,7 @@ def ajustar_stock(id):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Ajustó stock del producto ID {id} a {cantidad}",
+        accion=f"Ajustï¿½ stock del producto ID {id} a {cantidad}",
         modulo="Stock"
     )
 

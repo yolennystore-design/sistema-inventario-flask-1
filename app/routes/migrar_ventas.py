@@ -24,7 +24,7 @@ ventas_migradas = 0
 ventas_omitidas = 0
 
 for v in ventas:
-    # ?? Validar estructura mínima
+    # ?? Validar estructura mï¿½nima
     if "cliente" not in v or "total" not in v or "fecha" not in v:
         ventas_omitidas += 1
         continue
@@ -34,7 +34,7 @@ for v in ventas:
         INSERT INTO ventas (cliente, tipo_pago, total, fecha)
         VALUES (?, ?, ?, ?)
     """, (
-        v.get("cliente", "Público General"),
+        v.get("cliente", "Pï¿½blico General"),
         v.get("tipo_pago", "contado"),
         v.get("total", 0),
         v.get("fecha", "")

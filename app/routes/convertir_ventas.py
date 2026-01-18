@@ -17,13 +17,13 @@ ventas_nuevas = []
 
 for v in ventas_viejas:
     venta = {
-        "cliente": v.get("cliente", "Público General"),
+        "cliente": v.get("cliente", "Pï¿½blico General"),
         "tipo_pago": "contado",
         "total": v.get("total", 0),
         "fecha": v.get("fecha") + " 00:00",
         "items": [
             {
-                "id": None,  # no existía antes
+                "id": None,  # no existï¿½a antes
                 "nombre": v.get("producto", ""),
                 "cantidad": v.get("cantidad", 0),
                 "precio": v.get("precio", 0),

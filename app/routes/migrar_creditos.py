@@ -22,7 +22,7 @@ creditos = cargar_json(CREDITOS_FILE)
 migrados = 0
 
 for credito in creditos:
-    # ? Saltar créditos que ya tienen productos
+    # ? Saltar crï¿½ditos que ya tienen productos
     if "productos" in credito and credito["productos"]:
         continue
 
@@ -49,7 +49,7 @@ for credito in creditos:
 
 guardar_json(CREDITOS_FILE, creditos)
 
-print(f"? Migración completada. Créditos actualizados: {migrados}")
+print(f"? Migraciï¿½n completada. Crï¿½ditos actualizados: {migrados}")
 
 
 

@@ -32,7 +32,7 @@ def guardar_logs(registros):
         json.dump(registros, f, ensure_ascii=False, indent=4)
 
 # =========================
-# LISTADO + FILTROS + PAGINACIÓN
+# LISTADO + FILTROS + PAGINACIï¿½N
 # =========================
 @auditoria_bp.route("/")
 def index():
@@ -61,7 +61,7 @@ def index():
         r["_index"] = i
         filtrados.append(r)
 
-    # ?? Paginación
+    # ?? Paginaciï¿½n
     pagina = int(request.args.get("pagina", 1))
     total = len(filtrados)
     total_paginas = max(1, math.ceil(total / REGISTROS_POR_PAGINA))
@@ -114,7 +114,7 @@ def eliminar_todo():
     if session.get("rol") != "admin":
         return "Acceso denegado", 403
 
-    guardar_logs([])  # Vacía el archivo JSON
+    guardar_logs([])  # Vacï¿½a el archivo JSON
 
     return redirect(url_for("auditoria.index"))
 
