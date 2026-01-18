@@ -11,7 +11,7 @@ VENTAS_FILE = "app/data/ventas.json"
 
 
 # ======================
-# CARGAR VENTAS
+# CARGAR VENTAS (JSON)
 # ======================
 def cargar_ventas():
     if not os.path.exists(VENTAS_FILE):
@@ -27,13 +27,16 @@ def index():
 
     # ================= DATOS =================
     conn = get_db()
+    cur = conn.cursor()
 
-    compras = conn.execute("""
+    cur.execute("""
         SELECT fecha, cantidad, costo, tipo_pago
         FROM compras
         ORDER BY fecha
-    """).fetchall()
+    """)
+    compras = cur.fetchall()
 
+    cur.close()
     conn.close()
 
     ventas = cargar_ventas()
@@ -59,7 +62,7 @@ def index():
     for c in compras:
         costo_actual = float(c["costo"])
 
-    # ================= COMPRAS (1 FILA = 1 COMPRA) =================
+    # ================= COMPRAS =================
     for c in compras:
         fecha = c["fecha"]
         mes = fecha[:7]
@@ -91,7 +94,7 @@ def index():
         else:
             totales[mes]["inversion_credito"] += inversion
 
-    # ================= VENTAS (1 FILA = 1 VENTA) =================
+    # ================= VENTAS =================
     for v in ventas:
         fecha = v.get("fecha", "")
         mes = fecha[:7]
@@ -154,8 +157,3 @@ def index():
         resumen=resumen,
         totales=totales
     )
-
-
-
-
-
