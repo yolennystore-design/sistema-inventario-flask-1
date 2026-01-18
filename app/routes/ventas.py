@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from flask import (Blueprint,render_template,request,redirect,url_for,session,send_file)
+from flask import (
+    Blueprint, render_template, request, redirect,
+    url_for, session, send_file
+)
 import json
 import os
 import tempfile
-import sqlite3
 from datetime import datetime
+
 from app.routes.productos import cargar_productos
 from app.routes.clientes import cargar_clientes
 from app.routes.categorias import cargar_categorias
 from app.utils.auditoria import registrar_log
 from app.db import get_db
+
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
@@ -22,6 +26,7 @@ ventas_bp = Blueprint("ventas", __name__, url_prefix="/ventas")
 VENTAS_FILE = "app/data/ventas.json"
 CARRITO_FILE = "app/data/carrito.json"
 CREDITOS_FILE = "app/data/creditos.json"
+SOLICITUDES_FILE = "app/data/solicitudes_precio.json"
 
 
 # ======================
@@ -40,7 +45,6 @@ def guardar_json(ruta, data):
 
 
 def obtener_items(venta):
-    """Soporta ventas antiguas (elementos) y nuevas (items)."""
     return venta.get("items") or venta.get("elementos") or []
 
 
@@ -58,7 +62,6 @@ def index():
     carrito = cargar_json(CARRITO_FILE)
     ventas = cargar_json(VENTAS_FILE)
 
-    # ---------- Filtros productos ----------
     filtro_nombre = request.args.get("nombre", "").lower()
     filtro_categoria = request.args.get("categoria", "")
     filtro_subcategoria = request.args.get("subcategoria", "")
@@ -76,35 +79,7 @@ def index():
             continue
         productos_filtrados.append(p)
 
-    # ---------- Filtros ventas ----------
-    f_cliente = request.args.get("f_cliente", "").lower()
-    f_producto = request.args.get("f_producto", "").lower()
-    f_FROM = request.args.get("f_FROM", "")
-    f_hasta = request.args.get("f_hasta", "")
-
-    ventas_filtradas = []
-    for v in ventas:
-        if f_cliente and f_cliente not in v.get("cliente", "").lower():
-            continue
-
-        if f_producto:
-            encontrado = False
-            for item in obtener_items(v):
-                if f_producto in item.get("nombre", "").lower():
-                    encontrado = True
-                    break
-            if not encontrado:
-                continue
-
-        fecha_venta = v.get("fecha", "")[:10]
-        if f_FROM and fecha_venta < f_FROM:
-            continue
-        if f_hasta and fecha_venta > f_hasta:
-            continue
-
-        ventas_filtradas.append(v)
-
-    ventas = ventas_filtradas
+    ventas_filtradas = ventas
     total = sum(i["total"] for i in carrito)
 
     return render_template(
@@ -113,16 +88,8 @@ def index():
         categorias=categorias,
         clientes=clientes,
         carrito=carrito,
-        ventas=ventas,
-        total=total,
-        filtro_nombre=filtro_nombre,
-        filtro_categoria=filtro_categoria,
-        filtro_subcategoria=filtro_subcategoria,
-        filtro_item=filtro_item,
-        f_cliente=f_cliente,
-        f_producto=f_producto,
-        f_FROM=f_FROM,
-        f_hasta=f_hasta
+        ventas=ventas_filtradas,
+        total=total
     )
 
 
@@ -159,8 +126,10 @@ def agregar_carrito():
 
     guardar_json(CARRITO_FILE, carrito)
     return redirect(url_for("ventas.index"))
+
+
 # ======================
-# ACTUALIZAR PRECIO EN CARRITO
+# ACTUALIZAR PRECIO
 # ======================
 @ventas_bp.route("/actualizar_precio", methods=["POST"])
 def actualizar_precio():
@@ -199,12 +168,16 @@ def confirmar():
     total = sum(i["total"] for i in carrito)
 
     conn = get_db()
+    cur = conn.cursor()
+
     for item in carrito:
-        conn.execute(
-            "UPDATE productos SET cantidad = cantidad - ? WHERE id = ?",
+        cur.execute(
+            "UPDATE productos SET cantidad = cantidad - %s WHERE id = %s",
             (item["cantidad"], item["id"])
         )
+
     conn.commit()
+    cur.close()
     conn.close()
 
     ventas.append({
@@ -221,24 +194,16 @@ def confirmar():
     if tipo_pago == "credito":
         creditos = cargar_json(CREDITOS_FILE)
 
-        nuevo_credito = {
+        creditos.append({
             "cliente": cliente,
             "fecha": fecha,
             "monto": total,
             "abonado": 0.0,
             "pendiente": total,
-            "productos": [
-                {
-                    "nombre": item["nombre"],
-                    "cantidad": item["cantidad"],
-                    "precio": item["precio"]
-                }
-                for item in carrito
-            ],
+            "productos": carrito,
             "numero_factura": f"YS-{len(creditos)+1:05d}"
-        }
+        })
 
-        creditos.append(nuevo_credito)
         guardar_json(CREDITOS_FILE, creditos)
 
     registrar_log(
@@ -301,12 +266,16 @@ def eliminar_venta(index):
     items = obtener_items(venta)
 
     conn = get_db()
+    cur = conn.cursor()
+
     for item in items:
-        conn.execute(
-            "UPDATE productos SET cantidad = cantidad + ? WHERE id = ?",
+        cur.execute(
+            "UPDATE productos SET cantidad = cantidad + %s WHERE id = %s",
             (item["cantidad"], item["id"])
         )
+
     conn.commit()
+    cur.close()
     conn.close()
 
     ventas.pop(index)
@@ -314,7 +283,7 @@ def eliminar_venta(index):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Eliminó venta FROM {venta['cliente']} por ${venta['total']}",
+        accion=f"Eliminó venta de {venta['cliente']} por ${venta['total']}",
         modulo="Ventas"
     )
 
@@ -331,7 +300,7 @@ def cancelar():
 
 
 # ======================
-# ELIMINAR TODAS LAS VENTAS
+# ELIMINAR TODAS
 # ======================
 @ventas_bp.route("/eliminar_todas")
 def eliminar_todas_las_ventas():
@@ -339,17 +308,19 @@ def eliminar_todas_las_ventas():
         return redirect(url_for("ventas.index"))
 
     ventas = cargar_json(VENTAS_FILE)
-    if not ventas:
-        return redirect(url_for("ventas.index"))
 
     conn = get_db()
+    cur = conn.cursor()
+
     for venta in ventas:
         for item in obtener_items(venta):
-            conn.execute(
-                "UPDATE productos SET cantidad = cantidad + ? WHERE id = ?",
+            cur.execute(
+                "UPDATE productos SET cantidad = cantidad + %s WHERE id = %s",
                 (item["cantidad"], item["id"])
             )
+
     conn.commit()
+    cur.close()
     conn.close()
 
     guardar_json(VENTAS_FILE, [])
@@ -357,13 +328,16 @@ def eliminar_todas_las_ventas():
 
     registrar_log(
         usuario=session["usuario"],
-        accion="Eliminó TODAS las ventas del sistema",
+        accion="Eliminó todas las ventas",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
-SOLICITUDES_FILE = "app/data/solicitudes_precio.json"
 
+
+# ======================
+# SOLICITAR CAMBIO DE PRECIO
+# ======================
 @ventas_bp.route("/solicitar_precio", methods=["POST"])
 def solicitar_precio():
     solicitudes = cargar_json(SOLICITUDES_FILE)
@@ -380,13 +354,8 @@ def solicitar_precio():
 
     registrar_log(
         usuario=session["usuario"],
-        accion="Envió solicitud FROM cambio FROM precio",
+        accion="Envió solicitud de cambio de precio",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
-
-
-
-
-
