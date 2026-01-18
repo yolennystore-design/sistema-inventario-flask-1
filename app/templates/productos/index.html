@@ -8,7 +8,7 @@
      FORMULARIO AGREGAR PRODUCTO
 ========================= -->
 <form method="POST"
-      action="/productos/agregar"
+      action="{{ url_for('productos.agregar') }}"
       enctype="multipart/form-data"
       class="row g-3 mb-4">
 
@@ -26,7 +26,7 @@
         <select id="categoria" name="categoria" class="form-select" required>
             <option value="">Seleccione</option>
             {% for c in categorias %}
-            <option value="{{ c.nombre }}">{{ c.nombre }}</option>
+            <option value="{{ c['nombre'] }}">{{ c['nombre'] }}</option>
             {% endfor %}
         </select>
     </div>
@@ -97,12 +97,12 @@
     <tbody>
         {% for p in productos %}
         <tr>
-            <td>{{ p.id }}</td>
+            <td>{{ p['id'] }}</td>
 
             <!-- FOTO -->
             <td>
-                {% if p.foto %}
-                <img src="{{ url_for('static', filename='uploads/productos/' ~ p.foto) }}"
+                {% if p['foto'] %}
+                <img src="{{ url_for('static', filename='uploads/productos/' ~ p['foto']) }}"
                      width="50"
                      height="50"
                      style="object-fit:cover;border-radius:6px">
@@ -111,20 +111,20 @@
                 {% endif %}
             </td>
 
-            <td>{{ p.nombre }}</td>
-            <td>{{ p.categoria }}</td>
-            <td>{{ p.subcategoria }}</td>
-            <td>{{ p.item }}</td>
-            <td>${{ p.precio }}</td>
+            <td>{{ p['nombre'] }}</td>
+            <td>{{ p['categoria'] }}</td>
+            <td>{{ p['subcategoria'] }}</td>
+            <td>{{ p['item'] }}</td>
+            <td>${{ p['precio'] }}</td>
 
             {% if session.rol == "admin" %}
             <td>
-                <a href="/productos/editar/{{ p.id }}"
+                <a href="{{ url_for('productos.editar', id=p['id']) }}"
                    class="btn btn-warning btn-sm me-1">
                     ✏️ Editar
                 </a>
 
-                <a href="/productos/eliminar/{{ p.id }}"
+                <a href="{{ url_for('productos.eliminar', id=p['id']) }}"
                    class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Eliminar producto?')">
                     🗑 Eliminar
@@ -136,7 +136,7 @@
     </tbody>
 </table>
 
-<a href="/" class="btn btn-outline-secondary mt-3">
+<a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mt-3">
     ⬅ Volver al Inicio
 </a>
 
@@ -144,18 +144,15 @@
      SCRIPT CATEGORÍAS
 ========================= -->
 <script>
-const categorias = {{ categorias | tojson }};  // Convertir las categorías a JSON para manipularlas en JS
+const categorias = {{ categorias | tojson }};
 
 const categoriaSelect = document.getElementById("categoria");
 const subcategoriaSelect = document.getElementById("subcategoria");
 const itemSelect = document.getElementById("item");
 
-// Al cambiar categoría
 categoriaSelect.addEventListener("change", () => {
-    subcategoriaSelect.innerHTML =
-        "<option value=''>Seleccione</option>";
-    itemSelect.innerHTML =
-        "<option value=''>Seleccione subcategoría primero</option>";
+    subcategoriaSelect.innerHTML = "<option value=''>Seleccione</option>";
+    itemSelect.innerHTML = "<option value=''>Seleccione subcategoría primero</option>";
 
     const categoria = categorias.find(
         c => c.nombre === categoriaSelect.value
@@ -170,10 +167,8 @@ categoriaSelect.addEventListener("change", () => {
     });
 });
 
-// Al cambiar subcategoría
 subcategoriaSelect.addEventListener("change", () => {
-    itemSelect.innerHTML =
-        "<option value=''>Seleccione</option>";
+    itemSelect.innerHTML = "<option value=''>Seleccione</option>";
 
     const categoria = categorias.find(
         c => c.nombre === categoriaSelect.value
