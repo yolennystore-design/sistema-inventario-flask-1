@@ -16,12 +16,16 @@ def index():
         return redirect(url_for("auth.login"))
 
     conn = get_db()
+    cur = conn.cursor()
 
     filtro_nombre = request.args.get("nombre", "").lower()
     filtro_categoria = request.args.get("categoria", "")
     filtro_item = request.args.get("item", "")
 
-    productos_db = conn.execute("SELECT * FROM productos").fetchall()
+    cur.execute("SELECT * FROM productos")
+    productos_db = cur.fetchall()
+
+    cur.close()
     conn.close()
 
     productos = []
@@ -57,29 +61,27 @@ def ajustar_stock(id):
         return redirect(url_for("stock.index"))
 
     cantidad = request.form.get("cantidad")
-
     if cantidad is None:
         return redirect(url_for("stock.index"))
 
     cantidad = int(cantidad)
 
     conn = get_db()
-    conn.execute(
-        "UPDATE productos SET cantidad = ? WHERE id = ?",
+    cur = conn.cursor()
+
+    cur.execute(
+        "UPDATE productos SET cantidad = %s WHERE id = %s",
         (cantidad, id)
     )
+
     conn.commit()
+    cur.close()
     conn.close()
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Ajust� stock del producto ID {id} a {cantidad}",
+        accion=f"Ajustó stock del producto ID {id} a {cantidad}",
         modulo="Stock"
     )
 
     return redirect(url_for("stock.index"))
-
-
-
-
-
