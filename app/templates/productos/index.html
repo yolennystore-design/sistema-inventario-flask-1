@@ -117,12 +117,16 @@
             <td>{{ p['item'] }}</td>
             <td>${{ p['precio'] }}</td>
 
-            {% if session.rol == "admin" %}
+            {% if session["rol"] == "admin" %}
             <td>
-                {% if p['id'] %}
                 <a href="{{ url_for('productos.editar', id=p['id']) }}"
-                   class="btn btn-warning btn-sm me-1">
+                   class="btn btn-sm btn-warning mb-1">
                     ✏️ Editar
+                </a>
+
+                <a href="{{ url_for('productos.historial', id=p['id']) }}"
+                   class="btn btn-sm btn-info mb-1">
+                    🧾 Historial
                 </a>
 
                 <a href="{{ url_for('productos.eliminar', id=p['id']) }}"
@@ -130,9 +134,9 @@
                    onclick="return confirm('¿Eliminar producto?')">
                     🗑 Eliminar
                 </a>
-                {% else %}
-                <span class="text-muted">Sin ID</span>
-                {% endif %}
+            </td>
+            {% endif %}
+
 
             </td>
             {% endif %}

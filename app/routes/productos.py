@@ -104,6 +104,10 @@ def agregar():
 # ======================
 @productos_bp.route("/editar/<int:id>", methods=["GET", "POST"])
 def editar(id):
+    # 🔒 SOLO ADMIN
+    if session.get("rol") != "admin":
+        abort(403)
+
     conn = get_db()
     cur = conn.cursor()
 
@@ -115,7 +119,6 @@ def editar(id):
             if not nombre:
                 raise ValueError("Nombre vacío")
 
-            # Manejo de foto
             foto = request.files.get("foto")
             nombre_foto = None
 
@@ -141,15 +144,24 @@ def editar(id):
 
             conn.commit()
 
+            # 🧾 REGISTRAR HISTORIAL
+            registrar_log(
+                usuario=session["usuario"],
+                accion=f"Editó producto ID {id} (Nombre: {nombre}, Precio: {precio})",
+                modulo="Productos"
+            )
+
         except Exception as e:
             conn.rollback()
             print("ERROR EDITAR PRODUCTO:", e)
             cur.close()
             conn.close()
+            flash("Error al guardar cambios", "danger")
             return redirect(url_for("productos.editar", id=id))
 
         cur.close()
         conn.close()
+        flash("Producto actualizado correctamente", "success")
         return redirect(url_for("productos.listar"))
 
     # GET
@@ -244,3 +256,26 @@ def eliminar(id):
     )
 
     return redirect(url_for("productos.index"))
+@productos_bp.route("/historial/<int:id>")
+def historial(id):
+    if session.get("rol") != "admin":
+        abort(403)
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT usuario, accion, fecha
+        FROM productos_historial
+        WHERE producto_id=%s
+        ORDER BY fecha DESC
+    """, (id,))
+
+    historial = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "productos/historial.html",
+        historial=historial
+    )
