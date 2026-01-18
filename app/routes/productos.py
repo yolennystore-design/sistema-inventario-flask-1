@@ -93,7 +93,7 @@ def agregar():
 # ======================
 # FORMULARIO EDITAR
 # ======================
-@productos_bp.route("/editar/<int:id>")
+@productos_bp.route("/editar/<int:id>", methods=["GET", "POST"], endpoint="editar")
 def editar(id):
     if "usuario" not in session or session.get("rol") != "admin":
         return redirect(url_for("productos.index"))
