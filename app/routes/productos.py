@@ -162,7 +162,7 @@ def editar(id):
         cur.close()
         conn.close()
         flash("Producto actualizado correctamente", "success")
-        return redirect(url_for("productos.listar"))
+        return redirect(url_for("productos.index"))
 
     # GET
     cur.execute("SELECT * FROM productos WHERE id=%s", (id,))
