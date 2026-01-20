@@ -5,7 +5,6 @@ gastos_bp = Blueprint("gastos", __name__, url_prefix="/gastos")
 
 @gastos_bp.route("/")
 def index():
-    # 🔒 Solo administrador
     if session.get("rol") != "admin":
         return redirect(url_for("dashboard"))
 

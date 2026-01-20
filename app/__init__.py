@@ -9,7 +9,6 @@ def create_app():
     )
     app.secret_key = "super-secret-key-inventario"
 
-    # 🔥 ESTO ES LO QUE FALTABA
     crear_tablas()
 
     # ======================
@@ -26,6 +25,7 @@ def create_app():
     from app.routes.auditoria import auditoria_bp
     from app.routes.categorias import categorias_bp
     from app.routes.resumen import resumen_bp
+    from app.routes.gastos import gastos_bp   # ✅ SOLO IMPORTAR
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(clientes_bp)
@@ -38,6 +38,7 @@ def create_app():
     app.register_blueprint(auditoria_bp)
     app.register_blueprint(categorias_bp)
     app.register_blueprint(resumen_bp)
+    app.register_blueprint(gastos_bp)          # ✅ REGISTRAR
 
     @app.route("/")
     def dashboard():
