@@ -24,10 +24,12 @@ def index():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT concepto, categoria, monto, fecha
+        SELECT id, fecha, concepto, categoria, monto
         FROM gastos
         ORDER BY fecha DESC
     """)
+
+
     gastos = cur.fetchall()
     conn.close()
 
