@@ -8,6 +8,14 @@
 
     <h2>📉 Gestión de Gastos</h2>
 
+    <!-- BOTÓN IMPRIMIR -->
+    <p>
+        <a href="{{ url_for('gastos.imprimir') }}">
+            🖨 Imprimir gastos
+        </a>
+    </p>
+
+    <!-- FORMULARIO -->
     <form method="POST" action="{{ url_for('gastos.agregar') }}">
         <input type="text" name="concepto" placeholder="Concepto" required>
         <input type="text" name="categoria" placeholder="Categoría">
@@ -20,12 +28,13 @@
 
     <h3>Listado de gastos</h3>
 
-    <table border="1" cellpadding="5">
+    <table border="1" cellpadding="6">
         <tr>
             <th>Fecha</th>
             <th>Concepto</th>
             <th>Categoría</th>
             <th>Monto</th>
+            <th>Acciones</th>
         </tr>
 
         {% for g in gastos %}
@@ -34,6 +43,12 @@
             <td>{{ g.concepto }}</td>
             <td>{{ g.categoria }}</td>
             <td>${{ g.monto }}</td>
+            <td>
+                <a href="{{ url_for('gastos.eliminar', id=g.id) }}"
+                   onclick="return confirm('¿Eliminar este gasto?')">
+                    🗑 Eliminar
+                </a>
+            </td>
         </tr>
         {% endfor %}
     </table>
