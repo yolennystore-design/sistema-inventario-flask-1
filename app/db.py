@@ -80,6 +80,16 @@ def crear_tablas():
         fecha TEXT
     )
     """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS productos_historial (
+        id SERIAL PRIMARY KEY,
+        producto_id INTEGER NOT NULL,
+        usuario TEXT,
+        accion TEXT NOT NULL,
+        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
 
     conn.commit()
     conn.close()
