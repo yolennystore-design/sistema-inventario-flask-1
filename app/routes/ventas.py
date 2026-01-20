@@ -421,3 +421,18 @@ def solicitar_precio():
     )
 
     return redirect(url_for("ventas.index"))
+@ventas_bp.route("/test-drive")
+def test_drive():
+    pdf_bytes = b"%PDF-1.4\nPrueba Google Drive\n"
+
+    file_id, link = subir_pdf_a_drive(
+        "prueba_drive.pdf",
+        pdf_bytes,
+        os.environ["DRIVE_FOLDER_ID"]
+    )
+
+    return f"""
+        OK<br>
+        ID: {file_id}<br>
+        <a href="{link}" target="_blank">Abrir PDF</a>
+    """
