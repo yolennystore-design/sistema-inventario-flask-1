@@ -100,8 +100,8 @@ def crear_tablas():
         monto REAL NOT NULL,
         fecha DATE NOT NULL,
         usuario TEXT
-    )
-    """)
+        )
+        """)
 
 
     conn.commit()

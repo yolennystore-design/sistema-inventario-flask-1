@@ -1,14 +1,26 @@
 ﻿<h2>📊 Resumen mensual de gastos</h2>
 
-<table border="1" cellpadding="5">
+<table border="1">
     <tr>
-        <th>Mes</th>
-        <th>Total</th>
+        <th>Fecha</th>
+        <th>Concepto</th>
+        <th>Categoría</th>
+        <th>Monto</th>
+        <th>Acciones</th>
     </tr>
-    {% for r in resumen %}
+
+    {% for g in gastos %}
     <tr>
-        <td>{{ r.mes }}</td>
-        <td>${{ r.total }}</td>
+        <td>{{ g.fecha }}</td>
+        <td>{{ g.concepto }}</td>
+        <td>{{ g.categoria }}</td>
+        <td>${{ g.monto }}</td>
+        <td>
+            <a href="{{ url_for('gastos.eliminar', id=g.id) }}"
+               onclick="return confirm('¿Eliminar este gasto?')">
+                🗑
+            </a>
+        </td>
     </tr>
     {% endfor %}
 </table>

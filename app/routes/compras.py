@@ -77,21 +77,27 @@ def agregar():
     total = cantidad * costo
     tipo_pago = request.form["tipo_pago"]
 
+    # 🔥 NUEVO
+    abonado = 0
+    pendiente = total if tipo_pago == "Crédito" else 0
+
     conn = get_db()
     cur = conn.cursor()
 
-    # Registrar compra
     cur.execute("""
         INSERT INTO compras
-        (id_producto, producto, cantidad, costo, total, tipo_pago, fecha)
-        VALUES (%s, %s, %s, %s, %s, %s, NOW())
+        (id_producto, producto, cantidad, costo, total,
+         tipo_pago, abonado, pendiente, fecha)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,NOW())
     """, (
         id_producto,
         producto,
         cantidad,
         costo,
         total,
-        tipo_pago
+        tipo_pago,
+        abonado,
+        pendiente
     ))
 
     # AUMENTAR STOCK
@@ -107,12 +113,11 @@ def agregar():
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Registró compra de {cantidad} unidades de {producto}",
+        accion=f"Registró compra ({tipo_pago}) de {producto}",
         modulo="Compras"
     )
 
     return redirect(url_for("compras.index"))
-
 
 # ======================
 # ELIMINAR COMPRA
@@ -138,3 +143,34 @@ def eliminar(id):
     )
 
     return redirect(url_for("compras.index"))
+
+@compras_bp.route("/abonar/<int:id>", methods=["GET", "POST"])
+def abonar(id):
+    if session.get("rol") != "admin":
+        return redirect(url_for("compras.index"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        monto = float(request.form["monto"])
+
+        cur.execute("""
+            UPDATE compras
+            SET abonado = abonado + %s,
+                pendiente = total - (abonado + %s)
+            WHERE id = %s
+        """, (monto, monto, id))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for("compras.index"))
+
+    cur.execute("SELECT * FROM compras WHERE id = %s", (id,))
+    compra = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return render_template("compras/abonar.html", compra=compra)

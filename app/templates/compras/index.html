@@ -24,30 +24,19 @@
             </option>
             {% endfor %}
         </select>
-
-        <!-- nombre del producto (hidden) -->
         <input type="hidden" name="producto" id="productoNombre">
     </div>
 
     <!-- CANTIDAD -->
     <div class="col-md-2">
         <label class="form-label">Cantidad</label>
-        <input type="number"
-               name="cantidad"
-               class="form-control"
-               min="1"
-               required>
+        <input type="number" name="cantidad" class="form-control" min="1" required>
     </div>
 
     <!-- COSTO -->
     <div class="col-md-2">
         <label class="form-label">Costo unitario</label>
-        <input type="number"
-               name="costo"
-               class="form-control"
-               step="0.01"
-               min="0"
-               required>
+        <input type="number" name="costo" class="form-control" step="0.01" min="0" required>
     </div>
 
     <!-- TIPO DE PAGO -->
@@ -61,9 +50,7 @@
     </div>
 
     <div class="col-md-2 d-flex align-items-end">
-        <button class="btn btn-primary w-100">
-            Registrar compra
-        </button>
+        <button class="btn btn-primary w-100">Registrar compra</button>
     </div>
 </form>
 
@@ -80,6 +67,8 @@
             <th>Cantidad</th>
             <th>Costo</th>
             <th>Total</th>
+            <th>Abonado</th>
+            <th>Pendiente</th>
             <th>Pago</th>
             <th>Fecha</th>
             {% if session.rol == "admin" %}
@@ -95,10 +84,20 @@
             <td>{{ c.cantidad }}</td>
             <td>${{ c.costo }}</td>
             <td>${{ c.total }}</td>
+            <td>${{ c.abonado }}</td>
+            <td>${{ c.pendiente }}</td>
             <td>{{ c.tipo_pago }}</td>
             <td>{{ c.fecha }}</td>
+
             {% if session.rol == "admin" %}
             <td>
+                {% if c.tipo_pago == "Crédito" and c.pendiente > 0 %}
+                <a href="{{ url_for('compras.abonar', id=c.id) }}"
+                   class="btn btn-warning btn-sm mb-1">
+                    💵 Abonar
+                </a>
+                {% endif %}
+
                 <a href="{{ url_for('compras.eliminar', id=c.id) }}"
                    class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Eliminar compra?')">
@@ -115,9 +114,6 @@
     ⬅ Volver al Inicio
 </a>
 
-<!-- =========================
-     SCRIPT PRODUCTO
-========================= -->
 <script>
     const selectProducto = document.getElementById("productoSelect");
     const inputNombre = document.getElementById("productoNombre");
