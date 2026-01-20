@@ -232,7 +232,7 @@ def factura(index):
     c = canvas.Canvas(archivo.name, pagesize=(ANCHO, ALTO))
     y = ALTO - 20
 
-    titulo = "COMPROBANTE DE CRÉDITO" if venta["tipo_pago"] == "credito" else "COMPROBANTE DE VENTA"
+    titulo = "COMPROBANTE DE CRÉDITO" if venta["tipo_pago"] == "credito" else "Moda y estilo que te acompaña"
     numero = venta.get("numero_factura", f"{index + 1}")
 
     # ENCABEZADO

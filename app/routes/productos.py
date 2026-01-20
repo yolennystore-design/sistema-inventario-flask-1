@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 import os
 from werkzeug.utils import secure_filename
 
