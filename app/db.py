@@ -89,6 +89,19 @@ def crear_tablas():
         fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    # ======================
+    # GASTOS
+    # ======================
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS gastos (
+        id SERIAL PRIMARY KEY,
+        concepto TEXT NOT NULL,
+        categoria TEXT,
+        monto REAL NOT NULL,
+        fecha DATE NOT NULL,
+        usuario TEXT
+    )
+    """)
 
 
     conn.commit()

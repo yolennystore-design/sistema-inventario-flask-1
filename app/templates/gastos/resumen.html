@@ -1,0 +1,17 @@
+﻿<h2>📊 Resumen mensual de gastos</h2>
+
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Mes</th>
+        <th>Total</th>
+    </tr>
+    {% for r in resumen %}
+    <tr>
+        <td>{{ r.mes }}</td>
+        <td>${{ r.total }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="{{ url_for('gastos.index') }}">⬅ Volver</a>

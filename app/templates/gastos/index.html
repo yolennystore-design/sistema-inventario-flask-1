@@ -6,11 +6,40 @@
 </head>
 <body>
 
-    <h2>Gestión de Gastos</h2>
+    <h2>📉 Gestión de Gastos</h2>
 
-    <p>Solo visible para administradores.</p>
+    <form method="POST" action="{{ url_for('gastos.agregar') }}">
+        <input type="text" name="concepto" placeholder="Concepto" required>
+        <input type="text" name="categoria" placeholder="Categoría">
+        <input type="number" step="0.01" name="monto" placeholder="Monto" required>
+        <input type="date" name="fecha" value="{{ date.today() }}" required>
+        <button type="submit">Guardar gasto</button>
+    </form>
 
-    <a href="{{ url_for('dashboard') }}">⬅ Volver</a>
+    <hr>
+
+    <h3>Listado de gastos</h3>
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>Fecha</th>
+            <th>Concepto</th>
+            <th>Categoría</th>
+            <th>Monto</th>
+        </tr>
+
+        {% for g in gastos %}
+        <tr>
+            <td>{{ g.fecha }}</td>
+            <td>{{ g.concepto }}</td>
+            <td>{{ g.categoria }}</td>
+            <td>${{ g.monto }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="/">⬅ Volver</a>
 
 </body>
 </html>
