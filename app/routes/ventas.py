@@ -5,7 +5,9 @@ from flask import (
     url_for, session, send_file
 )
 import json
+from io import BytesIO
 import os
+from app.utils.google_drive import subir_pdf_a_drive
 import tempfile
 from datetime import datetime
 
@@ -225,11 +227,12 @@ def factura(index):
     venta = ventas[index]
     items = obtener_items(venta)
 
-    archivo = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    # 📌 PDF EN MEMORIA (NO ARCHIVO)
+    buffer = BytesIO()
 
     ANCHO = 165  # 58mm
     ALTO = 800
-    c = canvas.Canvas(archivo.name, pagesize=(ANCHO, ALTO))
+    c = canvas.Canvas(buffer, pagesize=(ANCHO, ALTO))
     y = ALTO - 20
 
     titulo = "COMPROBANTE DE CRÉDITO" if venta["tipo_pago"] == "credito" else "Moda y estilo que te acompaña"
@@ -304,8 +307,20 @@ def factura(index):
     c.drawCentredString(ANCHO / 2, y, "Conserve este comprobante")
 
     c.save()
-    return send_file(archivo.name, as_attachment=False)
 
+    # 📌 OBTENER BYTES DEL PDF
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+
+    # 📌 SUBIR A GOOGLE DRIVE
+    file_id, link = subir_pdf_a_drive(
+        nombre_archivo=f"factura_{numero}.pdf",
+        pdf_bytes=pdf_bytes,
+        folder_id=os.environ["DRIVE_FOLDER_ID"]
+    )
+
+    # 👉 OPCIÓN A: redirigir al PDF en Drive
+    return redirect(link)
 
 # ======================
 # ELIMINAR / CANCELAR
