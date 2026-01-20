@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial del Producto</title>
+</head>
+<body>
+
+    <h2>Historial del producto</h2>
+
+    {% if historial %}
+    <table border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Acción</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in historial %}
+            <tr>
+                <td>{{ h.usuario }}</td>
+                <td>{{ h.accion }}</td>
+                <td>{{ h.fecha }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay historial para este producto.</p>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('productos.index') }}">⬅ Volver a productos</a>
+
+</body>
+</html>
