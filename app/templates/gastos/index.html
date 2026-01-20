@@ -44,7 +44,7 @@
             <td>{{ g.categoria }}</td>
             <td>${{ g.monto }}</td>
             <td>
-                <a href="{{ url_for('gastos.eliminar', id=g.id) }}"
+                <a href="{{ url_for('gastos.eliminar', id=g['id']) }}"
                    onclick="return confirm('¿Eliminar este gasto?')">
                     🗑 Eliminar
                 </a>
