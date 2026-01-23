@@ -8,7 +8,6 @@ import json
 from io import BytesIO
 import os
 from datetime import datetime
-import tempfile
 
 from reportlab.pdfgen import canvas
 
@@ -34,8 +33,6 @@ ventas_bp = Blueprint("ventas", __name__, url_prefix="/ventas")
 
 VENTAS_FILE = "app/data/ventas.json"
 CARRITO_FILE = "app/data/carrito.json"
-CREDITOS_FILE = "app/data/creditos.json"
-SOLICITUDES_FILE = "app/data/solicitudes_precio.json"
 
 
 # ======================
@@ -54,7 +51,7 @@ def guardar_json(ruta, data):
 
 
 def obtener_items(venta):
-    return venta.get("items") or venta.get("elementos") or []
+    return venta.get("items", [])
 
 
 # ======================
@@ -85,6 +82,69 @@ def index():
 
 
 # ======================
+# AGREGAR AL CARRITO
+# ======================
+@ventas_bp.route("/agregar_carrito", methods=["POST"])
+def agregar_carrito():
+    carrito = cargar_json(CARRITO_FILE)
+    productos = cargar_productos()
+
+    producto_id = int(request.form["id"])
+    cantidad = int(request.form["cantidad"])
+
+    producto = next((p for p in productos if p["id"] == producto_id), None)
+    if not producto or cantidad > producto["cantidad"]:
+        return redirect(url_for("ventas.index"))
+
+    for item in carrito:
+        if item["id"] == producto_id:
+            item["cantidad"] += cantidad
+            item["total"] = item["cantidad"] * item["precio"]
+            guardar_json(CARRITO_FILE, carrito)
+            return redirect(url_for("ventas.index"))
+
+    carrito.append({
+        "id": producto["id"],
+        "nombre": producto["nombre"],
+        "cantidad": cantidad,
+        "precio": producto["precio"],
+        "total": cantidad * producto["precio"]
+    })
+
+    guardar_json(CARRITO_FILE, carrito)
+    return redirect(url_for("ventas.index"))
+
+
+# ======================
+# ✏️ EDITAR PRECIO EN CARRITO
+# ======================
+@ventas_bp.route("/editar_precio", methods=["POST"])
+def editar_precio():
+    carrito = cargar_json(CARRITO_FILE)
+
+    producto_id = int(request.form["id"])
+    nuevo_precio = float(request.form["precio"])
+
+    for item in carrito:
+        if item["id"] == producto_id:
+            item["precio"] = nuevo_precio
+            item["total"] = item["cantidad"] * nuevo_precio
+            break
+
+    guardar_json(CARRITO_FILE, carrito)
+    return redirect(url_for("ventas.index"))
+
+
+# ======================
+# 🧹 VACIAR CARRITO
+# ======================
+@ventas_bp.route("/vaciar_carrito")
+def vaciar_carrito():
+    guardar_json(CARRITO_FILE, [])
+    return redirect(url_for("ventas.index"))
+
+
+# ======================
 # CONFIRMAR VENTA
 # ======================
 @ventas_bp.route("/confirmar", methods=["POST"])
@@ -96,7 +156,6 @@ def confirmar():
         return redirect(url_for("ventas.index"))
 
     cliente = request.form["cliente"]
-    tipo_pago = request.form.get("tipo_pago", "contado").lower()
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
 
@@ -110,83 +169,124 @@ def confirmar():
         )
 
     conn.commit()
+    cur.close()
     conn.close()
 
     numero_factura = f"YS-{len(ventas)+1:05d}"
 
-    venta = {
+    ventas.append({
         "cliente": cliente,
-        "tipo_pago": tipo_pago,
         "items": carrito,
         "total": total,
         "fecha": fecha,
         "numero_factura": numero_factura
-    }
-
-    ventas.append(venta)
+    })
 
     guardar_json(VENTAS_FILE, ventas)
     guardar_json(CARRITO_FILE, [])
+
+    registrar_log(
+        usuario=session.get("usuario", "sistema"),
+        accion=f"Registró venta {numero_factura}",
+        modulo="Ventas"
+    )
 
     return redirect(url_for("ventas.index"))
 
 
 # ======================
-# FACTURA PDF (LOCAL / DRIVE)
+# 🧾 FACTURA PDF
 # ======================
 @ventas_bp.route("/factura/<int:index>")
 def factura(index):
     ventas = cargar_json(VENTAS_FILE)
+    if index < 0 or index >= len(ventas):
+        return redirect(url_for("ventas.index"))
+
     venta = ventas[index]
     items = obtener_items(venta)
+    numero = venta.get("numero_factura", index + 1)
 
     buffer = BytesIO()
-    ANCHO, ALTO = 165, 800
-    c = canvas.Canvas(buffer, pagesize=(ANCHO, ALTO))
-    y = ALTO - 20
+    c = canvas.Canvas(buffer, pagesize=(165, 800))
+    y = 780
 
     c.setFont("Helvetica-Bold", 10)
-    c.drawCentredString(ANCHO / 2, y, NOMBRE_EMPRESA)
+    c.drawCentredString(82, y, NOMBRE_EMPRESA)
     y -= 15
 
     c.setFont("Helvetica", 7)
+    c.drawString(5, y, f"Factura: {numero}")
+    y -= 10
     c.drawString(5, y, f"Cliente: {venta['cliente']}")
     y -= 10
     c.drawString(5, y, f"Fecha: {venta['fecha']}")
     y -= 15
 
-    for item in items:
-        c.drawString(5, y, f"{item['nombre']} x{item['cantidad']}")
-        c.drawRightString(ANCHO - 5, y, f"${item['total']}")
+    for i in items:
+        c.drawString(5, y, f"{i['nombre']} x{i['cantidad']}")
+        c.drawRightString(160, y, f"${i['total']}")
         y -= 10
 
     y -= 10
     c.setFont("Helvetica-Bold", 8)
     c.drawString(5, y, "TOTAL:")
-    c.drawRightString(ANCHO - 5, y, f"${venta['total']}")
+    c.drawRightString(160, y, f"${venta['total']}")
 
     c.save()
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
-    # ======================
-    # DESARROLLO → DESCARGA LOCAL
-    # ======================
     if not subir_pdf_a_drive:
         return send_file(
             BytesIO(pdf_bytes),
-            download_name=f"factura_{venta['numero_factura']}.pdf",
+            download_name=f"factura_{numero}.pdf",
             as_attachment=True,
             mimetype="application/pdf"
         )
 
-    # ======================
-    # PRODUCCIÓN → GOOGLE DRIVE
-    # ======================
-    file_id, link = subir_pdf_a_drive(
-        nombre_archivo=f"factura_{venta['numero_factura']}.pdf",
-        pdf_bytes=pdf_bytes,
-        folder_id=os.environ["DRIVE_FOLDER_ID"]
+    _, link = subir_pdf_a_drive(
+        f"factura_{numero}.pdf",
+        pdf_bytes,
+        os.environ["DRIVE_FOLDER_ID"]
     )
 
     return redirect(link)
+
+
+# ======================
+# 🗑 ELIMINAR FACTURA
+# ======================
+@ventas_bp.route("/eliminar/<int:index>")
+def eliminar_factura(index):
+    if session.get("rol") != "admin":
+        return redirect(url_for("ventas.index"))
+
+    ventas = cargar_json(VENTAS_FILE)
+    if index < 0 or index >= len(ventas):
+        return redirect(url_for("ventas.index"))
+
+    venta = ventas.pop(index)
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    for item in obtener_items(venta):
+        cur.execute(
+            "UPDATE productos SET cantidad = cantidad + %s WHERE id = %s",
+            (item["cantidad"], item["id"])
+        )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    guardar_json(VENTAS_FILE, ventas)
+
+    registrar_log(
+        usuario=session["usuario"],
+        accion=f"Eliminó factura {venta.get('numero_factura')}",
+        modulo="Ventas"
+    )
+
+    return redirect(url_for("ventas.index"))
