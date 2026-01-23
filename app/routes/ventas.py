@@ -27,6 +27,7 @@ ventas_bp = Blueprint("ventas", __name__, url_prefix="/ventas")
 
 VENTAS_FILE = "app/data/ventas.json"
 CARRITO_FILE = "app/data/carrito.json"
+CREDITOS_FILE = "app/data/creditos.json"
 
 
 # ======================
@@ -139,7 +140,7 @@ def vaciar_carrito():
 
 
 # ======================
-# CONFIRMAR VENTA
+# CONFIRMAR VENTA (CONTADO / CRÉDITO)
 # ======================
 @ventas_bp.route("/confirmar", methods=["POST"])
 def confirmar():
@@ -154,43 +155,58 @@ def confirmar():
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
 
+    # Descontar stock
     conn = get_db()
     cur = conn.cursor()
-
     for item in carrito:
         cur.execute(
             "UPDATE productos SET cantidad = cantidad - %s WHERE id = %s",
             (item["cantidad"], item["id"])
         )
-
     conn.commit()
     cur.close()
     conn.close()
 
     numero_factura = f"YS-{len(ventas) + 1:05d}"
 
-    ventas.append({
+    venta = {
         "numero_factura": numero_factura,
         "cliente": cliente,
         "tipo_venta": tipo_venta,
         "items": carrito,
         "total": total,
         "fecha": fecha
-    })
+    }
 
+    ventas.append(venta)
     guardar_json(VENTAS_FILE, ventas)
+
+    # 👉 REGISTRAR CRÉDITO
+    if tipo_venta.lower() == "credito":
+        creditos = cargar_json(CREDITOS_FILE)
+        creditos.append({
+            "numero_factura": numero_factura,
+            "cliente": cliente,
+            "total": total,
+            "abonado": 0,
+            "pendiente": total,
+            "fecha": fecha
+        })
+        guardar_json(CREDITOS_FILE, creditos)
+
     guardar_json(CARRITO_FILE, [])
 
     registrar_log(
         usuario=session.get("usuario", "sistema"),
-        accion=f"Registró venta {numero_factura} ({tipo_venta})",
+        accion=f"Venta {numero_factura} ({tipo_venta})",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
 
+
 # ======================
-# 🧾 FACTURA PDF (DESCARGA DIRECTA)
+# 🧾 FACTURA PDF TÉRMICA
 # ======================
 @ventas_bp.route("/factura/<int:index>")
 def factura(index):
@@ -201,19 +217,14 @@ def factura(index):
     venta = ventas[index]
     items = obtener_items(venta)
 
-    numero = venta.get("numero_factura", index + 1)
-    tipo_venta = venta.get("tipo_venta", "Contado")
-    cliente = venta.get("cliente", "N/A")
-    fecha = venta.get("fecha", "")
-
     buffer = BytesIO()
     ANCHO, ALTO = 165, 800
     c = canvas.Canvas(buffer, pagesize=(ANCHO, ALTO))
     y = ALTO - 20
 
-    # ===== ENCABEZADO =====
+    # ENCABEZADO
     c.setFont("Helvetica-Bold", 10)
-    c.drawCentredString(ANCHO / 2, y, "Yolenny Store")
+    c.drawCentredString(ANCHO / 2, y, NOMBRE_EMPRESA)
     y -= 12
 
     c.setFont("Helvetica", 7)
@@ -223,26 +234,20 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # ===== DATOS =====
-    c.drawString(5, y, f"Factura: {numero}")
+    # DATOS
+    c.drawString(5, y, f"Factura: {venta['numero_factura']}")
     y -= 10
-    c.drawString(5, y, f"Cliente: {cliente}")
+    c.drawString(5, y, f"Cliente: {venta['cliente']}")
     y -= 10
-    c.drawString(5, y, f"Tipo de venta: {tipo_venta}")
+    c.drawString(5, y, f"Tipo: {venta['tipo_venta']}")
     y -= 10
-    c.drawString(5, y, f"Fecha: {fecha}")
+    c.drawString(5, y, f"Fecha: {venta['fecha']}")
     y -= 15
 
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # ===== PRODUCTOS =====
-    c.setFont("Helvetica-Bold", 7)
-    c.drawString(5, y, "Producto")
-    c.drawRightString(ANCHO - 5, y, "Total")
-    y -= 10
-
-    c.setFont("Helvetica", 7)
+    # PRODUCTOS
     for i in items:
         c.drawString(5, y, i["nombre"][:18])
         y -= 9
@@ -253,7 +258,7 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 12
 
-    # ===== TOTAL =====
+    # TOTAL
     c.setFont("Helvetica-Bold", 8)
     c.drawString(5, y, "TOTAL:")
     c.drawRightString(ANCHO - 5, y, f"${venta['total']}")
@@ -262,7 +267,7 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 15
 
-    # ===== MENSAJE FINAL =====
+    # MENSAJE FINAL
     c.setFont("Helvetica", 7)
     c.drawCentredString(ANCHO / 2, y, "Gracias por su compra")
     y -= 10
@@ -274,7 +279,7 @@ def factura(index):
 
     return send_file(
         BytesIO(pdf_bytes),
-        download_name=f"factura_{numero}.pdf",
+        download_name=f"factura_{venta['numero_factura']}.pdf",
         as_attachment=True,
         mimetype="application/pdf"
     )
