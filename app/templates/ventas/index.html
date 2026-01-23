@@ -4,7 +4,7 @@
 {% block content %}
 <h2 class="mb-3">🛒 Ventas</h2>
 
-<!-- ========================= FILTROS PRODUCTOS ========================= -->
+<!-- ========================= FILTROS ========================= -->
 <form method="GET" action="/ventas" class="row g-2 mb-4">
     <div class="col-md-3">
         <input name="nombre" class="form-control"
@@ -17,7 +17,7 @@
             <option value="">Todas las categorías</option>
             {% for cat in categorias %}
             <option value="{{ cat.nombre }}"
-                    {% if filtro_categoria == cat.nombre %}selected{% endif %}>
+                    {% if filtro_categoria= =cat.nombre %}selected{% endif %}>
                 {{ cat.nombre }}
             </option>
             {% endfor %}
@@ -29,7 +29,7 @@
             <option value="">Todos los items</option>
             {% for p in productos | unique(attribute='item') %}
             <option value="{{ p.item }}"
-                    {% if filtro_item == p.item %}selected{% endif %}>
+                    {% if filtro_item= =p.item %}selected{% endif %}>
                 {{ p.item }}
             </option>
             {% endfor %}
@@ -110,10 +110,8 @@
             <td>{{ i.nombre }}</td>
             <td>{{ i.cantidad }}</td>
 
-            <!-- PRECIO CON CONTROL DE ROL -->
             <td>
                 {% if session.rol == "admin" %}
-                <!-- ADMIN -->
                 <form method="POST" action="/ventas/actualizar_precio" class="d-flex">
                     <input type="hidden" name="id" value="{{ i.id }}">
                     <input type="number"
@@ -124,58 +122,10 @@
                            class="form-control form-control-sm me-1"
                            style="width:90px"
                            required>
-                    <button class="btn btn-sm btn-warning" title="Modificar precio">💲</button>
+                    <button class="btn btn-sm btn-warning">💲</button>
                 </form>
                 {% else %}
-                <!-- EMPLEADO -->
-                <span>${{ i.precio }}</span>
-                <button class="btn btn-sm btn-outline-primary ms-1"
-                        data-bs-toggle="modal"
-                        data-bs-target="#solicitudPrecio{{ i.id }}"
-                        title="Solicitar cambio de precio">
-                    ✉
-                </button>
-
-                <!-- MODAL SOLICITUD -->
-                <div class="modal fade" id="solicitudPrecio{{ i.id }}" tabindex="-1">
-                    <div class="modal-dialog">
-                        <form method="POST" action="/ventas/solicitar_precio" class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Solicitud de cambio de precio</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-
-                            <div class="modal-body">
-                                <input type="hidden" name="id" value="{{ i.id }}">
-
-                                <p><strong>{{ i.nombre }}</strong></p>
-
-                                <label class="form-label">Precio solicitado</label>
-                                <input type="number"
-                                       name="precio_solicitado"
-                                       step="0.01"
-                                       min="0"
-                                       class="form-control"
-                                       required>
-
-                                <label class="form-label mt-2">Motivo</label>
-                                <textarea name="motivo"
-                                          class="form-control"
-                                          rows="2"
-                                          required></textarea>
-                            </div>
-
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    Cancelar
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    Enviar solicitud
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                ${{ i.precio }}
                 {% endif %}
             </td>
 
@@ -203,7 +153,7 @@
 <form method="POST" action="/ventas/confirmar">
     <div class="row mb-3">
         <div class="col-md-4">
-            <label class="form-label">Cliente</label>
+            <label class="form-label fw-bold">Cliente</label>
             <select name="cliente" class="form-select" required>
                 <option value="Público General">Público General</option>
                 {% for c in clientes %}
@@ -212,10 +162,28 @@
             </select>
         </div>
 
+        <!-- 🔴 CORREGIDO -->
         <div class="col-md-4">
-            <label class="form-label">Tipo de Pago</label><br>
-            <input type="radio" name="tipo_pago" value="contado" checked> Contado
-            <input type="radio" name="tipo_pago" value="credito" class="ms-3"> Crédito
+            <label class="form-label fw-bold">Tipo de Pago</label><br>
+
+            <div class="form-check form-check-inline">
+                <input class="form-check-input"
+                       type="radio"
+                       name="tipo_venta"
+                       id="contado"
+                       value="Contado"
+                       checked>
+                <label class="form-check-label" for="contado">Contado</label>
+            </div>
+
+            <div class="form-check form-check-inline">
+                <input class="form-check-input"
+                       type="radio"
+                       name="tipo_venta"
+                       id="credito"
+                       value="Credito">
+                <label class="form-check-label" for="credito">Crédito</label>
+            </div>
         </div>
     </div>
 
@@ -226,8 +194,7 @@
         Generar Venta
     </button>
 
-    <a href="/ventas/cancelar" class="btn btn-secondary ms-2">Cancelar Venta</a>
-    <a href="/" class="btn btn-outline-primary ms-2">Volver al Inicio</a>
+    <a href="/" class="btn btn-outline-primary ms-2">Volver</a>
 </form>
 
 <hr>
@@ -235,31 +202,16 @@
 <!-- ========================= VENTAS REALIZADAS ========================= -->
 <h4>🖨 Ventas Realizadas</h4>
 
-{% if session.rol == "admin" %}
-<div class="mb-3">
-    <a href="/ventas/eliminar_todas"
-       class="btn btn-danger"
-       onclick="return confirm(
-            '⚠️ ATENCIÓN\n\n' +
-            'Esto eliminará TODAS las ventas,\n' +
-            'devolverá el stock y borrará los créditos.\n\n' +
-            '¿Deseas continuar?'
-       )">
-        🗑 Eliminar TODAS las Ventas
-    </a>
-</div>
-{% endif %}
-
 <table class="table table-bordered align-middle">
     <thead class="table-light">
         <tr>
             <th>#</th>
             <th>Cliente</th>
-            <th>Tipo Pago</th>
+            <th>Tipo</th>
             <th>Productos</th>
             <th>Fecha</th>
             <th>Total</th>
-            <th>Acción</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -268,7 +220,7 @@
             <td>{{ v + 1 }}</td>
             <td>{{ ventas[v]["cliente"] }}</td>
             <td>
-                {% if ventas[v]["tipo_pago"] == "credito" %}
+                {% if ventas[v]["tipo_venta"] == "Credito" %}
                 <span class="badge bg-warning text-dark">Crédito</span>
                 {% else %}
                 <span class="badge bg-success">Contado</span>
@@ -276,26 +228,21 @@
             </td>
             <td>
                 <ul class="mb-0">
-                    {% for item in ventas[v].get("items") or ventas[v].get("elementos") or [] %}
-                    <li>{{ item["nombre"] }} x{{ item["cantidad"] }}</li>
+                    {% for item in ventas[v]["items"] %}
+                    <li>{{ item.nombre }} x{{ item.cantidad }}</li>
                     {% endfor %}
                 </ul>
             </td>
             <td>{{ ventas[v]["fecha"] }}</td>
             <td><strong>${{ ventas[v]["total"] }}</strong></td>
-            <td class="d-flex gap-1">
-                <a href="/ventas/factura/{{ v }}" target="_blank"
+            <td>
+                <a href="/ventas/factura/{{ v }}"
+                   target="_blank"
                    class="btn btn-sm btn-secondary">🖨</a>
-                {% if session.rol == "admin" %}
-                <a href="/ventas/eliminar/{{ v }}"
-                   class="btn btn-sm btn-danger"
-                   onclick="return confirm('¿Eliminar esta venta y devolver stock?')">
-                    🗑
-                </a>
-                {% endif %}
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
 {% endblock %}
