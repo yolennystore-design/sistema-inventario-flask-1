@@ -290,3 +290,38 @@ def eliminar_factura(index):
     )
 
     return redirect(url_for("ventas.index"))
+# ======================
+# ELIMINAR TODAS LAS VENTAS
+# ======================
+@ventas_bp.route("/eliminar_todas")
+def eliminar_todas():
+    if session.get("rol") != "admin":
+        return redirect(url_for("ventas.index"))
+
+    ventas = cargar_json(VENTAS_FILE)
+
+    # devolver stock
+    conn = get_db()
+    cur = conn.cursor()
+
+    for venta in ventas:
+        for item in obtener_items(venta):
+            cur.execute(
+                "UPDATE productos SET cantidad = cantidad + %s WHERE id = %s",
+                (item["cantidad"], item["id"])
+            )
+
+    conn.commit()
+    conn.close()
+
+    guardar_json(VENTAS_FILE, [])
+    guardar_json(CARRITO_FILE, [])
+    guardar_json(CREDITOS_FILE, [])
+
+    registrar_log(
+        usuario=session["usuario"],
+        accion="Eliminó todas las ventas",
+        modulo="Ventas"
+    )
+
+    return redirect(url_for("ventas.index"))
