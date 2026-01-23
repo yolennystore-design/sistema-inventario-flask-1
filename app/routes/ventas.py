@@ -150,6 +150,7 @@ def confirmar():
         return redirect(url_for("ventas.index"))
 
     cliente = request.form["cliente"]
+    tipo_venta = request.form.get("tipo_venta", "Contado")
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
 
@@ -169,11 +170,12 @@ def confirmar():
     numero_factura = f"YS-{len(ventas) + 1:05d}"
 
     ventas.append({
+        "numero_factura": numero_factura,
         "cliente": cliente,
+        "tipo_venta": tipo_venta,
         "items": carrito,
         "total": total,
-        "fecha": fecha,
-        "numero_factura": numero_factura
+        "fecha": fecha
     })
 
     guardar_json(VENTAS_FILE, ventas)
@@ -181,12 +183,11 @@ def confirmar():
 
     registrar_log(
         usuario=session.get("usuario", "sistema"),
-        accion=f"Registró venta {numero_factura}",
+        accion=f"Registró venta {numero_factura} ({tipo_venta})",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
-
 
 # ======================
 # 🧾 FACTURA PDF (DESCARGA DIRECTA)
@@ -231,6 +232,8 @@ def factura(index):
     c.drawString(5, y, f"Factura: {numero}")
     y -= 10
     c.drawString(5, y, f"Cliente: {venta['cliente']}")
+    y -= 10
+    c.drawString(5, y, f"Tipo de venta: {tipo_venta}")
     y -= 10
     c.drawString(5, y, f"Fecha: {venta['fecha']}")
     y -= 12
