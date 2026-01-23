@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from flask import (
-    Blueprint, render_template, request, redirect,
-    url_for, session, send_file
+    Blueprint, render_template, request,
+    redirect, url_for, session, send_file
 )
 import json
 from io import BytesIO
@@ -19,14 +19,8 @@ from app.db import get_db
 
 
 # ======================
-# GOOGLE DRIVE (SOLO PRODUCCIÓN)
+# CONFIGURACIÓN
 # ======================
-if os.getenv("FLASK_ENV") != "development":
-    from app.utils.google_drive import subir_pdf_a_drive
-else:
-    subir_pdf_a_drive = None
-
-
 NOMBRE_EMPRESA = "Yolenny Store"
 
 ventas_bp = Blueprint("ventas", __name__, url_prefix="/ventas")
@@ -116,7 +110,7 @@ def agregar_carrito():
 
 
 # ======================
-# ✏️ EDITAR PRECIO EN CARRITO
+# ✏️ EDITAR PRECIO
 # ======================
 @ventas_bp.route("/actualizar_precio", methods=["POST"])
 def actualizar_precio():
@@ -195,7 +189,7 @@ def confirmar():
 
 
 # ======================
-# 🧾 FACTURA PDF
+# 🧾 FACTURA PDF (DESCARGA DIRECTA)
 # ======================
 @ventas_bp.route("/factura/<int:index>")
 def factura(index):
@@ -237,27 +231,16 @@ def factura(index):
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
-    # LOCAL
-    if not subir_pdf_a_drive:
-        return send_file(
-            BytesIO(pdf_bytes),
-            download_name=f"factura_{numero}.pdf",
-            as_attachment=True,
-            mimetype="application/pdf"
-        )
-
-    # PRODUCCIÓN (Drive)
-    _, link = subir_pdf_a_drive(
-        f"factura_{numero}.pdf",
-        pdf_bytes,
-        os.environ["DRIVE_FOLDER_ID"]
+    return send_file(
+        BytesIO(pdf_bytes),
+        download_name=f"factura_{numero}.pdf",
+        as_attachment=True,
+        mimetype="application/pdf"
     )
-
-    return redirect(link)
 
 
 # ======================
-# 🗑 ELIMINAR UNA FACTURA
+# 🗑 ELIMINAR FACTURA
 # ======================
 @ventas_bp.route("/eliminar/<int:index>")
 def eliminar_factura(index):
