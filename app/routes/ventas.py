@@ -116,10 +116,10 @@ def agregar_carrito():
 
 
 # ======================
-# ✏️ EDITAR PRECIO
+# ✏️ EDITAR PRECIO EN CARRITO
 # ======================
-@ventas_bp.route("/editar_precio", methods=["POST"])
-def editar_precio():
+@ventas_bp.route("/actualizar_precio", methods=["POST"])
+def actualizar_precio():
     carrito = cargar_json(CARRITO_FILE)
 
     producto_id = int(request.form["id"])
@@ -172,7 +172,7 @@ def confirmar():
     cur.close()
     conn.close()
 
-    numero_factura = f"YS-{len(ventas)+1:05d}"
+    numero_factura = f"YS-{len(ventas) + 1:05d}"
 
     ventas.append({
         "cliente": cliente,
@@ -237,6 +237,7 @@ def factura(index):
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
+    # LOCAL
     if not subir_pdf_a_drive:
         return send_file(
             BytesIO(pdf_bytes),
@@ -245,6 +246,7 @@ def factura(index):
             mimetype="application/pdf"
         )
 
+    # PRODUCCIÓN (Drive)
     _, link = subir_pdf_a_drive(
         f"factura_{numero}.pdf",
         pdf_bytes,
@@ -255,7 +257,7 @@ def factura(index):
 
 
 # ======================
-# 🗑 ELIMINAR FACTURA
+# 🗑 ELIMINAR UNA FACTURA
 # ======================
 @ventas_bp.route("/eliminar/<int:index>")
 def eliminar_factura(index):
