@@ -1,7 +1,13 @@
+# -*- coding: utf-8 -*-
+
 import os
 import sqlite3
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+# ======================
+# CONFIGURACIÓN
+# ======================
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -9,8 +15,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 
 
+# ======================
+# CONEXIÓN A LA BASE DE DATOS
+# ======================
+
 def get_db():
-    # PRODUCCIÓN (Render) → SOLO PostgreSQL
+    """
+    PRODUCCIÓN (Render):
+        - PostgreSQL obligatorio
+        - Usa DATABASE_URL
+
+    DESARROLLO LOCAL:
+        - SQLite automático
+        - Usa database.db
+    """
+
+    # PRODUCCIÓN → PostgreSQL
     if DATABASE_URL and DATABASE_URL.startswith("postgres"):
         return psycopg2.connect(
             DATABASE_URL,
@@ -23,19 +43,36 @@ def get_db():
         conn.row_factory = sqlite3.Row
         return conn
 
-    # SI LLEGA AQUÍ EN PRODUCCIÓN → ERROR CLARO
+    # ERROR CLARO SI FALLA TODO
     raise RuntimeError(
         "DATABASE_URL no configurada. PostgreSQL es obligatorio en producción."
     )
 
 
+# ======================
+# CREAR TABLAS
+# ======================
+
 def crear_tablas():
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("""
+    # Detectar si es SQLite o PostgreSQL
+    is_sqlite = isinstance(conn, sqlite3.Connection)
+
+    # Tipo de ID compatible
+    id_type = (
+        "INTEGER PRIMARY KEY AUTOINCREMENT"
+        if is_sqlite
+        else "SERIAL PRIMARY KEY"
+    )
+
+    # ======================
+    # PRODUCTOS
+    # ======================
+    cur.execute(f"""
     CREATE TABLE IF NOT EXISTS productos (
-        id SERIAL PRIMARY KEY,
+        id {id_type},
         nombre TEXT NOT NULL,
         categoria TEXT,
         subcategoria TEXT,
@@ -46,17 +83,23 @@ def crear_tablas():
     )
     """)
 
-    cur.execute("""
+    # ======================
+    # CLIENTES
+    # ======================
+    cur.execute(f"""
     CREATE TABLE IF NOT EXISTS clientes (
-        id SERIAL PRIMARY KEY,
+        id {id_type},
         nombre TEXT,
         telefono TEXT
     )
     """)
 
-    cur.execute("""
+    # ======================
+    # VENTAS
+    # ======================
+    cur.execute(f"""
     CREATE TABLE IF NOT EXISTS ventas (
-        id SERIAL PRIMARY KEY,
+        id {id_type},
         id_producto INTEGER,
         producto TEXT,
         cantidad INTEGER,
@@ -66,9 +109,12 @@ def crear_tablas():
     )
     """)
 
-    cur.execute("""
+    # ======================
+    # COMPRAS / CRÉDITOS
+    # ======================
+    cur.execute(f"""
     CREATE TABLE IF NOT EXISTS compras (
-        id SERIAL PRIMARY KEY,
+        id {id_type},
         id_producto INTEGER,
         producto TEXT,
         cantidad INTEGER,
@@ -80,29 +126,33 @@ def crear_tablas():
         fecha TEXT
     )
     """)
-    cur.execute("""
+
+    # ======================
+    # HISTORIAL DE PRODUCTOS
+    # ======================
+    cur.execute(f"""
     CREATE TABLE IF NOT EXISTS productos_historial (
-        id SERIAL PRIMARY KEY,
+        id {id_type},
         producto_id INTEGER NOT NULL,
         usuario TEXT,
         accion TEXT NOT NULL,
         fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
     # ======================
     # GASTOS
     # ======================
-    cur.execute("""
+    cur.execute(f"""
     CREATE TABLE IF NOT EXISTS gastos (
-        id SERIAL PRIMARY KEY,
+        id {id_type},
         concepto TEXT NOT NULL,
         categoria TEXT,
         monto REAL NOT NULL,
         fecha DATE NOT NULL,
         usuario TEXT
-        )
-        """)
-
+    )
+    """)
 
     conn.commit()
     conn.close()
