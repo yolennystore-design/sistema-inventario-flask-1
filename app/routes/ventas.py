@@ -202,21 +202,26 @@ def factura(index):
     items = obtener_items(venta)
 
     numero = venta.get("numero_factura", index + 1)
-    tipo_venta = venta.get("tipo_venta", "Contado")  # ✅ AQUÍ SE DEFINE
+    tipo_venta = venta.get("tipo_venta", "Contado")
     cliente = venta.get("cliente", "N/A")
     fecha = venta.get("fecha", "")
 
     buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=(165, 800))
-    y = 780
+    ANCHO, ALTO = 165, 800
+    c = canvas.Canvas(buffer, pagesize=(ANCHO, ALTO))
+    y = ALTO - 20
 
     # ===== ENCABEZADO =====
     c.setFont("Helvetica-Bold", 10)
-    c.drawCentredString(82, y, "Yolenny Store")
+    c.drawCentredString(ANCHO / 2, y, "Yolenny Store")
     y -= 12
+
     c.setFont("Helvetica", 7)
-    c.drawCentredString(82, y, "Moda y estilo que te acompaña")
+    c.drawCentredString(ANCHO / 2, y, "Moda y estilo que te acompaña")
     y -= 15
+
+    c.line(5, y, ANCHO - 5, y)
+    y -= 10
 
     # ===== DATOS =====
     c.drawString(5, y, f"Factura: {numero}")
@@ -228,23 +233,40 @@ def factura(index):
     c.drawString(5, y, f"Fecha: {fecha}")
     y -= 15
 
-    c.line(5, y, 160, y)
+    c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # ===== ITEMS =====
+    # ===== PRODUCTOS =====
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(5, y, "Producto")
+    c.drawRightString(ANCHO - 5, y, "Total")
+    y -= 10
+
+    c.setFont("Helvetica", 7)
     for i in items:
-        c.drawString(5, y, f"{i['nombre']} x{i['cantidad']}")
-        c.drawRightString(160, y, f"${i['total']}")
+        c.drawString(5, y, i["nombre"][:18])
+        y -= 9
+        c.drawString(10, y, f"{i['cantidad']} x ${i['precio']}")
+        c.drawRightString(ANCHO - 5, y, f"${i['total']}")
         y -= 10
 
-    y -= 5
-    c.line(5, y, 160, y)
-    y -= 10
+    c.line(5, y, ANCHO - 5, y)
+    y -= 12
 
     # ===== TOTAL =====
     c.setFont("Helvetica-Bold", 8)
     c.drawString(5, y, "TOTAL:")
-    c.drawRightString(160, y, f"${venta['total']}")
+    c.drawRightString(ANCHO - 5, y, f"${venta['total']}")
+    y -= 18
+
+    c.line(5, y, ANCHO - 5, y)
+    y -= 15
+
+    # ===== MENSAJE FINAL =====
+    c.setFont("Helvetica", 7)
+    c.drawCentredString(ANCHO / 2, y, "Gracias por su compra")
+    y -= 10
+    c.drawCentredString(ANCHO / 2, y, "Conserve este comprobante")
 
     c.save()
     pdf_bytes = buffer.getvalue()
