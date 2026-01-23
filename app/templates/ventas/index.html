@@ -17,7 +17,7 @@
             <option value="">Todas las categorías</option>
             {% for cat in categorias %}
             <option value="{{ cat.nombre }}"
-                    {% if filtro_categoria= =cat.nombre %}selected{% endif %}>
+                    {% if filtro_categoria == cat.nombre %}selected{% endif %}>
                 {{ cat.nombre }}
             </option>
             {% endfor %}
@@ -29,7 +29,7 @@
             <option value="">Todos los items</option>
             {% for p in productos | unique(attribute='item') %}
             <option value="{{ p.item }}"
-                    {% if filtro_item= =p.item %}selected{% endif %}>
+                    {% if filtro_item == p.item %}selected{% endif %}>
                 {{ p.item }}
             </option>
             {% endfor %}
