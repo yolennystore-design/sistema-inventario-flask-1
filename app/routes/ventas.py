@@ -200,87 +200,53 @@ def factura(index):
 
     venta = ventas[index]
     items = obtener_items(venta)
+
     numero = venta.get("numero_factura", index + 1)
+    tipo_venta = venta.get("tipo_venta", "Contado")  # ✅ AQUÍ SE DEFINE
+    cliente = venta.get("cliente", "N/A")
+    fecha = venta.get("fecha", "")
 
     buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=(165, 800))
+    y = 780
 
-    # 📏 Medidas ticket térmico 58mm
-    ANCHO = 165
-    ALTO = 900
-
-    c = canvas.Canvas(buffer, pagesize=(ANCHO, ALTO))
-    y = ALTO - 20
-
-    # ======================
-    # ENCABEZADO
-    # ======================
-    c.setFont("Helvetica-Bold", 11)
-    c.drawCentredString(ANCHO / 2, y, NOMBRE_EMPRESA)
-    y -= 14
-
-    c.setFont("Helvetica", 8)
-    c.drawCentredString(ANCHO / 2, y, "Moda y estilo que te acompaña")
+    # ===== ENCABEZADO =====
+    c.setFont("Helvetica-Bold", 10)
+    c.drawCentredString(82, y, "Yolenny Store")
     y -= 12
-
-    c.line(5, y, ANCHO - 5, y)
-    y -= 12
-
-    # ======================
-    # DATOS DE FACTURA
-    # ======================
     c.setFont("Helvetica", 7)
+    c.drawCentredString(82, y, "Moda y estilo que te acompaña")
+    y -= 15
+
+    # ===== DATOS =====
     c.drawString(5, y, f"Factura: {numero}")
     y -= 10
-    c.drawString(5, y, f"Cliente: {venta['cliente']}")
+    c.drawString(5, y, f"Cliente: {cliente}")
     y -= 10
     c.drawString(5, y, f"Tipo de venta: {tipo_venta}")
     y -= 10
-    c.drawString(5, y, f"Fecha: {venta['fecha']}")
-    y -= 12
+    c.drawString(5, y, f"Fecha: {fecha}")
+    y -= 15
 
-    c.line(5, y, ANCHO - 5, y)
+    c.line(5, y, 160, y)
     y -= 10
 
-    # ======================
-    # ENCABEZADO PRODUCTOS
-    # ======================
-    c.setFont("Helvetica-Bold", 7)
-    c.drawString(5, y, "Producto")
-    c.drawRightString(ANCHO - 5, y, "Importe")
+    # ===== ITEMS =====
+    for i in items:
+        c.drawString(5, y, f"{i['nombre']} x{i['cantidad']}")
+        c.drawRightString(160, y, f"${i['total']}")
+        y -= 10
+
+    y -= 5
+    c.line(5, y, 160, y)
     y -= 10
 
-    # ======================
-    # LISTA DE PRODUCTOS
-    # ======================
-    c.setFont("Helvetica", 7)
-    for item in items:
-        c.drawString(5, y, item["nombre"][:20])
-        y -= 9
-        c.drawString(10, y, f"{item['cantidad']} x ${item['precio']}")
-        c.drawRightString(ANCHO - 5, y, f"${item['total']}")
-        y -= 12
-
-    c.line(5, y, ANCHO - 5, y)
-    y -= 12
-
-    # ======================
-    # TOTALES
-    # ======================
+    # ===== TOTAL =====
     c.setFont("Helvetica-Bold", 8)
     c.drawString(5, y, "TOTAL:")
-    c.drawRightString(ANCHO - 5, y, f"${venta['total']}")
-    y -= 18
-
-    # ======================
-    # PIE DE FACTURA
-    # ======================
-    c.setFont("Helvetica", 7)
-    c.drawCentredString(ANCHO / 2, y, "Gracias por su compra")
-    y -= 10
-    c.drawCentredString(ANCHO / 2, y, "Vuelva pronto ✨")
+    c.drawRightString(160, y, f"${venta['total']}")
 
     c.save()
-
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
@@ -290,7 +256,6 @@ def factura(index):
         as_attachment=True,
         mimetype="application/pdf"
     )
-
 
 
 # ======================
