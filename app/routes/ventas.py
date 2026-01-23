@@ -116,7 +116,7 @@ def agregar_carrito():
 
 
 # ======================
-# ✏️ EDITAR PRECIO EN CARRITO
+# ✏️ EDITAR PRECIO
 # ======================
 @ventas_bp.route("/editar_precio", methods=["POST"])
 def editar_precio():
@@ -290,8 +290,10 @@ def eliminar_factura(index):
     )
 
     return redirect(url_for("ventas.index"))
+
+
 # ======================
-# ELIMINAR TODAS LAS VENTAS
+# ❌ ELIMINAR TODAS LAS VENTAS
 # ======================
 @ventas_bp.route("/eliminar_todas")
 def eliminar_todas():
@@ -300,7 +302,6 @@ def eliminar_todas():
 
     ventas = cargar_json(VENTAS_FILE)
 
-    # devolver stock
     conn = get_db()
     cur = conn.cursor()
 
@@ -312,11 +313,11 @@ def eliminar_todas():
             )
 
     conn.commit()
+    cur.close()
     conn.close()
 
     guardar_json(VENTAS_FILE, [])
     guardar_json(CARRITO_FILE, [])
-    guardar_json(CREDITOS_FILE, [])
 
     registrar_log(
         usuario=session["usuario"],
