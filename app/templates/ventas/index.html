@@ -57,6 +57,7 @@
             <th>Cant.</th>
             <th>Precio</th>
             <th>Total</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -65,13 +66,46 @@
         <tr>
             <td>{{ i.nombre }}</td>
             <td>{{ i.cantidad }}</td>
-            <td>${{ i.precio }}</td>
+
+            <!-- ===== MODIFICAR PRECIO ===== -->
+            <td>
+                {% if session.rol == "admin" %}
+                <form method="POST" action="/ventas/actualizar_precio" class="d-flex">
+                    <input type="hidden" name="id" value="{{ i.id }}">
+                    <input type="number"
+                           name="precio"
+                           value="{{ i.precio }}"
+                           min="0"
+                           step="0.01"
+                           class="form-control form-control-sm me-1"
+                           style="width:90px"
+                           required>
+                    <button class="btn btn-sm btn-warning" title="Modificar precio">
+                        💲
+                    </button>
+                </form>
+                {% else %}
+                ${{ i.precio }}
+                {% endif %}
+            </td>
+
             <td>${{ i.total }}</td>
+
+            <!-- ELIMINAR ITEM -->
+            <td>
+                <a href="/ventas/eliminar_item/{{ i.id }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar este producto del carrito?')">
+                    ❌
+                </a>
+            </td>
         </tr>
         {% endfor %}
         {% else %}
         <tr>
-            <td colspan="4" class="text-center text-muted">Carrito vacío</td>
+            <td colspan="5" class="text-center text-muted">
+                🛒 El carrito está vacío
+            </td>
         </tr>
         {% endif %}
     </tbody>
