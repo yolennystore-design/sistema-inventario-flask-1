@@ -364,3 +364,15 @@ def eliminar_todas():
     )
 
     return redirect(url_for("ventas.index"))
+# ======================
+# ❌ ELIMINAR ITEM DEL CARRITO
+# ======================
+@ventas_bp.route("/eliminar_item/<int:producto_id>")
+def eliminar_item(producto_id):
+    carrito = cargar_json(CARRITO_FILE)
+
+    carrito = [i for i in carrito if i["id"] != producto_id]
+
+    guardar_json(CARRITO_FILE, carrito)
+
+    return redirect(url_for("ventas.index"))
