@@ -99,10 +99,22 @@
 
     <h4>Total: <strong>${{ total }}</strong></h4>
 
-    <button type="submit" class="btn btn-success"
-            {% if not carrito %}disabled{% endif %}>
-        Generar Venta
-    </button>
+    <div class="d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-success"
+                {% if not carrito %}disabled{% endif %}>
+            💾 Generar Venta
+        </button>
+
+        <a href="/ventas/vaciar_carrito"
+           class="btn btn-secondary"
+           onclick="return confirm('¿Cancelar la venta y vaciar el carrito?')">
+            ❌ Cancelar Venta
+        </a>
+
+        <a href="/" class="btn btn-outline-primary">
+            ⬅ Volver al Inicio
+        </a>
+    </div>
 </form>
 
 <hr>
@@ -158,9 +170,7 @@
                 {% if session.rol == "admin" %}
                 <a href="/ventas/eliminar/{{ v }}"
                    class="btn btn-sm btn-danger"
-                   onclick="return confirm(
-                       '¿Eliminar esta venta y devolver stock?'
-                   )">
+                   onclick="return confirm('¿Eliminar esta venta y devolver stock?')">
                     🗑
                 </a>
                 {% endif %}
