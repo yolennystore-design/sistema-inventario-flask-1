@@ -217,12 +217,19 @@ def factura(index):
     venta = ventas[index]
     items = obtener_items(venta)
 
+    # 🔒 PROTECCIÓN CONTRA VENTAS ANTIGUAS
+    numero_factura = venta.get("numero_factura", f"SIN-{index+1:05d}")
+    cliente = venta.get("cliente", "N/A")
+    tipo_venta = venta.get("tipo_venta", "Contado")
+    fecha = venta.get("fecha", "")
+    total = venta.get("total", 0)
+
     buffer = BytesIO()
     ANCHO, ALTO = 165, 800
     c = canvas.Canvas(buffer, pagesize=(ANCHO, ALTO))
     y = ALTO - 20
 
-    # ENCABEZADO
+    # ===== ENCABEZADO =====
     c.setFont("Helvetica-Bold", 10)
     c.drawCentredString(ANCHO / 2, y, NOMBRE_EMPRESA)
     y -= 12
@@ -234,40 +241,41 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # DATOS
-    c.drawString(5, y, f"Factura: {venta['numero_factura']}")
+    # ===== DATOS =====
+    c.drawString(5, y, f"Factura: {numero_factura}")
     y -= 10
-    c.drawString(5, y, f"Cliente: {venta['cliente']}")
+    c.drawString(5, y, f"Cliente: {cliente}")
     y -= 10
-    c.drawString(5, y, f"Tipo: {venta['tipo_venta']}")
+    c.drawString(5, y, f"Tipo: {tipo_venta}")
     y -= 10
-    c.drawString(5, y, f"Fecha: {venta['fecha']}")
+    c.drawString(5, y, f"Fecha: {fecha}")
     y -= 15
 
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # PRODUCTOS
+    # ===== PRODUCTOS =====
+    c.setFont("Helvetica", 7)
     for i in items:
-        c.drawString(5, y, i["nombre"][:18])
+        c.drawString(5, y, i.get("nombre", "")[:18])
         y -= 9
-        c.drawString(10, y, f"{i['cantidad']} x ${i['precio']}")
-        c.drawRightString(ANCHO - 5, y, f"${i['total']}")
+        c.drawString(10, y, f"{i.get('cantidad',0)} x ${i.get('precio',0)}")
+        c.drawRightString(ANCHO - 5, y, f"${i.get('total',0)}")
         y -= 10
 
     c.line(5, y, ANCHO - 5, y)
     y -= 12
 
-    # TOTAL
+    # ===== TOTAL =====
     c.setFont("Helvetica-Bold", 8)
     c.drawString(5, y, "TOTAL:")
-    c.drawRightString(ANCHO - 5, y, f"${venta['total']}")
+    c.drawRightString(ANCHO - 5, y, f"${total}")
     y -= 18
 
     c.line(5, y, ANCHO - 5, y)
     y -= 15
 
-    # MENSAJE FINAL
+    # ===== MENSAJE FINAL =====
     c.setFont("Helvetica", 7)
     c.drawCentredString(ANCHO / 2, y, "Gracias por su compra")
     y -= 10
@@ -279,11 +287,10 @@ def factura(index):
 
     return send_file(
         BytesIO(pdf_bytes),
-        download_name=f"factura_{venta['numero_factura']}.pdf",
+        download_name=f"factura_{numero_factura}.pdf",
         as_attachment=True,
         mimetype="application/pdf"
     )
-
 
 # ======================
 # 🗑 ELIMINAR FACTURA
