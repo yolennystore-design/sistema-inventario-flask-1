@@ -268,17 +268,3 @@ def eliminar(index):
     )
 
     return redirect(url_for("creditos.index"))
-@ventas_bp.route("/factura/numero/<numero>")
-def factura_por_numero(numero):
-    ventas = cargar_json(VENTAS_FILE)
-
-    venta = next(
-        (v for v in ventas if v.get("numero_factura") == numero),
-        None
-    )
-
-    if not venta:
-        return redirect(url_for("ventas.index"))
-
-    index = ventas.index(venta)
-    return redirect(url_for("ventas.factura", index=index))
