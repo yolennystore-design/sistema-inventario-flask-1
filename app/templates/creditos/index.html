@@ -105,14 +105,23 @@
                     </a>
                 </td>
 
-                <!-- ELIMINAR -->
+                <!-- ELIMINAR / VER FACTURA -->
                 {% if session.rol == "admin" %}
                 <td class="no-print text-center">
+
+                    <!-- Eliminar crédito -->
                     <a href="{{ url_for('creditos.eliminar', index=loop.index0) }}"
                        class="btn btn-danger btn-sm"
                        onclick="return confirm('¿Eliminar este crédito?')">
                         🗑️
                     </a>
+
+                    <!-- Ver factura asociada -->
+                    <a href="{{ url_for('ventas.factura', index=loop.index0) }}"
+                       class="btn btn-primary btn-sm ms-1">
+                        🧾 Ver factura
+                    </a>
+
                 </td>
                 {% endif %}
             </tr>

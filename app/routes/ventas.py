@@ -187,11 +187,13 @@ def confirmar():
         creditos.append({
             "numero_factura": numero_factura,
             "cliente": cliente,
+            "fecha": fecha,
             "total": total,
             "abonado": 0,
             "pendiente": total,
-            "fecha": fecha
+            "items": carrito  # 🔗 MISMA VENTA
         })
+
         guardar_json(CREDITOS_FILE, creditos)
 
     guardar_json(CARRITO_FILE, [])
