@@ -98,7 +98,7 @@
 
                 <!-- PDF -->
                 <td class="no-print text-center">
-                    <a href="{{ url_for('creditos.pdf_credito', index=loop.index0) }}"
+                    <a href="{{ url_for('creditos.pdf_credito', numero_factura=c.numero_factura) }}"
                        class="btn btn-outline-info btn-sm"
                        target="_blank">🖨️</a>
                 </td>
