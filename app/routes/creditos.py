@@ -90,10 +90,18 @@ def index():
 
     filtro_cliente = request.args.get("cliente", "").strip()
 
+    def normalizar(texto):
+        return unicodedata.normalize("NFKD", texto)\
+            .encode("ascii", "ignore")\
+            .decode("ascii")\
+            .lower()\
+            .strip()
+
     if filtro_cliente:
+        filtro = normalizar(filtro_cliente)
         creditos = [
             c for c in creditos
-            if c.get("cliente") == filtro_cliente
+            if normalizar(c.get("cliente", "")) == filtro
         ]
 
     return render_template(
