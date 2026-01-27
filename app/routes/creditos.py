@@ -106,33 +106,54 @@ def index():
 # ======================
 @creditos_bp.route("/abonar/<int:index>", methods=["POST"])
 def abonar(index):
-    if "usuario" not in session:
-        return redirect(url_for("auth.login"))
+    # 🔐 Solo administrador puede abonar
+    if session.get("rol") != "admin":
+        registrar_log(
+            usuario=session.get("usuario", "desconocido"),
+            accion="Intento de abono sin autorización",
+            modulo="Créditos"
+        )
+        return redirect(url_for("creditos.index"))
 
     creditos = cargar_creditos()
 
+    # Validar índice
     if index < 0 or index >= len(creditos):
         return redirect(url_for("creditos.index"))
 
+    credito = creditos[index]
+
+    # Obtener monto
     try:
         monto = float(request.form.get("monto", 0))
     except ValueError:
         return redirect(url_for("creditos.index"))
 
-    credito = creditos[index]
-
-    if monto <= 0 or monto > credito.get("pendiente", 0):
+    # Validaciones de negocio
+    if monto <= 0:
         return redirect(url_for("creditos.index"))
 
+    if monto > credito.get("pendiente", 0):
+        return redirect(url_for("creditos.index"))
+
+    # Aplicar abono
     credito["abonado"] += monto
     credito["pendiente"] -= monto
     credito["fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # Marcar como pagado si aplica
+    if credito["pendiente"] == 0:
+        credito["estado"] = "Pagado"
+
     guardar_creditos(creditos)
 
+    # 🧾 Auditoría
     registrar_log(
-        usuario=session["usuario"],
-        accion=f"Abonó ${monto:.2f} al crédito de {credito.get('cliente','')}",
+        usuario=session.get("usuario", "admin"),
+        accion=(
+            f"Abonó ${monto:.2f} al crédito "
+            f"{credito.get('numero_factura','')}"
+        ),
         modulo="Créditos"
     )
 
