@@ -109,6 +109,9 @@
                 {% if session.rol == "admin" %}
                 <td class="no-print text-center">
 
+                    {% if session.rol == "admin" %}
+                <td class="no-print text-center">
+
                     <!-- Eliminar crédito -->
                     <a href="{{ url_for('creditos.eliminar', index=loop.index0) }}"
                        class="btn btn-danger btn-sm"
@@ -117,7 +120,7 @@
                     </a>
 
                     <!-- Ver factura asociada -->
-                    <a href="{{ url_for('ventas.factura_por_numero', numero=credito.numero_factura) }}"
+                    <a href="{{ url_for('ventas.factura_por_numero', numero=c.get('numero_factura')) }}"
                        class="btn btn-primary btn-sm ms-1">
                         🧾 Ver factura
                     </a>
