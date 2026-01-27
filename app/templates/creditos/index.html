@@ -67,8 +67,9 @@
             <tr>
                 <td>{{ loop.index }}</td>
                 <td>{{ c.get("cliente", "") }}</td>
-                <td>${{ "%.2f"|format(c.get("monto", 0)) }}</td>
-                <td>${{ "%.2f"|format(c.get("abonado", 0)) }}</td>
+                <td>${{ "%.2f"|format(c.monto|float) }}</td>
+                <td>${{ "%.2f"|format(c.abonado|float) }}</td>
+                <td>${{ "%.2f"|format(c.pendiente|float) }}</td>
                 <td>
                     {% if c.get("pendiente", 0) > 0 %}
                     <strong class="text-danger">
