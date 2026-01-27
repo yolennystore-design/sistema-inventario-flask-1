@@ -117,7 +117,7 @@
                     </a>
 
                     <!-- Ver factura asociada -->
-                    <a href="{{ url_for('ventas.factura', index=loop.index0) }}"
+                    <a href="{{ url_for('ventas.factura_por_numero', numero=credito.numero_factura) }}"
                        class="btn btn-primary btn-sm ms-1">
                         🧾 Ver factura
                     </a>
