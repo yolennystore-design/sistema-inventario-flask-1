@@ -3,13 +3,12 @@ from flask import (
     Blueprint, render_template, request,
     redirect, url_for, session, send_file
 )
-import json
 import os
 import unicodedata
 from datetime import datetime
 from io import BytesIO
 
-from app.db import get_db                 # ✅ AGREGADO (CLAVE)
+from app.db import get_db
 from app.utils.auditoria import registrar_log
 from app.routes.clientes import cargar_clientes
 
@@ -23,55 +22,75 @@ from reportlab.lib import colors
 
 creditos_bp = Blueprint("creditos", __name__, url_prefix="/creditos")
 
-DATA_FILE = "app/data/creditos.json"
-
 # ======================
 # UTILIDADES
 # ======================
 def cargar_creditos():
     conn = get_db()
     cur = conn.cursor()
+
     cur.execute("""
-        SELECT * FROM creditos
+        SELECT
+            numero_factura,
+            cliente,
+            monto,
+            abonado,
+            pendiente,
+            estado,
+            fecha
+        FROM creditos
         ORDER BY fecha DESC
     """)
-    creditos = cur.fetchall()
+
+    columnas = [c[0] for c in cur.description]
+    creditos = [dict(zip(columnas, fila)) for fila in cur.fetchall()]
+
     cur.close()
     conn.close()
     return creditos
 
 
-def guardar_creditos(creditos):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(creditos, f, indent=4, ensure_ascii=False)
+def normalizar(texto):
+    return unicodedata.normalize("NFKD", texto)\
+        .encode("ascii", "ignore")\
+        .decode("ascii")\
+        .lower()\
+        .strip()
 
 # ======================
-# CREAR CRÉDITO
+# CREAR CRÉDITO (BD)
 # ======================
 @creditos_bp.route("/crear", methods=["POST"])
 def crear_credito():
     if "usuario" not in session:
         return redirect(url_for("auth.login"))
 
-    creditos = cargar_creditos()
-
     cliente = request.form.get("cliente")
-    productos = json.loads(request.form.get("productos"))  # viene del frontend
+    monto = float(request.form.get("monto", 0))
 
-    monto = sum(p["cantidad"] * p["precio"] for p in productos)
+    if not cliente or monto <= 0:
+        return redirect(url_for("creditos.index"))
 
-    nuevo_credito = {
-        "cliente": cliente,
-        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "monto": monto,
-        "abonado": 0.0,
-        "pendiente": monto,
-        "items": productos,
-        "numero_factura": f"YS-{len(creditos)+1:05d}"
-    }
+    conn = get_db()
+    cur = conn.cursor()
 
-    creditos.append(nuevo_credito)
-    guardar_creditos(creditos)
+    numero_factura = datetime.now().strftime("YS-%Y%m%d%H%M%S")
+
+    cur.execute("""
+        INSERT INTO creditos
+        (numero_factura, cliente, monto, abonado, pendiente, estado, fecha)
+        VALUES (%s, %s, %s, 0, %s, 'Pendiente', %s)
+    """, (
+        numero_factura,
+        cliente,
+        monto,
+        monto,
+        datetime.now().strftime("%Y-%m-%d %H:%M")
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     registrar_log(
         usuario=session["usuario"],
@@ -82,7 +101,7 @@ def crear_credito():
     return redirect(url_for("creditos.index"))
 
 # ======================
-# LISTAR + FILTRAR CRÉDITOS
+# LISTAR + FILTRAR
 # ======================
 @creditos_bp.route("/")
 def index():
@@ -97,21 +116,13 @@ def index():
         if c.get("nombre")
     })
 
-
     filtro_cliente = request.args.get("cliente", "").strip()
-
-    def normalizar(texto):
-        return unicodedata.normalize("NFKD", texto)\
-            .encode("ascii", "ignore")\
-            .decode("ascii")\
-            .lower()\
-            .strip()
 
     if filtro_cliente:
         filtro = normalizar(filtro_cliente)
         creditos = [
             c for c in creditos
-            if normalizar(c.get("cliente", "")) == filtro
+            if normalizar(c["cliente"]) == filtro
         ]
 
     return render_template(
@@ -122,65 +133,63 @@ def index():
     )
 
 # ======================
-# ABONAR CRÉDITO
+# ABONAR CRÉDITO (BD)
 # ======================
 @creditos_bp.route("/abonar/<int:index>", methods=["POST"])
 def abonar(index):
-    # 🔐 Solo administrador puede abonar
     if session.get("rol") != "admin":
-        registrar_log(
-            usuario=session.get("usuario", "desconocido"),
-            accion="Intento de abono sin autorización",
-            modulo="Créditos"
-        )
         return redirect(url_for("creditos.index"))
 
     creditos = cargar_creditos()
-
-    # Validar índice
     if index < 0 or index >= len(creditos):
         return redirect(url_for("creditos.index"))
 
     credito = creditos[index]
 
-    # Obtener monto
     try:
         monto = float(request.form.get("monto", 0))
     except ValueError:
         return redirect(url_for("creditos.index"))
 
-    # Validaciones de negocio
-    if monto <= 0:
+    if monto <= 0 or monto > credito["pendiente"]:
         return redirect(url_for("creditos.index"))
 
-    if monto > credito.get("pendiente", 0):
-        return redirect(url_for("creditos.index"))
+    nuevo_abonado = credito["abonado"] + monto
+    nuevo_pendiente = credito["pendiente"] - monto
+    estado = "Pagado" if nuevo_pendiente == 0 else "Pendiente"
 
-    # Aplicar abono
-    credito["abonado"] += monto
-    credito["pendiente"] -= monto
-    credito["fecha"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+    conn = get_db()
+    cur = conn.cursor()
 
-    # Marcar como pagado si aplica
-    if credito["pendiente"] == 0:
-        credito["estado"] = "Pagado"
+    cur.execute("""
+        UPDATE creditos
+        SET abonado = %s,
+            pendiente = %s,
+            estado = %s,
+            fecha = %s
+        WHERE numero_factura = %s
+    """, (
+        nuevo_abonado,
+        nuevo_pendiente,
+        estado,
+        datetime.now().strftime("%Y-%m-%d %H:%M"),
+        credito["numero_factura"]
+    ))
 
-    guardar_creditos(creditos)
+    conn.commit()
+    cur.close()
+    conn.close()
 
-    # 🧾 Auditoría
     registrar_log(
         usuario=session.get("usuario", "admin"),
-        accion=(
-            f"Abonó ${monto:.2f} al crédito "
-            f"{credito.get('numero_factura','')}"
-        ),
+        accion=f"Abonó ${monto:.2f} al crédito {credito['numero_factura']}",
         modulo="Créditos"
     )
 
     return redirect(url_for("creditos.index"))
 
 # ======================
-# PDF DETALLADO DEL CRÉDITO
+# PDF DEL CRÉDITO
 # ======================
 @creditos_bp.route("/pdf/<int:index>")
 def pdf_credito(index):
@@ -188,106 +197,51 @@ def pdf_credito(index):
         return redirect(url_for("auth.login"))
 
     creditos = cargar_creditos()
-
     if index < 0 or index >= len(creditos):
         return redirect(url_for("creditos.index"))
 
-    credito = creditos[index]
-    productos = credito.get("items", [])
+    c = creditos[index]
 
-    cliente = credito.get("cliente", "")
-    fecha = credito.get("fecha", "")
-    monto = credito.get("monto", 0)
-    abonado = credito.get("abonado", 0)
-    pendiente = credito.get("pendiente", 0)
-
-    numero_factura = credito.get(
-        "numero_factura",
-        f"YS-{index+1:05d}"
-    )
-
-    # 🔥 PDF EN MEMORIA (Render safe)
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     elementos = []
 
-    # LOGO
     logo_path = "app/static/logo.png"
     if os.path.exists(logo_path):
-        logo = Image(logo_path, width=90, height=60)
-        logo.hAlign = "CENTER"
-        elementos.append(logo)
-        elementos.append(Paragraph("<br/>", styles["Normal"]))
+        elementos.append(Image(logo_path, width=90, height=60))
 
-    # TITULOS
     elementos.append(Paragraph("<b>Yolenny Store</b>", styles["Heading1"]))
     elementos.append(Paragraph("<b>COMPROBANTE DE CRÉDITO</b><br/>", styles["Heading2"]))
 
-    # DATOS DEL CRÉDITO
-    data_credito = [
-        ["N° Factura", numero_factura],
-        ["Cliente", cliente],
-        ["Fecha", fecha],
-        ["Monto Total", f"${monto:,.2f}"],
-        ["Abonado", f"${abonado:,.2f}"],
-        ["Pendiente", f"${pendiente:,.2f}"],
+    data = [
+        ["Factura", c["numero_factura"]],
+        ["Cliente", c["cliente"]],
+        ["Fecha", c["fecha"]],
+        ["Monto", f"${c['monto']:,.2f}"],
+        ["Abonado", f"${c['abonado']:,.2f}"],
+        ["Pendiente", f"${c['pendiente']:,.2f}"],
     ]
 
-    tabla_credito = Table(data_credito, colWidths=[150, 300])
-    tabla_credito.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("BACKGROUND", (0, 0), (0, -1), colors.whitesmoke),
-        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+    tabla = Table(data, colWidths=[150, 300])
+    tabla.setStyle(TableStyle([
+        ("GRID", (0,0), (-1,-1), 1, colors.black),
+        ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold")
     ]))
 
-    elementos.append(tabla_credito)
-
-    # PRODUCTOS
-    elementos.append(Paragraph("<br/><b>Detalle de Productos</b><br/>", styles["Heading3"]))
-
-    data_productos = [["Producto", "Cantidad", "Precio Unit.", "Subtotal"]]
-    total = 0
-
-    for p in productos:
-        subtotal = p["cantidad"] * p["precio"]
-        total += subtotal
-        data_productos.append([p["nombre"], str(p["cantidad"]), f"${p['precio']:,.2f}", f"${subtotal:,.2f}"])
-
-    if not productos:
-        data_productos.append(["Sin productos", "", "", ""])
-
-    tabla_productos = Table(data_productos, colWidths=[200, 80, 100, 100])
-    tabla_productos.setStyle(TableStyle([  # <- Cambio a lista
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("ALIGN", (1, 1), (-1, -1), "CENTER"),
-    ]))
-
-   
-
-    elementos.append(tabla_productos)
-
-    elementos.append(
-        Paragraph(f"<br/><b>Total Productos: ${total:,.2f}</b><br/>", styles["Normal"])
-    )
-
-    elementos.append(
-        Paragraph("Firma del Cliente: ________________________________", styles["Normal"])
-    )
-
+    elementos.append(tabla)
     doc.build(elementos)
-    buffer.seek(0)
 
+    buffer.seek(0)
     return send_file(
         buffer,
         mimetype="application/pdf",
         as_attachment=False,
-        download_name=f"credito_{numero_factura}.pdf"
+        download_name=f"credito_{c['numero_factura']}.pdf"
     )
 
 # ======================
-# ELIMINAR CRÉDITO (ADMIN)
+# ELIMINAR CRÉDITO (BD)
 # ======================
 @creditos_bp.route("/eliminar/<int:index>")
 def eliminar(index):
@@ -295,16 +249,21 @@ def eliminar(index):
         return redirect(url_for("creditos.index"))
 
     creditos = cargar_creditos()
-
     if index < 0 or index >= len(creditos):
         return redirect(url_for("creditos.index"))
 
-    eliminado = creditos.pop(index)
-    guardar_creditos(creditos)
+    numero_factura = creditos[index]["numero_factura"]
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM creditos WHERE numero_factura = %s", (numero_factura,))
+    conn.commit()
+    cur.close()
+    conn.close()
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Eliminó crédito de {eliminado.get('cliente','')}",
+        accion=f"Eliminó crédito {numero_factura}",
         modulo="Créditos"
     )
 
