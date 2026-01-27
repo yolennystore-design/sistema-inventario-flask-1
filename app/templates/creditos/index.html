@@ -12,7 +12,7 @@
             <option value="">— Todos los clientes —</option>
             {% for cliente in clientes %}
             <option value="{{ cliente }}"
-                    {% if cliente= =filtro_cliente %}selected{% endif %}>
+                    {% if cliente == filtro_cliente %}selected{% endif %}>
                 {{ cliente }}
             </option>
             {% endfor %}
