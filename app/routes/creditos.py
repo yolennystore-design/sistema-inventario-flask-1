@@ -81,10 +81,11 @@ def index():
     creditos = cargar_creditos()
 
     clientes = sorted({
-        c.get("cliente", "").strip()
-        for c in creditos
-        if c.get("cliente")
+        c.get("nombre", "").strip()
+        for c in cargar_clientes()
+        if c.get("nombre")
     })
+
 
     filtro_cliente = request.args.get("cliente", "").strip()
 
