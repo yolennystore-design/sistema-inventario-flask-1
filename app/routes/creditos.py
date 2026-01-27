@@ -35,7 +35,6 @@ def normalizar(texto):
 
 
 def cargar_creditos():
-    """Carga créditos desde BD con tipos correctos"""
     conn = get_db()
     cur = conn.cursor()
 
@@ -55,19 +54,25 @@ def cargar_creditos():
     columnas = [c[0] for c in cur.description]
     creditos = []
 
+    def to_float(valor):
+        try:
+            return float(valor)
+        except (TypeError, ValueError):
+            return 0.0
+
     for fila in cur.fetchall():
         c = dict(zip(columnas, fila))
 
-        # 🔒 Forzar tipos numéricos (evita errores Jinja)
-        c["monto"] = float(c["monto"] or 0)
-        c["abonado"] = float(c["abonado"] or 0)
-        c["pendiente"] = float(c["pendiente"] or 0)
+        c["monto"] = to_float(c.get("monto"))
+        c["abonado"] = to_float(c.get("abonado"))
+        c["pendiente"] = to_float(c.get("pendiente"))
 
         creditos.append(c)
 
     cur.close()
     conn.close()
     return creditos
+
 
 
 # ======================================================
