@@ -167,7 +167,7 @@ def confirmar():
     cur.close()
     conn.close()
 
-    numero_factura = f"YS-{len(ventas) + 1:05d}"
+    numero_factura = f"YS-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     venta = {
         "numero_factura": numero_factura,
