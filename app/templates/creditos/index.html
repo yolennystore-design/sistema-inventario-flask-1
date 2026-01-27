@@ -105,7 +105,7 @@
 
                 {% if session.rol == "admin" %}
                 <td class="no-print text-center">
-                    <a href="{{ url_for('creditos.eliminar', index=loop.index0) }}"
+                    <a href="{{ url_for('creditos.eliminar', numero_factura=c.numero_factura) }}"
                        class="btn btn-danger btn-sm"
                        onclick="return confirm('¿Eliminar crédito?')">🗑️</a>
 
