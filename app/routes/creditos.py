@@ -184,7 +184,7 @@ def pdf_credito(index):
         return redirect(url_for("creditos.index"))
 
     credito = creditos[index]
-    productos = credito.get("productos", [])
+    productos = credito.get("items", [])
 
     cliente = credito.get("cliente", "")
     fecha = credito.get("fecha", "")
