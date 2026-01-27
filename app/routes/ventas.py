@@ -182,7 +182,7 @@ def confirmar():
     guardar_json(VENTAS_FILE, ventas)
 
     # 👉 REGISTRAR CRÉDITO
-    if tipo_venta.lower() == "credito":
+    if tipo_venta.lower().replace("é", "e") == "credito":
         conn = get_db()
         cur = conn.cursor()
         cur.execute("""
