@@ -188,11 +188,13 @@ def confirmar():
             "numero_factura": numero_factura,
             "cliente": cliente,
             "fecha": fecha,
-            "total": total,
+            "monto": total,          # ✅ CAMBIO CLAVE
             "abonado": 0,
             "pendiente": total,
-            "items": carrito  # 🔗 MISMA VENTA
+            "estado": "Pendiente",
+            "items": carrito
         })
+
 
         guardar_json(CREDITOS_FILE, creditos)
 

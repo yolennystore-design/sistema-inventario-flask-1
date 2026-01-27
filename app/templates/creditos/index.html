@@ -83,6 +83,9 @@
                 <!-- ABONAR -->
                 <td class="no-print">
                     {% if c.get("pendiente", 0) > 0 %}
+
+                    {% if session.rol == "admin" %}
+                    <!-- ADMIN: puede abonar -->
                     <form method="POST"
                           action="{{ url_for('creditos.abonar', index=loop.index0) }}"
                           class="d-flex">
@@ -98,6 +101,15 @@
                             Abonar
                         </button>
                     </form>
+
+                    {% else %}
+                    <!-- EMPLEADO: solicitar autorización -->
+                    <button class="btn btn-warning btn-sm"
+                            onclick="solicitarAutorizacion()">
+                        🔒 Solicitar autorización
+                    </button>
+                    {% endif %}
+
                     {% else %}
                     <span class="text-muted">—</span>
                     {% endif %}
