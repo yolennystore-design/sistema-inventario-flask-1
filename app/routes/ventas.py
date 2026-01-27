@@ -196,6 +196,7 @@ def confirmar():
             total,
             fecha
         ))
+
         conn.commit()
         cur.close()
         conn.close()
