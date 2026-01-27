@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from flask import (
     Blueprint, render_template, request,
     redirect, url_for, session, send_file
@@ -22,10 +23,19 @@ from reportlab.lib import colors
 
 creditos_bp = Blueprint("creditos", __name__, url_prefix="/creditos")
 
-# ======================
+# ======================================================
 # UTILIDADES
-# ======================
+# ======================================================
+def normalizar(texto):
+    return unicodedata.normalize("NFKD", texto or "") \
+        .encode("ascii", "ignore") \
+        .decode("ascii") \
+        .lower() \
+        .strip()
+
+
 def cargar_creditos():
+    """Carga créditos desde BD con tipos correctos"""
     conn = get_db()
     cur = conn.cursor()
 
@@ -43,23 +53,26 @@ def cargar_creditos():
     """)
 
     columnas = [c[0] for c in cur.description]
-    creditos = [dict(zip(columnas, fila)) for fila in cur.fetchall()]
+    creditos = []
+
+    for fila in cur.fetchall():
+        c = dict(zip(columnas, fila))
+
+        # 🔒 Forzar tipos numéricos (evita errores Jinja)
+        c["monto"] = float(c["monto"] or 0)
+        c["abonado"] = float(c["abonado"] or 0)
+        c["pendiente"] = float(c["pendiente"] or 0)
+
+        creditos.append(c)
 
     cur.close()
     conn.close()
     return creditos
 
 
-def normalizar(texto):
-    return unicodedata.normalize("NFKD", texto)\
-        .encode("ascii", "ignore")\
-        .decode("ascii")\
-        .lower()\
-        .strip()
-
-# ======================
-# LISTAR + FILTRAR
-# ======================
+# ======================================================
+# LISTAR + FILTRAR CRÉDITOS
+# ======================================================
 @creditos_bp.route("/")
 def index():
     if "usuario" not in session:
@@ -77,7 +90,10 @@ def index():
 
     if filtro_cliente:
         f = normalizar(filtro_cliente)
-        creditos = [c for c in creditos if normalizar(c["cliente"]) == f]
+        creditos = [
+            c for c in creditos
+            if normalizar(c["cliente"]) == f
+        ]
 
     return render_template(
         "creditos/index.html",
@@ -86,9 +102,10 @@ def index():
         filtro_cliente=filtro_cliente
     )
 
-# ======================
-# ABONAR CRÉDITO (ID REAL)
-# ======================
+
+# ======================================================
+# ABONAR CRÉDITO (POR NUMERO_FACTURA)
+# ======================================================
 @creditos_bp.route("/abonar/<numero_factura>", methods=["POST"])
 def abonar(numero_factura):
     if session.get("rol") != "admin":
@@ -97,6 +114,9 @@ def abonar(numero_factura):
     try:
         monto = float(request.form.get("monto", 0))
     except ValueError:
+        return redirect(url_for("creditos.index"))
+
+    if monto <= 0:
         return redirect(url_for("creditos.index"))
 
     conn = get_db()
@@ -114,9 +134,9 @@ def abonar(numero_factura):
         conn.close()
         return redirect(url_for("creditos.index"))
 
-    abonado, pendiente = row
+    abonado, pendiente = map(float, row)
 
-    if monto <= 0 or monto > pendiente:
+    if monto > pendiente:
         cur.close()
         conn.close()
         return redirect(url_for("creditos.index"))
@@ -152,9 +172,10 @@ def abonar(numero_factura):
 
     return redirect(url_for("creditos.index"))
 
-# ======================
-# PDF
-# ======================
+
+# ======================================================
+# PDF DEL CRÉDITO
+# ======================================================
 @creditos_bp.route("/pdf/<numero_factura>")
 def pdf_credito(numero_factura):
     if "usuario" not in session:
@@ -169,14 +190,14 @@ def pdf_credito(numero_factura):
         WHERE numero_factura = %s
     """, (numero_factura,))
 
-    c = cur.fetchone()
+    row = cur.fetchone()
     cur.close()
     conn.close()
 
-    if not c:
+    if not row:
         return redirect(url_for("creditos.index"))
 
-    numero_factura, cliente, monto, abonado, pendiente, fecha = c
+    numero_factura, cliente, monto, abonado, pendiente, fecha = row
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -194,15 +215,15 @@ def pdf_credito(numero_factura):
         ["Factura", numero_factura],
         ["Cliente", cliente],
         ["Fecha", fecha],
-        ["Monto", f"${monto:,.2f}"],
-        ["Abonado", f"${abonado:,.2f}"],
-        ["Pendiente", f"${pendiente:,.2f}"],
+        ["Monto", f"${float(monto):,.2f}"],
+        ["Abonado", f"${float(abonado):,.2f}"],
+        ["Pendiente", f"${float(pendiente):,.2f}"],
     ]
 
     tabla = Table(data, colWidths=[150, 300])
     tabla.setStyle(TableStyle([
-        ("GRID", (0,0), (-1,-1), 1, colors.black),
-        ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold")
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
     ]))
 
     elementos.append(tabla)
@@ -216,9 +237,10 @@ def pdf_credito(numero_factura):
         download_name=f"credito_{numero_factura}.pdf"
     )
 
-# ======================
-# ELIMINAR
-# ======================
+
+# ======================================================
+# ELIMINAR CRÉDITO
+# ======================================================
 @creditos_bp.route("/eliminar/<numero_factura>")
 def eliminar(numero_factura):
     if session.get("rol") != "admin":
@@ -226,7 +248,10 @@ def eliminar(numero_factura):
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("DELETE FROM creditos WHERE numero_factura = %s", (numero_factura,))
+    cur.execute(
+        "DELETE FROM creditos WHERE numero_factura = %s",
+        (numero_factura,)
+    )
     conn.commit()
     cur.close()
     conn.close()
