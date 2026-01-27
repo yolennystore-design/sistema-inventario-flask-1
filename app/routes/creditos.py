@@ -43,27 +43,11 @@ def cargar_creditos():
     """)
 
     columnas = [c[0] for c in cur.description]
-    creditos = []
-
-    for fila in cur.fetchall():
-        c = dict(zip(columnas, fila))
-
-        def to_float(valor):
-            try:
-                return float(valor)
-            except (TypeError, ValueError):
-                return 0.0
-
-        c["monto"] = to_float(c.get("monto"))
-        c["abonado"] = to_float(c.get("abonado"))
-        c["pendiente"] = to_float(c.get("pendiente"))
-
-        creditos.append(c)
+    creditos = [dict(zip(columnas, fila)) for fila in cur.fetchall()]
 
     cur.close()
     conn.close()
     return creditos
-
 
 
 def normalizar(texto):
@@ -72,49 +56,6 @@ def normalizar(texto):
         .decode("ascii")\
         .lower()\
         .strip()
-
-# ======================
-# CREAR CRÉDITO (BD)
-# ======================
-@creditos_bp.route("/crear", methods=["POST"])
-def crear_credito():
-    if "usuario" not in session:
-        return redirect(url_for("auth.login"))
-
-    cliente = request.form.get("cliente")
-    monto = float(request.form.get("monto", 0))
-
-    if not cliente or monto <= 0:
-        return redirect(url_for("creditos.index"))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    numero_factura = datetime.now().strftime("YS-%Y%m%d%H%M%S")
-
-    cur.execute("""
-        INSERT INTO creditos
-        (numero_factura, cliente, monto, abonado, pendiente, estado, fecha)
-        VALUES (%s, %s, %s, 0, %s, 'Pendiente', %s)
-    """, (
-        numero_factura,
-        cliente,
-        monto,
-        monto,
-        datetime.now().strftime("%Y-%m-%d %H:%M")
-    ))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    registrar_log(
-        usuario=session["usuario"],
-        accion=f"Creó crédito para {cliente}",
-        modulo="Créditos"
-    )
-
-    return redirect(url_for("creditos.index"))
 
 # ======================
 # LISTAR + FILTRAR
@@ -135,11 +76,8 @@ def index():
     filtro_cliente = request.args.get("cliente", "").strip()
 
     if filtro_cliente:
-        filtro = normalizar(filtro_cliente)
-        creditos = [
-            c for c in creditos
-            if normalizar(c["cliente"]) == filtro
-        ]
+        f = normalizar(filtro_cliente)
+        creditos = [c for c in creditos if normalizar(c["cliente"]) == f]
 
     return render_template(
         "creditos/index.html",
@@ -149,33 +87,43 @@ def index():
     )
 
 # ======================
-# ABONAR CRÉDITO (BD)
+# ABONAR CRÉDITO (ID REAL)
 # ======================
-@creditos_bp.route("/abonar/<int:index>", methods=["POST"])
-def abonar(index):
+@creditos_bp.route("/abonar/<numero_factura>", methods=["POST"])
+def abonar(numero_factura):
     if session.get("rol") != "admin":
         return redirect(url_for("creditos.index"))
-
-    creditos = cargar_creditos()
-    if index < 0 or index >= len(creditos):
-        return redirect(url_for("creditos.index"))
-
-    credito = creditos[index]
 
     try:
         monto = float(request.form.get("monto", 0))
     except ValueError:
         return redirect(url_for("creditos.index"))
 
-    if monto <= 0 or monto > credito["pendiente"]:
-        return redirect(url_for("creditos.index"))
-
-    nuevo_abonado = credito["abonado"] + monto
-    nuevo_pendiente = credito["pendiente"] - monto
-    estado = "Pagado" if nuevo_pendiente == 0 else "Pendiente"
-
     conn = get_db()
     cur = conn.cursor()
+
+    cur.execute("""
+        SELECT abonado, pendiente
+        FROM creditos
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return redirect(url_for("creditos.index"))
+
+    abonado, pendiente = row
+
+    if monto <= 0 or monto > pendiente:
+        cur.close()
+        conn.close()
+        return redirect(url_for("creditos.index"))
+
+    nuevo_abonado = abonado + monto
+    nuevo_pendiente = pendiente - monto
+    estado = "Pagado" if nuevo_pendiente == 0 else "Pendiente"
 
     cur.execute("""
         UPDATE creditos
@@ -189,7 +137,7 @@ def abonar(index):
         nuevo_pendiente,
         estado,
         datetime.now().strftime("%Y-%m-%d %H:%M"),
-        credito["numero_factura"]
+        numero_factura
     ))
 
     conn.commit()
@@ -198,25 +146,37 @@ def abonar(index):
 
     registrar_log(
         usuario=session.get("usuario", "admin"),
-        accion=f"Abonó ${monto:.2f} al crédito {credito['numero_factura']}",
+        accion=f"Abonó ${monto:.2f} al crédito {numero_factura}",
         modulo="Créditos"
     )
 
     return redirect(url_for("creditos.index"))
 
 # ======================
-# PDF DEL CRÉDITO
+# PDF
 # ======================
-@creditos_bp.route("/pdf/<int:index>")
-def pdf_credito(index):
+@creditos_bp.route("/pdf/<numero_factura>")
+def pdf_credito(numero_factura):
     if "usuario" not in session:
         return redirect(url_for("auth.login"))
 
-    creditos = cargar_creditos()
-    if index < 0 or index >= len(creditos):
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT numero_factura, cliente, monto, abonado, pendiente, fecha
+        FROM creditos
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+
+    c = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if not c:
         return redirect(url_for("creditos.index"))
 
-    c = creditos[index]
+    numero_factura, cliente, monto, abonado, pendiente, fecha = c
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -231,12 +191,12 @@ def pdf_credito(index):
     elementos.append(Paragraph("<b>COMPROBANTE DE CRÉDITO</b><br/>", styles["Heading2"]))
 
     data = [
-        ["Factura", c["numero_factura"]],
-        ["Cliente", c["cliente"]],
-        ["Fecha", c["fecha"]],
-        ["Monto", f"${c['monto']:,.2f}"],
-        ["Abonado", f"${c['abonado']:,.2f}"],
-        ["Pendiente", f"${c['pendiente']:,.2f}"],
+        ["Factura", numero_factura],
+        ["Cliente", cliente],
+        ["Fecha", fecha],
+        ["Monto", f"${monto:,.2f}"],
+        ["Abonado", f"${abonado:,.2f}"],
+        ["Pendiente", f"${pendiente:,.2f}"],
     ]
 
     tabla = Table(data, colWidths=[150, 300])
@@ -253,22 +213,16 @@ def pdf_credito(index):
         buffer,
         mimetype="application/pdf",
         as_attachment=False,
-        download_name=f"credito_{c['numero_factura']}.pdf"
+        download_name=f"credito_{numero_factura}.pdf"
     )
 
 # ======================
-# ELIMINAR CRÉDITO (BD)
+# ELIMINAR
 # ======================
-@creditos_bp.route("/eliminar/<int:index>")
-def eliminar(index):
+@creditos_bp.route("/eliminar/<numero_factura>")
+def eliminar(numero_factura):
     if session.get("rol") != "admin":
         return redirect(url_for("creditos.index"))
-
-    creditos = cargar_creditos()
-    if index < 0 or index >= len(creditos):
-        return redirect(url_for("creditos.index"))
-
-    numero_factura = creditos[index]["numero_factura"]
 
     conn = get_db()
     cur = conn.cursor()
