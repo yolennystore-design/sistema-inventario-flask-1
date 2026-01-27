@@ -9,6 +9,7 @@ from datetime import datetime
 from io import BytesIO
 
 from app.utils.auditoria import registrar_log
+from app.routes.clientes import cargar_clientes   # ✅ ESTE
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph,
