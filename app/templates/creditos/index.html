@@ -16,7 +16,7 @@
             <option value="">— Todos los clientes —</option>
             {% for cliente in clientes %}
             <option value="{{ cliente }}"
-                    {% if cliente == filtro_cliente %}selected{% endif %}>
+                    {% if cliente= =filtro_cliente %}selected{% endif %}>
                 {{ cliente }}
             </option>
             {% endfor %}
@@ -145,8 +145,7 @@
      VOLVER AL INICIO
 ========================= -->
 <div class="mt-4">
-    <a href="{{ url_for('main.index') if 'main.index' in current_app.view_functions else '/' }}"
-       class="btn btn-outline-secondary">
+    <a href="/" class="btn btn-outline-secondary">
         ⬅ Volver al inicio
     </a>
 </div>
