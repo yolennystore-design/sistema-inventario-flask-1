@@ -196,12 +196,9 @@ def confirmar():
             total,
             fecha
         ))
-
         conn.commit()
         cur.close()
         conn.close()
-
-        guardar_json(CREDITOS_FILE, creditos)
 
     guardar_json(CARRITO_FILE, [])
 
