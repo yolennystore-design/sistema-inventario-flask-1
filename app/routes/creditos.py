@@ -43,7 +43,17 @@ def cargar_creditos():
     """)
 
     columnas = [c[0] for c in cur.description]
-    creditos = [dict(zip(columnas, fila)) for fila in cur.fetchall()]
+    creditos = []
+
+    for fila in cur.fetchall():
+        c = dict(zip(columnas, fila))
+
+        # 🔥 CONVERSIÓN DEFINITIVA A FLOAT
+        c["monto"] = float(c.get("monto") or 0)
+        c["abonado"] = float(c.get("abonado") or 0)
+        c["pendiente"] = float(c.get("pendiente") or 0)
+
+        creditos.append(c)
 
     cur.close()
     conn.close()
