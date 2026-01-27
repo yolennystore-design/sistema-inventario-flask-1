@@ -57,7 +57,7 @@ def crear_credito():
         "monto": monto,
         "abonado": 0.0,
         "pendiente": monto,
-        "productos": productos,
+        "items": productos,
         "numero_factura": f"YS-{len(creditos)+1:05d}"
     }
 
