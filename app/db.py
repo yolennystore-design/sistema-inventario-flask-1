@@ -108,6 +108,21 @@ def crear_tablas():
         fecha TEXT
     )
     """)
+    # ======================
+    # CRÉDITOS
+    # ======================
+    cur.execute(f"""
+    CREATE TABLE IF NOT EXISTS creditos (
+        id {id_type},
+        numero_factura TEXT,
+        cliente TEXT NOT NULL,
+        monto REAL NOT NULL,
+        abonado REAL DEFAULT 0,
+        pendiente REAL NOT NULL,
+        estado TEXT DEFAULT 'Pendiente',
+        fecha TEXT
+    )
+    """)
 
     # ======================
     # COMPRAS / CRÉDITOS

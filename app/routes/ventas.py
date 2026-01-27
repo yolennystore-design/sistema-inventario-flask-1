@@ -183,18 +183,22 @@ def confirmar():
 
     # 👉 REGISTRAR CRÉDITO
     if tipo_venta.lower() == "credito":
-        creditos = cargar_json(CREDITOS_FILE)
-        creditos.append({
-            "numero_factura": numero_factura,
-            "cliente": cliente,
-            "fecha": fecha,
-            "monto": total,          # ✅ CAMBIO CLAVE
-            "abonado": 0,
-            "pendiente": total,
-            "estado": "Pendiente",
-            "items": carrito
-        })
-
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO creditos
+            (numero_factura, cliente, monto, abonado, pendiente, estado, fecha)
+            VALUES (%s, %s, %s, 0, %s, 'Pendiente', %s)
+        """, (
+            numero_factura,
+            cliente,
+            total,
+            total,
+            fecha
+        ))
+        conn.commit()
+        cur.close()
+        conn.close()
 
         guardar_json(CREDITOS_FILE, creditos)
 

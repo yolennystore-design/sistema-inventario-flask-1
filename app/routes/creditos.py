@@ -27,10 +27,17 @@ DATA_FILE = "app/data/creditos.json"
 # UTILIDADES
 # ======================
 def cargar_creditos():
-    if not os.path.exists(DATA_FILE) or os.stat(DATA_FILE).st_size == 0:
-        return []
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT * FROM creditos
+        ORDER BY fecha DESC
+    """)
+    creditos = cur.fetchall()
+    cur.close()
+    conn.close()
+    return creditos
+
 
 def guardar_creditos(creditos):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
