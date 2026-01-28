@@ -18,7 +18,6 @@ SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 # ======================
 # CONEXIÓN A LA BD
 # ======================
-
 def get_db():
     """
     PRIORIDAD DE CONEXIÓN
