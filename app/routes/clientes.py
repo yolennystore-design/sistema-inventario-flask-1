@@ -3,6 +3,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 import json, os
 from app.utils.auditoria import registrar_log
 from flask import session
+from app.db import get_db
+
 
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/clientes")
