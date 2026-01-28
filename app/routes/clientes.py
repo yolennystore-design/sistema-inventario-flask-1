@@ -1,43 +1,55 @@
 ﻿# -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, request, redirect, url_for, session
-import json, os
-from app.utils.auditoria import registrar_log
-from flask import session
+
+from flask import (
+    Blueprint, render_template, request,
+    redirect, url_for, session
+)
 from app.db import get_db
-
-
+from app.utils.auditoria import registrar_log
 
 clientes_bp = Blueprint("clientes", __name__, url_prefix="/clientes")
 
-DATA_FILE = "app/data/clientes.json"
 
-
-def cargar_clientes():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def guardar_clientes(clientes):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(clientes, f, indent=4, ensure_ascii=False)
-
-
+# ======================
+# 📋 LISTAR CLIENTES
+# ======================
 @clientes_bp.route("/")
 def index():
     if "usuario" not in session:
         return redirect(url_for("auth.login"))
 
-    clientes = cargar_clientes()
-    return render_template("clientes/index.html", clientes=clientes)
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, nombre, direccion, telefono
+        FROM clientes
+        ORDER BY id DESC
+    """)
+    clientes = cur.fetchall()
+
+    conn.close()
+
+    return render_template(
+        "clientes/index.html",
+        clientes=clientes
+    )
 
 
+# ======================
+# ➕ AGREGAR CLIENTE
+# ======================
 @clientes_bp.route("/agregar", methods=["POST"])
 def agregar():
-    nombre = request.form["nombre"]
-    direccion = request.form.get("direccion", "")
-    telefono = request.form.get("telefono", "")
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
+
+    nombre = request.form.get("nombre", "").strip()
+    direccion = request.form.get("direccion", "").strip()
+    telefono = request.form.get("telefono", "").strip()
+
+    if not nombre:
+        return redirect(url_for("clientes.index"))
 
     conn = get_db()
     cur = conn.cursor()
@@ -47,21 +59,37 @@ def agregar():
         VALUES (%s, %s, %s)
     """, (nombre, direccion, telefono))
 
-    conn.commit()   # 🔥 SIN ESTO NO SE GUARDA
+    conn.commit()
     conn.close()
 
+    registrar_log(
+        usuario=session["usuario"],
+        accion=f"Agregó cliente: {nombre}",
+        modulo="Clientes"
+    )
+
     return redirect(url_for("clientes.index"))
 
 
-
+# ======================
+# 🗑 ELIMINAR CLIENTE
+# ======================
 @clientes_bp.route("/eliminar/<int:id>")
 def eliminar(id):
-    clientes = cargar_clientes()
-    clientes = [c for c in clientes if c["id"] != id]
-    guardar_clientes(clientes)
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM clientes WHERE id = %s", (id,))
+    conn.commit()
+    conn.close()
+
+    registrar_log(
+        usuario=session["usuario"],
+        accion=f"Eliminó cliente ID {id}",
+        modulo="Clientes"
+    )
+
     return redirect(url_for("clientes.index"))
-
-
-
-
-
