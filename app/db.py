@@ -94,6 +94,13 @@ def crear_tablas():
     )
     """)
 
+    # 🔐 MIGRACIÓN AUTOMÁTICA (POSTGRES + SQLITE)
+    try:
+        cur.execute("ALTER TABLE clientes ADD COLUMN direccion TEXT")
+    except Exception:
+        pass
+
+
     # ======================
     # VENTAS
     # ======================
