@@ -21,7 +21,7 @@
         <select name="cliente" class="form-select">
             <option value="">Todos</option>
             {% for c in clientes %}
-            <option value="{{ c }}" {% if cliente_sel= =c %}selected{% endif %}>
+            <option value="{{ c }}" {% if cliente_sel == c %}selected{% endif %}>
                 {{ c }}
             </option>
             {% endfor %}
@@ -32,10 +32,10 @@
         <label class="form-label fw-bold">Estado</label>
         <select name="estado" class="form-select">
             <option value="">Todos</option>
-            <option value="Pendiente" {% if estado= ="Pendiente" %}selected{% endif %}>
+            <option value="Pendiente" {% if estado == "Pendiente" %}selected{% endif %}>
                 Pendiente
             </option>
-            <option value="Pagado" {% if estado= ="Pagado" %}selected{% endif %}>
+            <option value="Pagado" {% if estado == "Pagado" %}selected{% endif %}>
                 Pagado
             </option>
         </select>
