@@ -35,8 +35,9 @@ def index():
     conn = get_db()
     cur = conn.cursor()
 
+    # ✅ FIX AQUÍ
     cur.execute("SELECT DISTINCT cliente FROM creditos ORDER BY cliente")
-    clientes = [c[0] for c in cur.fetchall()]
+    clientes = [c["cliente"] for c in cur.fetchall()]
 
     query = """
         SELECT id, numero_factura, cliente, monto,
@@ -69,7 +70,6 @@ def index():
         cliente_sel=cliente,
         estado=estado
     )
-
 
 # ======================
 # 🔐 ABONAR (SOLO ADMIN)
