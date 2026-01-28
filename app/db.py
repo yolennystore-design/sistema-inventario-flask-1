@@ -50,11 +50,6 @@ def get_db():
 # ======================
 
 def crear_tablas():
-    """
-    Crea todas las tablas necesarias.
-    Se ejecuta UNA SOLA VEZ al iniciar la app.
-    """
-
     conn = get_db()
     cur = conn.cursor()
 
@@ -89,17 +84,18 @@ def crear_tablas():
     CREATE TABLE IF NOT EXISTS clientes (
         id {id_type},
         nombre TEXT NOT NULL,
-        direccion TEXT,
         telefono TEXT
     )
     """)
 
-    # 🔐 MIGRACIÓN AUTOMÁTICA (POSTGRES + SQLITE)
+    # ======================
+    # MIGRACIÓN SEGURA (direccion)
+    # ======================
     try:
         cur.execute("ALTER TABLE clientes ADD COLUMN direccion TEXT")
+        conn.commit()
     except Exception:
-        pass
-
+        conn.rollback()  # 🔥 ESTO ES LO QUE FALTABA
 
     # ======================
     # VENTAS
@@ -133,7 +129,7 @@ def crear_tablas():
     """)
 
     # ======================
-    # COMPRAS / CRÉDITOS
+    # COMPRAS
     # ======================
     cur.execute(f"""
     CREATE TABLE IF NOT EXISTS compras (
@@ -151,7 +147,7 @@ def crear_tablas():
     """)
 
     # ======================
-    # HISTORIAL DE PRODUCTOS
+    # HISTORIAL
     # ======================
     cur.execute(f"""
     CREATE TABLE IF NOT EXISTS productos_historial (
