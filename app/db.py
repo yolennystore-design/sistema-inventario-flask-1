@@ -16,37 +16,33 @@ SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 
 
 # ======================
-# CONEXIÓN A LA BASE DE DATOS
+# CONEXIÓN A LA BD
 # ======================
 
 def get_db():
     """
-    PRODUCCIÓN (Render):
-        - PostgreSQL obligatorio
-        - Usa DATABASE_URL
+    PRIORIDAD DE CONEXIÓN
 
-    DESARROLLO LOCAL:
-        - SQLite automático
-        - Usa database.db
+    1️⃣ PostgreSQL (Render / Producción)
+       - Usa DATABASE_URL
+       - Persistente
+
+    2️⃣ SQLite (Desarrollo local)
+       - Usa database.db
+       - SOLO si no existe DATABASE_URL
     """
 
-    # PRODUCCIÓN → PostgreSQL
-    if DATABASE_URL and DATABASE_URL.startswith("postgres"):
+    # PostgreSQL (Render)
+    if DATABASE_URL:
         return psycopg2.connect(
             DATABASE_URL,
             cursor_factory=RealDictCursor
         )
 
-    # DESARROLLO LOCAL → SQLite
-    if os.getenv("FLASK_ENV") == "development":
-        conn = sqlite3.connect(SQLITE_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn
-
-    # ERROR CLARO SI FALLA TODO
-    raise RuntimeError(
-        "DATABASE_URL no configurada. PostgreSQL es obligatorio en producción."
-    )
+    # SQLite (Local)
+    conn = sqlite3.connect(SQLITE_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 # ======================
@@ -54,13 +50,16 @@ def get_db():
 # ======================
 
 def crear_tablas():
+    """
+    Crea todas las tablas necesarias.
+    Se ejecuta UNA SOLA VEZ al iniciar la app.
+    """
+
     conn = get_db()
     cur = conn.cursor()
 
-    # Detectar si es SQLite o PostgreSQL
     is_sqlite = isinstance(conn, sqlite3.Connection)
 
-    # Tipo de ID compatible
     id_type = (
         "INTEGER PRIMARY KEY AUTOINCREMENT"
         if is_sqlite
@@ -108,6 +107,7 @@ def crear_tablas():
         fecha TEXT
     )
     """)
+
     # ======================
     # CRÉDITOS
     # ======================
