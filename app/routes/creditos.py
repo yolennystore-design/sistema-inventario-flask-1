@@ -4,7 +4,6 @@ from flask import (
     Blueprint, render_template, request,
     redirect, url_for, session, flash, send_file
 )
-from datetime import datetime
 from io import BytesIO
 import os
 
@@ -35,7 +34,7 @@ def index():
     conn = get_db()
     cur = conn.cursor()
 
-    # ✅ FIX AQUÍ
+    # Clientes únicos
     cur.execute("SELECT DISTINCT cliente FROM creditos ORDER BY cliente")
     clientes = [c["cliente"] for c in cur.fetchall()]
 
@@ -71,6 +70,7 @@ def index():
         estado=estado
     )
 
+
 # ======================
 # 🔐 ABONAR (SOLO ADMIN)
 # ======================
@@ -99,7 +99,8 @@ def abonar(id):
         conn.close()
         return redirect(url_for("creditos.index"))
 
-    abonado, pendiente = row
+    abonado = float(row["abonado"])
+    pendiente = float(row["pendiente"])
 
     if abono <= 0 or abono > pendiente:
         flash("Monto de abono inválido", "danger")
@@ -111,9 +112,16 @@ def abonar(id):
 
     cur.execute("""
         UPDATE creditos
-        SET abonado=%s, pendiente=%s, estado=%s
-        WHERE id=%s
-    """, (nuevo_abonado, nuevo_pendiente, estado, id))
+        SET abonado = %s,
+            pendiente = %s,
+            estado = %s
+        WHERE id = %s
+    """, (
+        nuevo_abonado,
+        nuevo_pendiente,
+        estado,
+        id
+    ))
 
     conn.commit()
     cur.close()
@@ -121,7 +129,7 @@ def abonar(id):
 
     registrar_log(
         usuario=session["usuario"],
-        accion=f"Abonó RD${abono} al crédito #{id}",
+        accion=f"Abonó RD${abono:,.2f} al crédito #{id}",
         modulo="Créditos"
     )
 
@@ -137,7 +145,7 @@ def solicitar_abono(id):
     if "usuario" not in session:
         return redirect(url_for("auth.login"))
 
-    monto = request.form["abono"]
+    monto = request.form.get("abono", "0")
     usuario = session["usuario"]
 
     registrar_log(
@@ -147,8 +155,7 @@ def solicitar_abono(id):
     )
 
     flash(
-        "📨 Solicitud enviada al administrador. "
-        "El abono será aplicado tras aprobación.",
+        "📨 Solicitud enviada al administrador.",
         "info"
     )
 
@@ -180,7 +187,12 @@ def pdf_credito(numero_factura):
     if not row:
         return redirect(url_for("creditos.index"))
 
-    numero_factura, cliente, monto, abonado, pendiente, fecha = row
+    numero_factura = row["numero_factura"]
+    cliente = row["cliente"]
+    monto = float(row["monto"])
+    abonado = float(row["abonado"])
+    pendiente = float(row["pendiente"])
+    fecha = row["fecha"]
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -192,7 +204,9 @@ def pdf_credito(numero_factura):
         elementos.append(Image(logo, 90, 60))
 
     elementos.append(Paragraph("<b>Yolenny Store</b>", styles["Heading1"]))
-    elementos.append(Paragraph("<b>COMPROBANTE DE CRÉDITO</b><br/><br/>", styles["Heading2"]))
+    elementos.append(
+        Paragraph("<b>COMPROBANTE DE CRÉDITO</b><br/><br/>", styles["Heading2"])
+    )
 
     data = [
         ["Factura", numero_factura],
@@ -232,16 +246,19 @@ def eliminar_credito(id):
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT numero_factura FROM creditos WHERE id=%s", (id,))
+    cur.execute(
+        "SELECT numero_factura FROM creditos WHERE id = %s",
+        (id,)
+    )
     row = cur.fetchone()
 
     if not row:
         conn.close()
         return redirect(url_for("creditos.index"))
 
-    numero_factura = row[0]
+    numero_factura = row["numero_factura"]
 
-    cur.execute("DELETE FROM creditos WHERE id=%s", (id,))
+    cur.execute("DELETE FROM creditos WHERE id = %s", (id,))
     conn.commit()
 
     cur.close()
@@ -253,4 +270,5 @@ def eliminar_credito(id):
         modulo="Créditos"
     )
 
+    flash("🗑 Crédito eliminado correctamente", "success")
     return redirect(url_for("creditos.index"))
