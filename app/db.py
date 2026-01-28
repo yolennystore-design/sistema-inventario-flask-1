@@ -88,7 +88,8 @@ def crear_tablas():
     cur.execute(f"""
     CREATE TABLE IF NOT EXISTS clientes (
         id {id_type},
-        nombre TEXT,
+        nombre TEXT NOT NULL,
+        direccion TEXT,
         telefono TEXT
     )
     """)
