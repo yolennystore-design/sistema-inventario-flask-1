@@ -65,9 +65,9 @@
             <tr>
                 <td>{{ c[1] }}</td>
                 <td>{{ c[2] }}</td>
-                <td class="text-end">RD$ {{ "{:,.2f}".format(c[3]) }}</td>
-                <td class="text-end text-success">RD$ {{ "{:,.2f}".format(c[4]) }}</td>
-                <td class="text-end text-danger">RD$ {{ "{:,.2f}".format(c[5]) }}</td>
+                <td class="text-end">RD$ {{ "{:,.2f}".format(c.monto) }}</td>
+                <td class="text-end text-success">RD$ {{ "{:,.2f}".format(c.abonado) }}</td>
+                <td class="text-end text-danger">RD$ {{ "{:,.2f}".format(c.pendiente) }}</td>
                 <td class="text-center">
                     {% if c[6]=="Pagado" %}
                     <span class="badge bg-success">Pagado</span>
