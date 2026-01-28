@@ -2,132 +2,126 @@
 {% block title %}Créditos{% endblock %}
 
 {% block content %}
-
 <h2 class="mb-4">💳 Créditos</h2>
 
+<!-- FILTROS -->
 <form method="get" class="row g-3 mb-4 align-items-end">
+
     <div class="col-md-4">
         <label class="form-label fw-bold">Cliente</label>
         <select name="cliente" class="form-select">
-            <option value="">— Todos los clientes —</option>
-            {% for cliente in clientes %}
-            <option value="{{ cliente }}"
-                    {% if cliente == filtro_cliente %}selected{% endif %}>
-                {{ cliente }}
+            <option value="">Todos</option>
+            {% for c in clientes %}
+            <option value="{{ c }}" {% if cliente_sel == c %}selected{% endif %}>
+                {{ c }}
             </option>
             {% endfor %}
         </select>
     </div>
 
-    <div class="col-md-2">
-        <button class="btn btn-primary w-100">Filtrar</button>
+    <div class="col-md-3">
+        <label class="form-label fw-bold">Estado</label>
+        <select name="estado" class="form-select">
+            <option value="">Todos</option>
+            <option value="Pendiente" {% if estado == "Pendiente" %}selected{% endif %}>
+                Pendiente
+            </option>
+            <option value="Pagado" {% if estado == "Pagado" %}selected{% endif %}>
+                Pagado
+            </option>
+        </select>
     </div>
 
     <div class="col-md-2">
-        <a href="{{ url_for('creditos.index') }}"
-           class="btn btn-secondary w-100">Limpiar</a>
+        <button class="btn btn-primary w-100">🔍 Filtrar</button>
     </div>
+
+    <div class="col-md-2">
+        <a href="{{ url_for('creditos.index') }}" class="btn btn-secondary w-100">
+            🔄 Limpiar
+        </a>
+    </div>
+
 </form>
 
-<hr>
-
+<!-- TABLA -->
 <div class="table-responsive">
-    <table class="table table-striped table-bordered align-middle">
-        <thead class="table-light">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark text-center">
             <tr>
-                <th>#</th>
+                <th>Factura</th>
                 <th>Cliente</th>
                 <th>Monto</th>
                 <th>Abonado</th>
                 <th>Pendiente</th>
+                <th>Estado</th>
                 <th>Fecha</th>
-                <th class="no-print">Abonar</th>
-                <th class="no-print">PDF</th>
-                {% if session.rol == "admin" %}
-                <th class="no-print">Acción</th>
-                {% endif %}
+                <th>Acciones</th>
             </tr>
         </thead>
 
         <tbody>
             {% for c in creditos %}
             <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ c.cliente }}</td>
-                <td>${{ "%.2f"|format(c.monto|float) }}</td>
-                <td>${{ "%.2f"|format(c.abonado|float) }}</td>
-
-                <td>
-                    {% if c.pendiente|float > 0 %}
-                    <span class="text-danger fw-bold">
-                        ${{ "%.2f"|format(c.pendiente|float) }}
-                    </span>
+                <td>{{ c[1] }}</td>
+                <td>{{ c[2] }}</td>
+                <td class="text-end">RD$ {{ "{:,.2f}".format(c[3]) }}</td>
+                <td class="text-end text-success">RD$ {{ "{:,.2f}".format(c[4]) }}</td>
+                <td class="text-end text-danger">RD$ {{ "{:,.2f}".format(c[5]) }}</td>
+                <td class="text-center">
+                    {% if c[6]=="Pagado" %}
+                    <span class="badge bg-success">Pagado</span>
                     {% else %}
-                    <span class="text-success fw-bold">Pagado</span>
+                    <span class="badge bg-warning text-dark">Pendiente</span>
                     {% endif %}
                 </td>
+                <td>{{ c[7] }}</td>
 
-                <td>{{ c.fecha }}</td>
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-1 flex-wrap">
 
-                <td class="no-print">
-                    {% if c.pendiente|float > 0 and session.rol == "admin" %}
-                    <form method="POST"
-                          action="{{ url_for('creditos.abonar',
-                      numero_factura=c.numero_factura) }}"
-                          class="d-flex">
-                        <input type="number"
-                               name="monto"
-                               class="form-control me-2"
-                               min="1"
-                               max="{{ c.pendiente|float }}"
-                               step="0.01"
-                               required>
-                        <button class="btn btn-success btn-sm">Abonar</button>
-                    </form>
-                    {% else %}
-                    —
-                    {% endif %}
-                </td>
+                        <!-- ADMIN: ABONAR -->
+                        {% if session.get("rol")=="admin" and c[6]=="Pendiente" %}
+                        <form method="post"
+                              action="{{ url_for('creditos.abonar', id=c[0]) }}"
+                              class="d-flex gap-1">
+                            <input type="number" step="0.01"
+                                   name="abono"
+                                   class="form-control form-control-sm"
+                                   placeholder="RD$" required>
+                            <button class="btn btn-success btn-sm">💵</button>
+                        </form>
+                        {% endif %}
 
-                <td class="no-print text-center">
-                    <a href="{{ url_for('creditos.pdf_credito',
-            numero_factura=c.numero_factura) }}"
-                       class="btn btn-outline-info btn-sm"
-                       target="_blank">🖨️</a>
-                </td>
+                        <!-- EMPLEADO: SOLICITAR -->
+                        {% if session.get("rol")=="empleado" and c[6]=="Pendiente" %}
+                        <form method="post"
+                              action="{{ url_for('creditos.solicitar_abono', id=c[0]) }}">
+                            <input type="hidden" name="abono" value="0">
+                            <button class="btn btn-warning btn-sm" title="Solicitar permiso">
+                                📝
+                            </button>
+                        </form>
+                        {% endif %}
 
-                {% if session.rol == "admin" %}
-                <td class="no-print text-center">
-                    <a href="{{ url_for('creditos.eliminar',
-            numero_factura=c.numero_factura) }}"
-                       class="btn btn-danger btn-sm"
-                       onclick="return confirm('¿Eliminar este crédito?')">🗑️</a>
+                        <!-- PDF -->
+                        <a href="{{ url_for('creditos.pdf_credito', numero_factura=c[1]) }}"
+                           class="btn btn-secondary btn-sm">🖨️</a>
 
-                    <a href="{{ url_for('ventas.factura_por_numero',
-            numero=c.numero_factura) }}"
-                       class="btn btn-primary btn-sm">📄</a>
-                </td>
-                {% endif %}
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="9" class="text-center text-muted">
-                    No hay créditos para mostrar
+                        <!-- ELIMINAR -->
+                        {% if session.get("rol")=="admin" %}
+                        <a href="{{ url_for('creditos.eliminar_credito', id=c[0]) }}"
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('¿Eliminar este crédito?')">
+                            🗑️
+                        </a>
+                        {% endif %}
+
+                    </div>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-
-<a href="/" class="btn btn-outline-secondary mt-3">⬅ Volver</a>
-
-<style>
-    @media print {
-        .no-print {
-            display: none !important;
-        }
-    }
-</style>
-
 {% endblock %}
