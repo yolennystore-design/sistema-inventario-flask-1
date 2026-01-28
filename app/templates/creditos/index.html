@@ -110,7 +110,7 @@
 
                         <!-- ELIMINAR -->
                         {% if session.get("rol")=="admin" %}
-                        <a href="{{ url_for('creditos.eliminar_credito', id=c[0]) }}"
+                        <a href="{{ url_for('creditos.eliminar_credito', id=c.id) }}"
                            class="btn btn-danger btn-sm"
                            onclick="return confirm('¿Eliminar este crédito?')">
                             🗑️
