@@ -63,27 +63,38 @@
         <tbody>
             {% for c in creditos %}
             <tr>
-                <td>{{ c[1] }}</td>
-                <td>{{ c[2] }}</td>
-                <td class="text-end">RD$ {{ "{:,.2f}".format(c.monto) }}</td>
-                <td class="text-end text-success">RD$ {{ "{:,.2f}".format(c.abonado) }}</td>
-                <td class="text-end text-danger">RD$ {{ "{:,.2f}".format(c.pendiente) }}</td>
+                <td>{{ c.numero_factura }}</td>
+                <td>{{ c.cliente }}</td>
+
+                <td class="text-end">
+                    RD$ {{ "{:,.2f}".format(c.monto) }}
+                </td>
+
+                <td class="text-end text-success">
+                    RD$ {{ "{:,.2f}".format(c.abonado) }}
+                </td>
+
+                <td class="text-end text-danger">
+                    RD$ {{ "{:,.2f}".format(c.pendiente) }}
+                </td>
+
                 <td class="text-center">
-                    {% if c[6]=="Pagado" %}
+                    {% if c.estado == "Pagado" %}
                     <span class="badge bg-success">Pagado</span>
                     {% else %}
                     <span class="badge bg-warning text-dark">Pendiente</span>
                     {% endif %}
                 </td>
-                <td>{{ c[7] }}</td>
+
+                <td>{{ c.fecha }}</td>
 
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-1 flex-wrap">
 
                         <!-- ADMIN: ABONAR -->
-                        {% if session.get("rol")=="admin" and c[6]=="Pendiente" %}
+                        {% if session.get("rol") == "admin" and c.estado == "Pendiente" %}
                         <form method="post"
-                              action="{{ url_for('creditos.abonar', id=c[0]) }}"
+                              action="{{ url_for('creditos.abonar', id=c.id) }}"
                               class="d-flex gap-1">
                             <input type="number" step="0.01"
                                    name="abono"
@@ -94,10 +105,9 @@
                         {% endif %}
 
                         <!-- EMPLEADO: SOLICITAR -->
-                        {% if session.get("rol")=="empleado" and c[6]=="Pendiente" %}
+                        {% if session.get("rol") == "empleado" and c.estado == "Pendiente" %}
                         <form method="post"
-                              action="{{ url_for('creditos.solicitar_abono', id=c[0]) }}">
-                            <input type="hidden" name="abono" value="0">
+                              action="{{ url_for('creditos.solicitar_abono', id=c.id) }}">
                             <button class="btn btn-warning btn-sm" title="Solicitar permiso">
                                 📝
                             </button>
@@ -105,23 +115,25 @@
                         {% endif %}
 
                         <!-- PDF -->
-                        <a href="{{ url_for('creditos.pdf_credito', numero_factura=c[1]) }}"
-                           class="btn btn-secondary btn-sm">🖨️</a>
+                        <a href="{{ url_for('creditos.pdf_credito', numero_factura=c.numero_factura) }}"
+                           class="btn btn-secondary btn-sm">
+                            🖨️
+                        </a>
 
                         <!-- ELIMINAR -->
-                        {% if session.get("rol")=="admin" %}
+                        {% if session.get("rol") == "admin" %}
                         <a href="{{ url_for('creditos.eliminar_credito', id=c.id) }}"
                            class="btn btn-danger btn-sm"
                            onclick="return confirm('¿Eliminar este crédito?')">
                             🗑️
                         </a>
                         {% endif %}
-
                     </div>
                 </td>
             </tr>
             {% endfor %}
         </tbody>
+
     </table>
 </div>
 {% endblock %}
