@@ -4,6 +4,18 @@
 {% block content %}
 <h2 class="mb-3">🛒 Ventas</h2>
 
+<!-- =========================
+     FILTRO DE PRODUCTOS
+========================= -->
+<div class="card mb-3">
+    <div class="card-body">
+        <input type="text"
+               id="filtroProducto"
+               class="form-control"
+               placeholder="🔍 Buscar producto por nombre">
+    </div>
+</div>
+
 <!-- ========================= PRODUCTOS ========================= -->
 <h4>📦 Productos</h4>
 <table class="table table-bordered table-hover">
@@ -18,7 +30,7 @@
     </thead>
     <tbody>
         {% for p in productos %}
-        <tr>
+        <tr class="producto-row" data-nombre="{{ p.nombre | lower }}">
             <td>{{ p.id }}</td>
             <td>{{ p.nombre }}</td>
             <td>${{ p.precio }}</td>
@@ -179,9 +191,7 @@
 <div class="mb-3">
     <a href="/ventas/eliminar_todas"
        class="btn btn-danger"
-       onclick="return confirm(
-           '⚠️ Esto eliminará TODAS las ventas y devolverá el stock.\n\n¿Continuar?'
-       )">
+       onclick="return confirm('⚠️ Esto eliminará TODAS las ventas y devolverá el stock.\n\n¿Continuar?')">
         🗑 Eliminar TODAS las Ventas
     </a>
 </div>
@@ -230,6 +240,7 @@
     </tbody>
 </table>
 
+<!-- ========================= SCRIPTS ========================= -->
 <script>
     function activarClienteManual() {
         const input = document.getElementById("cliente_manual");
@@ -247,6 +258,19 @@
             input.value = "";
         }
     }
+
+    // 🔍 FILTRO DE PRODUCTOS
+    const filtro = document.getElementById("filtroProducto");
+    const filas = document.querySelectorAll(".producto-row");
+
+    filtro.addEventListener("input", () => {
+        const texto = filtro.value.toLowerCase();
+
+        filas.forEach(fila => {
+            const nombre = fila.dataset.nombre;
+            fila.style.display = nombre.includes(texto) ? "" : "none";
+        });
+    });
 </script>
 
 {% endblock %}

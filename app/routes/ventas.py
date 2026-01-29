@@ -150,7 +150,20 @@ def confirmar():
     if not carrito:
         return redirect(url_for("ventas.index"))
 
-    cliente = request.form["cliente"]
+    cliente_manual = request.form.get("cliente_manual", "").strip()
+    cliente_select = request.form.get("cliente_select", "").strip()
+
+    # Prioridad:
+    # 1️⃣ Nombre escrito
+    # 2️⃣ Cliente seleccionado
+    # 3️⃣ Público General
+    if cliente_manual:
+        cliente = cliente_manual
+    elif cliente_select:
+        cliente = cliente_select
+    else:
+        cliente = "Público General"
+
     tipo_venta = request.form.get("tipo_venta", "Contado")
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
