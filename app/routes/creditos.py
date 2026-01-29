@@ -175,7 +175,7 @@ def pdf_credito(numero_factura):
 
     cur.execute("""
         SELECT numero_factura, cliente, monto,
-               abonado, pendiente, fecha
+               abonado, pendiente, fecha, estado
         FROM creditos
         WHERE numero_factura = %s
     """, (numero_factura,))
@@ -193,37 +193,113 @@ def pdf_credito(numero_factura):
     abonado = float(row["abonado"])
     pendiente = float(row["pendiente"])
     fecha = row["fecha"]
+    estado = row.get("estado", "Pendiente")
 
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40
+    )
+
     styles = getSampleStyleSheet()
     elementos = []
 
+    # =========================
+    # LOGO
+    # =========================
     logo = "app/static/logo.png"
     if os.path.exists(logo):
-        elementos.append(Image(logo, 90, 60))
+        elementos.append(Image(logo, 100, 60))
 
-    elementos.append(Paragraph("<b>Yolenny Store</b>", styles["Heading1"]))
+    elementos.append(Spacer(1, 12))
+
+    # =========================
+    # ENCABEZADO
+    # =========================
     elementos.append(
-        Paragraph("<b>COMPROBANTE DE CRÉDITO</b><br/><br/>", styles["Heading2"])
+        Paragraph("<b>YOLENNY STORE</b>", styles["Title"])
+    )
+    elementos.append(
+        Paragraph("Comprobante de Crédito", styles["Heading2"])
     )
 
-    data = [
-        ["Factura", numero_factura],
+    elementos.append(Spacer(1, 20))
+
+    # =========================
+    # DATOS GENERALES
+    # =========================
+    datos = [
+        ["Factura No.", numero_factura],
         ["Cliente", cliente],
         ["Fecha", fecha],
-        ["Monto", f"RD$ {monto:,.2f}"],
-        ["Abonado", f"RD$ {abonado:,.2f}"],
-        ["Pendiente", f"RD$ {pendiente:,.2f}"],
+        ["Estado del crédito", estado],
     ]
 
-    tabla = Table(data, colWidths=[150, 300])
-    tabla.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+    tabla_datos = Table(datos, colWidths=[150, 300])
+    tabla_datos.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
         ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("BACKGROUND", (0, 0), (0, -1), colors.whitesmoke),
+        ("ALIGN", (1, 0), (1, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
     ]))
 
-    elementos.append(tabla)
+    elementos.append(tabla_datos)
+    elementos.append(Spacer(1, 20))
+
+    # =========================
+    # RESUMEN FINANCIERO
+    # =========================
+    resumen = [
+        ["Monto Total", f"RD$ {monto:,.2f}"],
+        ["Total Abonado", f"RD$ {abonado:,.2f}"],
+        ["Saldo Pendiente", f"RD$ {pendiente:,.2f}"],
+    ]
+
+    tabla_resumen = Table(resumen, colWidths=[150, 300])
+    tabla_resumen.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+    ]))
+
+    elementos.append(
+        Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"])
+    )
+    elementos.append(Spacer(1, 8))
+    elementos.append(tabla_resumen)
+
+    elementos.append(Spacer(1, 30))
+
+    # =========================
+    # NOTA FINAL
+    # =========================
+    elementos.append(
+        Paragraph(
+            "Este documento certifica el estado actual del crédito del cliente. "
+            "Para cualquier aclaración, comuníquese con Yolenny Store.",
+            styles["Normal"]
+        )
+    )
+
+    elementos.append(Spacer(1, 20))
+
+    elementos.append(
+        Paragraph(
+            "<i>Gracias por confiar en nosotros</i>",
+            styles["Italic"]
+        )
+    )
+
     doc.build(elementos)
 
     buffer.seek(0)
@@ -233,6 +309,7 @@ def pdf_credito(numero_factura):
         as_attachment=True,
         download_name=f"credito_{numero_factura}.pdf"
     )
+
 
 
 # ======================
