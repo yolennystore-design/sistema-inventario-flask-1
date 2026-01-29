@@ -199,17 +199,21 @@ def pdf_credito(numero_factura):
 
     cur.execute("""
         SELECT numero_factura, cliente, monto,
-               abonado, pendiente, fecha, estado, fecha_ultimo_abono
+               abonado, pendiente, fecha, estado,
+               fecha_ultimo_abono
         FROM creditos
         WHERE numero_factura = %s
     """, (numero_factura,))
-    row = cur.fetchone()
 
+    row = cur.fetchone()
     cur.close()
     conn.close()
 
     if not row:
         return redirect(url_for("creditos.index"))
+
+    fecha_ultimo_abono = row.get("fecha_ultimo_abono") or "—"
+
 
     # =========================
     # DATOS DEL CRÉDITO
