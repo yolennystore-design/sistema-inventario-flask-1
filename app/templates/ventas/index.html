@@ -5,11 +5,10 @@
 <h2 class="mb-3">🛒 Ventas</h2>
 
 <!-- =========================
-     FILTROS
+     FILTROS DE PRODUCTOS
 ========================= -->
 <div class="card mb-3">
     <div class="card-body row g-2">
-
         <div class="col-md-4">
             <input type="text"
                    id="filtroNombre"
@@ -21,7 +20,7 @@
             <select id="filtroCategoria" class="form-select">
                 <option value="">📂 Todas las categorías</option>
                 {% for c in categorias %}
-                <option value="{{ c.nombre | lower }}">{{ c.nombre }}</option>
+                <option value="{{ c.nombre }}">{{ c.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -32,12 +31,11 @@
             </select>
         </div>
 
-        <div class="col-md-2 d-grid">
-            <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
-                🧹 Limpiar
+        <div class="col-md-2">
+            <button class="btn btn-secondary w-100" onclick="limpiarFiltros()">
+                🔄 Limpiar
             </button>
         </div>
-
     </div>
 </div>
 
@@ -56,9 +54,9 @@
     <tbody>
         {% for p in productos %}
         <tr class="producto-row"
-            data-nombre="{{ p.nombre | lower }}"
-            data-categoria="{{ p.categoria | lower }}"
-            data-subcategoria="{{ p.subcategoria | lower }}">
+            data-nombre="{{ p.nombre|lower }}"
+            data-categoria="{{ p.categoria }}"
+            data-subcategoria="{{ p.subcategoria }}">
 
             <td>{{ p.id }}</td>
             <td>{{ p.nombre }}</td>
@@ -67,9 +65,7 @@
                 {% if p.cantidad <= 0 %}
                 <span class="badge bg-danger">AGOTADO</span>
                 {% elif p.cantidad <= 5 %}
-                <span class="badge bg-warning text-dark">
-                    STOCK BAJO ({{ p.cantidad }})
-                </span>
+                <span class="badge bg-warning text-dark">STOCK BAJO ({{ p.cantidad }})</span>
                 {% else %}
                 <span class="badge bg-success">{{ p.cantidad }}</span>
                 {% endif %}
@@ -78,14 +74,9 @@
                 {% if p.cantidad > 0 %}
                 <form method="POST" action="/ventas/agregar_carrito" class="d-flex">
                     <input type="hidden" name="id" value="{{ p.id }}">
-                    <input type="number"
-                           name="cantidad"
-                           min="1"
-                           max="{{ p.cantidad }}"
-                           class="form-control me-1"
-                           style="width:80px"
-                           required>
-                    <button class="btn btn-primary btn-sm">+</button>
+                    <input type="number" name="cantidad" min="1" max="{{ p.cantidad }}"
+                           class="form-control me-1" style="width:80px" required>
+                    <button type="submit" class="btn btn-primary btn-sm">+</button>
                 </form>
                 {% else %}
                 <button class="btn btn-secondary btn-sm" disabled>🚫</button>
@@ -118,14 +109,9 @@
                 {% if session.rol == "admin" %}
                 <form method="POST" action="/ventas/actualizar_precio" class="d-flex">
                     <input type="hidden" name="id" value="{{ i.id }}">
-                    <input type="number"
-                           name="precio"
-                           value="{{ i.precio }}"
-                           step="0.01"
-                           min="0"
-                           class="form-control form-control-sm me-1"
-                           style="width:90px"
-                           required>
+                    <input type="number" name="precio" value="{{ i.precio }}"
+                           step="0.01" min="0"
+                           class="form-control form-control-sm me-1" style="width:90px" required>
                     <button class="btn btn-warning btn-sm">💲</button>
                 </form>
                 {% else %}
@@ -136,17 +122,13 @@
             <td>
                 <a href="/ventas/eliminar_item/{{ i.id }}"
                    class="btn btn-danger btn-sm"
-                   onclick="return confirm('¿Eliminar producto del carrito?')">
-                    ❌
-                </a>
+                   onclick="return confirm('¿Eliminar producto del carrito?')">❌</a>
             </td>
         </tr>
         {% endfor %}
         {% else %}
         <tr>
-            <td colspan="5" class="text-center text-muted">
-                🛒 El carrito está vacío
-            </td>
+            <td colspan="5" class="text-center text-muted">🛒 El carrito está vacío</td>
         </tr>
         {% endif %}
     </tbody>
@@ -155,28 +137,14 @@
 <!-- ========================= CONFIRMAR VENTA ========================= -->
 <form method="POST" action="/ventas/confirmar" class="mt-3">
     <div class="row mb-3">
-
         <div class="col-md-4">
             <label class="form-label">Cliente</label>
-
-            <select id="cliente_select" name="cliente" class="form-select">
+            <select name="cliente" class="form-select">
                 <option value="Público General">Público General</option>
                 {% for c in clientes %}
                 <option value="{{ c.nombre }}">{{ c.nombre }}</option>
                 {% endfor %}
             </select>
-
-            <button type="button"
-                    class="btn btn-outline-secondary btn-sm mt-2"
-                    onclick="activarClienteManual()">
-                ✍️ Cliente manual
-            </button>
-
-            <input type="text"
-                   id="cliente_manual"
-                   name="cliente_manual"
-                   class="form-control mt-2 d-none"
-                   placeholder="Nombre del cliente">
         </div>
 
         <div class="col-md-4">
@@ -189,19 +157,76 @@
     <h4>Total: <strong>${{ total }}</strong></h4>
 
     <div class="d-flex gap-2 mt-2">
-        <button class="btn btn-success" {% if not carrito %}disabled{% endif %}>
+        <button type="submit" class="btn btn-success" {% if not carrito %}disabled{% endif %}>
             💾 Generar Venta
         </button>
 
-        <a href="/ventas/vaciar_carrito"
-           class="btn btn-secondary"
+        <a href="/ventas/vaciar_carrito" class="btn btn-secondary"
            onclick="return confirm('¿Cancelar la venta?')">
             ❌ Cancelar
+        </a>
+
+        <a href="/" class="btn btn-outline-primary">
+            ⬅ Volver al Inicio
         </a>
     </div>
 </form>
 
 <hr>
+
+<!-- ========================= VENTAS REALIZADAS ========================= -->
+<h4>🖨 Ventas Realizadas</h4>
+
+{% if session.rol == "admin" %}
+<div class="mb-3">
+    <a href="/ventas/eliminar_todas"
+       class="btn btn-danger"
+       onclick="return confirm('⚠️ Eliminar TODAS las ventas y devolver stock?')">
+        🗑 Eliminar TODAS las Ventas
+    </a>
+</div>
+{% endif %}
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>#</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in range(ventas|length) %}
+        <tr>
+            <td>{{ v + 1 }}</td>
+            <td>{{ ventas[v].cliente }}</td>
+            <td>
+                {% if ventas[v].tipo_venta == "Crédito" %}
+                <span class="badge bg-warning text-dark">Crédito</span>
+                {% else %}
+                <span class="badge bg-success">Contado</span>
+                {% endif %}
+            </td>
+            <td>{{ ventas[v].fecha }}</td>
+            <td><strong>${{ ventas[v].total }}</strong></td>
+            <td class="d-flex gap-1">
+                <a href="/ventas/factura/{{ v }}"
+                   target="_blank"
+                   class="btn btn-secondary btn-sm">🖨</a>
+
+                {% if session.rol == "admin" %}
+                <a href="/ventas/eliminar/{{ v }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar esta venta?')">🗑</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 <!-- ========================= SCRIPTS ========================= -->
 <script>
@@ -213,60 +238,43 @@ const filtroCategoria = document.getElementById("filtroCategoria");
 const filtroSubcategoria = document.getElementById("filtroSubcategoria");
 
 filtroCategoria.addEventListener("change", () => {
-    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas las subcategorías</option>";
-    const cat = categorias.find(c => c.nombre.toLowerCase() === filtroCategoria.value);
+    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
+    const cat = categorias.find(c => c.nombre === filtroCategoria.value);
     if (!cat) return;
 
     cat.subcategorias.forEach(s => {
         const opt = document.createElement("option");
-        opt.value = s.nombre.toLowerCase();
+        opt.value = s.nombre;
         opt.textContent = s.nombre;
         filtroSubcategoria.appendChild(opt);
     });
-
-    filtrar();
+    aplicarFiltros();
 });
 
-[filtroNombre, filtroSubcategoria].forEach(el => {
-    el.addEventListener("input", filtrar);
-});
+[filtroNombre, filtroSubcategoria].forEach(el =>
+    el.addEventListener("input", aplicarFiltros)
+);
 
-function filtrar() {
+function aplicarFiltros() {
     const nombre = filtroNombre.value.toLowerCase();
     const categoria = filtroCategoria.value;
     const sub = filtroSubcategoria.value;
 
     filas.forEach(f => {
-        const okNombre = f.dataset.nombre.includes(nombre);
-        const okCat = !categoria || f.dataset.categoria === categoria;
-        const okSub = !sub || f.dataset.subcategoria === sub;
+        const ok =
+            f.dataset.nombre.includes(nombre) &&
+            (!categoria || f.dataset.categoria === categoria) &&
+            (!sub || f.dataset.subcategoria === sub);
 
-        f.style.display = (okNombre && okCat && okSub) ? "" : "none";
+        f.style.display = ok ? "" : "none";
     });
 }
 
 function limpiarFiltros() {
     filtroNombre.value = "";
     filtroCategoria.value = "";
-    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas las subcategorías</option>";
-    filtrar();
-}
-
-function activarClienteManual() {
-    const input = document.getElementById("cliente_manual");
-    const select = document.getElementById("cliente_select");
-
-    input.classList.toggle("d-none");
-
-    if (!input.classList.contains("d-none")) {
-        select.disabled = true;
-        input.required = true;
-        input.focus();
-    } else {
-        select.disabled = false;
-        input.required = false;
-        input.value = "";
-    }
+    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
+    aplicarFiltros();
 }
 </script>
 
