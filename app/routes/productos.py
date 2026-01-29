@@ -216,3 +216,30 @@ def eliminar(id):
 
     flash("Producto eliminado", "success")
     return redirect(url_for("productos.index"))
+@productos_bp.route("/historial/<int:id>")
+def historial(id):
+    if "usuario" not in session:
+        return redirect(url_for("auth.login"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT usuario, accion, fecha
+        FROM productos_historial
+        WHERE producto_id = %s
+        ORDER BY fecha DESC
+    """, (id,))
+
+    historial = cur.fetchall()
+
+    cur.execute("SELECT nombre FROM productos WHERE id=%s", (id,))
+    producto = cur.fetchone()
+
+    conn.close()
+
+    return render_template(
+        "productos/historial.html",
+        historial=historial,
+        producto=producto
+    )
