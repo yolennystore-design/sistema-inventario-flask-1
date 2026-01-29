@@ -8,25 +8,6 @@ from io import BytesIO
 import os
 import json 
 from datetime import datetime
-
-fecha_abono = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-cur.execute("""
-    UPDATE creditos
-    SET abonado = %s,
-        pendiente = %s,
-        estado = %s,
-        fecha_ultimo_abono = %s
-    WHERE id = %s
-""", (
-    nuevo_abonado,
-    nuevo_pendiente,
-    estado,
-    fecha_abono,
-    id
-))
-
-
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -109,6 +90,7 @@ def abonar(id):
         return redirect(url_for("creditos.index"))
 
     abono = float(request.form["abono"])
+    fecha_abono = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     conn = get_db()
     cur = conn.cursor()
@@ -121,6 +103,7 @@ def abonar(id):
     row = cur.fetchone()
 
     if not row:
+        cur.close()
         conn.close()
         return redirect(url_for("creditos.index"))
 
@@ -139,12 +122,14 @@ def abonar(id):
         UPDATE creditos
         SET abonado = %s,
             pendiente = %s,
-            estado = %s
+            estado = %s,
+            fecha_ultimo_abono = %s
         WHERE id = %s
     """, (
         nuevo_abonado,
         nuevo_pendiente,
         estado,
+        fecha_abono,
         id
     ))
 
