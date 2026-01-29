@@ -8,7 +8,12 @@ from io import BytesIO
 import os
 
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Table, TableStyle, Image
+    SimpleDocTemplate,
+    Paragraph,
+    Table,
+    TableStyle,
+    Image,
+    Spacer   # 👈 ESTA LÍNEA ES LA CLAVE
 )
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
