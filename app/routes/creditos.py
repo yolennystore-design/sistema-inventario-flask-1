@@ -161,7 +161,6 @@ def pdf_credito(numero_factura):
         FROM creditos
         WHERE numero_factura = %s
     """, (numero_factura,))
-
     row = cur.fetchone()
     cur.close()
     conn.close()
@@ -169,13 +168,9 @@ def pdf_credito(numero_factura):
     if not row:
         return redirect(url_for("creditos.index"))
 
-    # Normalizar fecha último abono
-    fecha_ultimo_abono = (
-        str(row["fecha_ultimo_abono"])
-        if row.get("fecha_ultimo_abono")
-        else "Sin abonos"
-    )
-
+    # ======================
+    # DATOS DEL CRÉDITO
+    # ======================
     numero_factura = row["numero_factura"]
     cliente = row["cliente"]
     monto = float(row["monto"])
@@ -183,6 +178,11 @@ def pdf_credito(numero_factura):
     pendiente = float(row["pendiente"])
     fecha = row["fecha"]
     estado = row.get("estado", "Pendiente")
+    fecha_ultimo_abono = (
+        str(row["fecha_ultimo_abono"])
+        if row.get("fecha_ultimo_abono")
+        else "Sin abonos"
+    )
 
     # ======================
     # PRODUCTOS DE LA VENTA
@@ -215,6 +215,7 @@ def pdf_credito(numero_factura):
     styles = getSampleStyleSheet()
     elementos = []
 
+    # LOGO
     logo = "app/static/logo.png"
     if os.path.exists(logo):
         elementos.append(Image(logo, 100, 60))
@@ -224,14 +225,19 @@ def pdf_credito(numero_factura):
     elementos.append(Paragraph("Comprobante de Crédito", styles["Heading2"]))
     elementos.append(Spacer(1, 20))
 
-    datos = [
-        ["Factura No.", numero_factura],
-        ["Cliente", cliente],
-        ["Fecha", fecha],
-        ["Estado del crédito", estado],
-    ]
+    # ======================
+    # DATOS GENERALES
+    # ======================
+    tabla_datos = Table(
+        [
+            ["Factura No.", numero_factura],
+            ["Cliente", cliente],
+            ["Fecha", fecha],
+            ["Estado del crédito", estado],
+        ],
+        colWidths=[150, 300]
+    )
 
-    tabla_datos = Table(datos, colWidths=[150, 300])
     tabla_datos.setStyle(TableStyle([
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
         ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
@@ -241,6 +247,9 @@ def pdf_credito(numero_factura):
     elementos.append(tabla_datos)
     elementos.append(Spacer(1, 20))
 
+    # ======================
+    # RESUMEN DEL CRÉDITO
+    # ======================
     elementos.append(Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"]))
     elementos.append(Spacer(1, 10))
 
@@ -257,7 +266,7 @@ def pdf_credito(numero_factura):
                 f"RD$ {monto:,.2f}",
                 f"RD$ {abonado:,.2f}",
                 f"RD$ {pendiente:,.2f}",
-                Paragraph(fecha_ultimo_abono.replace(" ", "<br/>"), styles["Normal"])
+                Paragraph(fecha_ultimo_abono.replace(" ", "<br/>"), styles["Normal"]),
             ]
         ],
         colWidths=[200, 90, 90, 90, 110]
@@ -271,13 +280,55 @@ def pdf_credito(numero_factura):
     ]))
 
     elementos.append(tabla_resumen)
-    elementos.append(Spacer(1, 30))
+    elementos.append(Spacer(1, 25))
 
+    # ======================
+    # PRODUCTOS INCLUIDOS (CUADRO COMO EN LA FOTO)
+    # ======================
+    elementos.append(Paragraph("<b>Productos incluidos</b>", styles["Heading3"]))
+    elementos.append(Spacer(1, 10))
+
+    tabla_productos_data = [
+        ["Fecha", "Producto", "Cant.", "Precio", "Subtotal"]
+    ]
+
+    if items:
+        for i in items:
+            tabla_productos_data.append([
+                fecha,
+                i.get("nombre", ""),
+                str(i.get("cantidad", 0)),
+                f"RD$ {i.get('precio', 0):,.2f}",
+                f"RD$ {i.get('total', 0):,.2f}",
+            ])
+    else:
+        tabla_productos_data.append(["—", "Sin productos", "—", "—", "—"])
+
+    tabla_productos = Table(
+        tabla_productos_data,
+        colWidths=[100, 180, 50, 90, 90]
+    )
+
+    tabla_productos.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+    ]))
+
+    elementos.append(tabla_productos)
+    elementos.append(Spacer(1, 25))
+
+    # ======================
+    # FIRMA
+    # ======================
     elementos.append(Paragraph(
-        "Este documento certifica el estado actual del crédito del cliente.",
+        "Este documento certifica el estado actual del crédito del cliente. Para cualquier aclaración, comuniquese con Yolenny store.",
         styles["Normal"]
     ))
-
     elementos.append(Spacer(1, 30))
     elementos.append(Paragraph("______________________________", styles["Normal"]))
     elementos.append(Paragraph("<b>Firma del Cliente</b>", styles["Normal"]))
@@ -293,6 +344,7 @@ def pdf_credito(numero_factura):
         as_attachment=True,
         download_name=f"credito_{numero_factura}.pdf"
     )
+
 
 # ======================
 # 🗑 ELIMINAR CRÉDITO
