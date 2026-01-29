@@ -69,7 +69,6 @@
     <thead class="table-light">
         <tr>
             <th>ID</th>
-            <th>Foto</th>
             <th>Nombre</th>
             <th>Categoría</th>
             <th>Subcategoría</th>
@@ -85,17 +84,6 @@
         {% for p in productos %}
         <tr>
             <td>{{ p.id }}</td>
-
-            <td>
-                {% if p.foto %}
-                <img src="{{ url_for('static', filename='uploads/productos/' ~ p.foto) }}"
-                     width="50"
-                     height="50"
-                     style="object-fit:cover;border-radius:6px">
-                {% else %}
-                —
-                {% endif %}
-            </td>
 
             <td>{{ p.nombre }}</td>
             <td>{{ p.categoria }}</td>
