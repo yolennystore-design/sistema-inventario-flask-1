@@ -154,7 +154,6 @@ def vaciar_carrito():
 # ======================
 @ventas_bp.route("/confirmar", methods=["POST"])
 def confirmar():
-    ventas = cargar_json(VENTAS_FILE)
     carrito = cargar_json(CARRITO_FILE)
 
     if not carrito:
@@ -163,61 +162,54 @@ def confirmar():
     cliente_manual = request.form.get("cliente_manual", "").strip()
     cliente_select = request.form.get("cliente_select", "").strip()
 
-    # Prioridad:
-    # 1️⃣ Nombre escrito
-    # 2️⃣ Cliente seleccionado
-    # 3️⃣ Público General
-    if cliente_manual:
-        cliente = cliente_manual
-    elif cliente_select:
-        cliente = cliente_select
-    else:
-        cliente = "Público General"
+    cliente = (
+        cliente_manual
+        or cliente_select
+        or "Público General"
+    )
 
     tipo_venta_raw = request.form.get("tipo_venta", "Contado")
     tipo_pago = normalizar_pago(tipo_venta_raw)
+
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
-
-    # Descontar stock
-    conn = get_db()
-    cur = conn.cursor()
-    for item in carrito:
-        cur.execute(
-            "UPDATE productos SET cantidad = cantidad - %s WHERE id = %s",
-            (item["cantidad"], item["id"])
-        )
-    conn.commit()
-    cur.close()
-    conn.close()
-
     numero_factura = f"YS-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    venta = {
-        "numero_factura": numero_factura,
-        "cliente": cliente,
+    conn = get_db()
+    cur = conn.cursor()
 
-        # 🔥 IMPORTANTE
-        "tipo_pago": tipo_pago,        # contado / credito
-        "tipo_venta": tipo_venta_raw,  # Contado / Crédito (visual)
+    # ======================
+    # GUARDAR VENTAS EN BD
+    # ======================
+    for item in carrito:
+        cur.execute("""
+            INSERT INTO ventas
+            (id_producto, producto, cantidad, precio, total, fecha)
+            VALUES (%s,%s,%s,%s,%s,%s)
+        """, (
+            item["id"],
+            item["nombre"],
+            item["cantidad"],
+            item["precio"],
+            item["total"],
+            fecha
+        ))
 
-        "items": carrito,
-        "total": total,
-        "fecha": fecha
-    }
+        # DESCONTAR STOCK
+        cur.execute("""
+            UPDATE productos
+            SET cantidad = cantidad - %s
+            WHERE id = %s
+        """, (item["cantidad"], item["id"]))
 
-
-    ventas.append(venta)
-    guardar_json(VENTAS_FILE, ventas)
-
-    # 👉 REGISTRAR CRÉDITO
+    # ======================
+    # REGISTRAR CRÉDITO
+    # ======================
     if tipo_pago == "credito":
-        conn = get_db()
-        cur = conn.cursor()
         cur.execute("""
             INSERT INTO creditos
             (numero_factura, cliente, monto, abonado, pendiente, estado, fecha)
-            VALUES (%s, %s, %s, 0, %s, 'Pendiente', %s)
+            VALUES (%s,%s,%s,0,%s,'Pendiente',%s)
         """, (
             numero_factura,
             cliente,
@@ -225,10 +217,14 @@ def confirmar():
             total,
             fecha
         ))
-        conn.commit()
-        cur.close()
-        conn.close()
 
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    # ======================
+    # LIMPIAR CARRITO
+    # ======================
     guardar_json(CARRITO_FILE, [])
 
     registrar_log(
@@ -237,9 +233,7 @@ def confirmar():
         modulo="Ventas"
     )
 
-
     return redirect(url_for("ventas.index"))
-
 
 # ======================
 # 🧾 FACTURA PDF TÉRMICA
