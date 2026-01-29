@@ -26,23 +26,6 @@
                required>
     </div>
 
-    <div class="col-md-3">
-        <label class="form-label">Cambiar foto</label>
-        <input type="file"
-               name="foto"
-               class="form-control"
-               accept="image/*">
-    </div>
-
-    {% if producto['foto'] %}
-    <div class="col-md-12">
-        <p class="mb-1">Foto actual:</p>
-        <img src="{{ url_for('static', filename='uploads/productos/' ~ producto['foto']) }}"
-             width="120"
-             style="border-radius:8px">
-    </div>
-    {% endif %}
-
     <div class="col-md-12 d-flex justify-content-end mt-3">
         <a href="{{ url_for('productos.index') }}"
            class="btn btn-secondary me-2">
