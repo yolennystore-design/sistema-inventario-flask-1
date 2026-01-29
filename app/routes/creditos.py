@@ -7,6 +7,25 @@ from flask import (
 from io import BytesIO
 import os
 import json 
+from datetime import datetime
+
+fecha_abono = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+cur.execute("""
+    UPDATE creditos
+    SET abonado = %s,
+        pendiente = %s,
+        estado = %s,
+        fecha_ultimo_abono = %s
+    WHERE id = %s
+""", (
+    nuevo_abonado,
+    nuevo_pendiente,
+    estado,
+    fecha_abono,
+    id
+))
+
 
 from reportlab.platypus import (
     SimpleDocTemplate,
@@ -180,7 +199,7 @@ def pdf_credito(numero_factura):
 
     cur.execute("""
         SELECT numero_factura, cliente, monto,
-               abonado, pendiente, fecha, estado
+               abonado, pendiente, fecha, estado, fecha_ultimo_abono
         FROM creditos
         WHERE numero_factura = %s
     """, (numero_factura,))
@@ -192,6 +211,9 @@ def pdf_credito(numero_factura):
     if not row:
         return redirect(url_for("creditos.index"))
 
+    # =========================
+    # DATOS DEL CRÉDITO
+    # =========================
     numero_factura = row["numero_factura"]
     cliente = row["cliente"]
     monto = float(row["monto"])
@@ -199,6 +221,7 @@ def pdf_credito(numero_factura):
     pendiente = float(row["pendiente"])
     fecha = row["fecha"]
     estado = row.get("estado", "Pendiente")
+    fecha_ultimo_abono = row.get("fecha_ultimo_abono") or "Sin abonos"
 
     # =========================
     # OBTENER PRODUCTOS DE LA VENTA
@@ -215,6 +238,9 @@ def pdf_credito(numero_factura):
             if venta:
                 items = venta.get("items", [])
 
+    # =========================
+    # PDF
+    # =========================
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -267,12 +293,12 @@ def pdf_credito(numero_factura):
     elementos.append(Spacer(1, 20))
 
     # =========================
-    # RESUMEN FINANCIERO (HORIZONTAL)
+    # RESUMEN FINANCIERO HORIZONTAL
     # =========================
     elementos.append(Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"]))
     elementos.append(Spacer(1, 10))
 
-    # Construir texto de productos
+    # Detalle productos
     if items:
         detalle_productos = "<br/>".join([
             f"{i.get('nombre')} "
@@ -284,18 +310,19 @@ def pdf_credito(numero_factura):
         detalle_productos = "—"
 
     tabla_resumen_data = [
-        ["Detalle", "Monto Total", "Total Abonado", "Saldo Pendiente"],
+        ["Detalle", "Monto Total", "Total Abonado", "Saldo Pendiente", "Último Abono"],
         [
             Paragraph(detalle_productos, styles["Normal"]),
             f"RD$ {monto:,.2f}",
             f"RD$ {abonado:,.2f}",
             f"RD$ {pendiente:,.2f}",
+            fecha_ultimo_abono
         ]
     ]
 
     tabla_resumen = Table(
         tabla_resumen_data,
-        colWidths=[220, 110, 110, 110]
+        colWidths=[200, 90, 90, 90, 80]
     )
 
     tabla_resumen.setStyle(TableStyle([
@@ -311,15 +338,11 @@ def pdf_credito(numero_factura):
     elementos.append(tabla_resumen)
     elementos.append(Spacer(1, 25))
 
-
-
     # =========================
     # PRODUCTOS DEL CRÉDITO
     # =========================
     if items:
-        elementos.append(
-            Paragraph("<b>Productos incluidos</b>", styles["Heading3"])
-        )
+        elementos.append(Paragraph("<b>Productos incluidos</b>", styles["Heading3"]))
         elementos.append(Spacer(1, 10))
 
         tabla_productos_data = [
@@ -376,7 +399,6 @@ def pdf_credito(numero_factura):
         as_attachment=True,
         download_name=f"credito_{numero_factura}.pdf"
     )
-
 
 # ======================
 # 🗑 ELIMINAR CRÉDITO (ADMIN)

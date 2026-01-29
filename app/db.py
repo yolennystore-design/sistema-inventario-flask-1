@@ -126,6 +126,15 @@ def crear_tablas():
         fecha TEXT
     )
     """)
+    # ======================
+    # MIGRACIÓN SEGURA (fecha_ultimo_abono)
+    # ======================
+    try:
+        cur.execute("ALTER TABLE creditos ADD COLUMN fecha_ultimo_abono TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
 
     # ======================
     # COMPRAS
