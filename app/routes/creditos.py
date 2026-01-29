@@ -269,26 +269,41 @@ def pdf_credito(numero_factura):
     # =========================
     # RESUMEN FINANCIERO
     # =========================
-    resumen = [
+    elementos.append(Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"]))
+    elementos.append(Spacer(1, 10))
+
+    tabla_resumen_data = [
+        ["Concepto", "Detalle"],
         ["Monto Total", f"RD$ {monto:,.2f}"],
         ["Total Abonado", f"RD$ {abonado:,.2f}"],
         ["Saldo Pendiente", f"RD$ {pendiente:,.2f}"],
     ]
 
-    tabla_resumen = Table(resumen, colWidths=[150, 300])
+    if items:
+        tabla_resumen_data.append(["", ""])
+        tabla_resumen_data.append(["Productos", ""])
+
+        for i in items:
+            tabla_resumen_data.append([
+                f"{fecha}",
+                f"{i.get('nombre')} "
+                f"({i.get('cantidad')} x RD$ {i.get('precio'):,.2f}) "
+                f"= RD$ {i.get('total'):,.2f}"
+            ])
+
+    tabla_resumen = Table(tabla_resumen_data, colWidths=[150, 300])
     tabla_resumen.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
         ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-        ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),
-        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
     ]))
 
-    elementos.append(Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"]))
-    elementos.append(Spacer(1, 8))
     elementos.append(tabla_resumen)
     elementos.append(Spacer(1, 25))
+
 
     # =========================
     # PRODUCTOS DEL CRÉDITO
