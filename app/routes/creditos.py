@@ -166,7 +166,6 @@ def solicitar_abono(id):
 
     return redirect(url_for("creditos.index"))
 
-
 # ======================
 # 🧾 PDF DEL CRÉDITO
 # ======================
@@ -200,6 +199,21 @@ def pdf_credito(numero_factura):
     fecha = row["fecha"]
     estado = row.get("estado", "Pendiente")
 
+    # =========================
+    # OBTENER PRODUCTOS DE LA VENTA
+    # =========================
+    items = []
+    ruta_ventas = "app/data/ventas.json"
+    if os.path.exists(ruta_ventas):
+        with open(ruta_ventas, "r", encoding="utf-8") as f:
+            ventas = json.load(f)
+            venta = next(
+                (v for v in ventas if v.get("numero_factura") == numero_factura),
+                None
+            )
+            if venta:
+                items = venta.get("items", [])
+
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -225,13 +239,8 @@ def pdf_credito(numero_factura):
     # =========================
     # ENCABEZADO
     # =========================
-    elementos.append(
-        Paragraph("<b>YOLENNY STORE</b>", styles["Title"])
-    )
-    elementos.append(
-        Paragraph("Comprobante de Crédito", styles["Heading2"])
-    )
-
+    elementos.append(Paragraph("<b>YOLENNY STORE</b>", styles["Title"]))
+    elementos.append(Paragraph("Comprobante de Crédito", styles["Heading2"]))
     elementos.append(Spacer(1, 20))
 
     # =========================
@@ -249,8 +258,6 @@ def pdf_credito(numero_factura):
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
         ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
         ("BACKGROUND", (0, 0), (0, -1), colors.whitesmoke),
-        ("ALIGN", (1, 0), (1, -1), "LEFT"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
         ("TOPPADDING", (0, 0), (-1, -1), 8),
     ]))
@@ -277,13 +284,46 @@ def pdf_credito(numero_factura):
         ("TOPPADDING", (0, 0), (-1, -1), 10),
     ]))
 
-    elementos.append(
-        Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"])
-    )
+    elementos.append(Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"]))
     elementos.append(Spacer(1, 8))
     elementos.append(tabla_resumen)
+    elementos.append(Spacer(1, 25))
 
-    elementos.append(Spacer(1, 30))
+    # =========================
+    # PRODUCTOS DEL CRÉDITO
+    # =========================
+    if items:
+        elementos.append(Paragraph("<b>Detalle de Productos</b>", styles["Heading3"]))
+        elementos.append(Spacer(1, 10))
+
+        data_productos = [
+            ["Producto", "Cant.", "Precio", "Subtotal"]
+        ]
+
+        for i in items:
+            data_productos.append([
+                i.get("nombre", ""),
+                str(i.get("cantidad", 0)),
+                f"RD$ {i.get('precio', 0):,.2f}",
+                f"RD$ {i.get('total', 0):,.2f}",
+            ])
+
+        tabla_productos = Table(
+            data_productos,
+            colWidths=[220, 60, 90, 90]
+        )
+
+        tabla_productos.setStyle(TableStyle([
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ]))
+
+        elementos.append(tabla_productos)
+        elementos.append(Spacer(1, 25))
 
     # =========================
     # NOTA FINAL
@@ -297,13 +337,7 @@ def pdf_credito(numero_factura):
     )
 
     elementos.append(Spacer(1, 20))
-
-    elementos.append(
-        Paragraph(
-            "<i>Gracias por confiar en nosotros</i>",
-            styles["Italic"]
-        )
-    )
+    elementos.append(Paragraph("<i>Gracias por confiar en nosotros</i>", styles["Italic"]))
 
     doc.build(elementos)
 
@@ -314,7 +348,6 @@ def pdf_credito(numero_factura):
         as_attachment=True,
         download_name=f"credito_{numero_factura}.pdf"
     )
-
 
 
 # ======================
