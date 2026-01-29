@@ -91,7 +91,7 @@
 
             {% if session.rol == "admin" %}
             <td>
-                {% if c.tipo_pago == "Crédito" and c.pendiente > 0 %}
+                {% if c.tipo_pago == "credito" and c.pendiente > 0 %}
                 <a href="{{ url_for('compras.abonar', id=c.id) }}"
                    class="btn btn-warning btn-sm mb-1">
                     💵 Abonar
@@ -104,6 +104,7 @@
                     🗑 Eliminar
                 </a>
             </td>
+
             {% endif %}
         </tr>
         {% endfor %}
