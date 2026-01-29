@@ -6,6 +6,7 @@ from flask import (
 )
 from io import BytesIO
 import os
+import json 
 
 from reportlab.platypus import (
     SimpleDocTemplate,
