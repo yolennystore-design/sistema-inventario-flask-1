@@ -305,13 +305,16 @@ def pdf_credito(numero_factura):
             f"RD$ {monto:,.2f}",
             f"RD$ {abonado:,.2f}",
             f"RD$ {pendiente:,.2f}",
-            fecha_ultimo_abono
+            Paragraph(
+                fecha_ultimo_abono.replace(" ", "<br/>"),
+                styles["Normal"]
+            )
         ]
     ]
 
     tabla_resumen = Table(
         tabla_resumen_data,
-        colWidths=[200, 90, 90, 90, 80]
+        colWidths=[200, 90, 90, 90, 110]
     )
 
     tabla_resumen.setStyle(TableStyle([
