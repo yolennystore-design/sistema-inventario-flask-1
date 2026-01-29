@@ -5,12 +5,11 @@
 <h2 class="mb-3">🛒 Ventas</h2>
 
 <!-- =========================
-     FILTROS DE PRODUCTOS
+     FILTROS
 ========================= -->
 <div class="card mb-3">
     <div class="card-body row g-2">
 
-        <!-- BUSCAR POR NOMBRE -->
         <div class="col-md-4">
             <input type="text"
                    id="filtroNombre"
@@ -18,27 +17,24 @@
                    placeholder="🔍 Buscar por nombre">
         </div>
 
-        <!-- FILTRO CATEGORÍA -->
         <div class="col-md-3">
             <select id="filtroCategoria" class="form-select">
                 <option value="">📂 Todas las categorías</option>
                 {% for c in categorias %}
-                <option value="{{ c.nombre }}">{{ c.nombre }}</option>
+                <option value="{{ c.nombre | lower }}">{{ c.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
 
-        <!-- FILTRO SUBCATEGORÍA -->
         <div class="col-md-3">
             <select id="filtroSubcategoria" class="form-select">
                 <option value="">📁 Todas las subcategorías</option>
             </select>
         </div>
 
-        <!-- LIMPIAR -->
-        <div class="col-md-2">
-            <button class="btn btn-secondary w-100" onclick="limpiarFiltros()">
-                🔄 Limpiar
+        <div class="col-md-2 d-grid">
+            <button class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                🧹 Limpiar
             </button>
         </div>
 
@@ -61,8 +57,9 @@
         {% for p in productos %}
         <tr class="producto-row"
             data-nombre="{{ p.nombre | lower }}"
-            data-categoria="{{ p.categoria }}"
-            data-subcategoria="{{ p.subcategoria }}">
+            data-categoria="{{ p.categoria | lower }}"
+            data-subcategoria="{{ p.subcategoria | lower }}">
+
             <td>{{ p.id }}</td>
             <td>{{ p.nombre }}</td>
             <td>${{ p.precio }}</td>
@@ -88,7 +85,7 @@
                            class="form-control me-1"
                            style="width:80px"
                            required>
-                    <button type="submit" class="btn btn-primary btn-sm">+</button>
+                    <button class="btn btn-primary btn-sm">+</button>
                 </form>
                 {% else %}
                 <button class="btn btn-secondary btn-sm" disabled>🚫</button>
@@ -158,8 +155,10 @@
 <!-- ========================= CONFIRMAR VENTA ========================= -->
 <form method="POST" action="/ventas/confirmar" class="mt-3">
     <div class="row mb-3">
+
         <div class="col-md-4">
             <label class="form-label">Cliente</label>
+
             <select id="cliente_select" name="cliente" class="form-select">
                 <option value="Público General">Público General</option>
                 {% for c in clientes %}
@@ -190,81 +189,85 @@
     <h4>Total: <strong>${{ total }}</strong></h4>
 
     <div class="d-flex gap-2 mt-2">
-        <button type="submit"
-                class="btn btn-success"
-                {% if not carrito %}disabled{% endif %}>
+        <button class="btn btn-success" {% if not carrito %}disabled{% endif %}>
             💾 Generar Venta
         </button>
 
         <a href="/ventas/vaciar_carrito"
            class="btn btn-secondary"
            onclick="return confirm('¿Cancelar la venta?')">
-            ❌ Cancelar Venta
-        </a>
-
-        <a href="/" class="btn btn-outline-primary">
-            ⬅ Volver al Inicio
+            ❌ Cancelar
         </a>
     </div>
 </form>
 
+<hr>
+
 <!-- ========================= SCRIPTS ========================= -->
 <script>
-    const categorias = {{ categorias | tojson }};
-    const filas = document.querySelectorAll(".producto-row");
+const categorias = {{ categorias | tojson }};
+const filas = document.querySelectorAll(".producto-row");
 
-    const filtroNombre = document.getElementById("filtroNombre");
-    const filtroCategoria = document.getElementById("filtroCategoria");
-    const filtroSubcategoria = document.getElementById("filtroSubcategoria");
+const filtroNombre = document.getElementById("filtroNombre");
+const filtroCategoria = document.getElementById("filtroCategoria");
+const filtroSubcategoria = document.getElementById("filtroSubcategoria");
 
-    filtroCategoria.addEventListener("change", () => {
-        filtroSubcategoria.innerHTML = '<option value="">📁 Todas las subcategorías</option>';
+filtroCategoria.addEventListener("change", () => {
+    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas las subcategorías</option>";
+    const cat = categorias.find(c => c.nombre.toLowerCase() === filtroCategoria.value);
+    if (!cat) return;
 
-        const cat = categorias.find(c => c.nombre === filtroCategoria.value);
-        if (!cat) return;
-
-        cat.subcategorias.forEach(s => {
-            const opt = document.createElement("option");
-            opt.value = s.nombre;
-            opt.textContent = s.nombre;
-            filtroSubcategoria.appendChild(opt);
-        });
-
-        filtrar();
+    cat.subcategorias.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.nombre.toLowerCase();
+        opt.textContent = s.nombre;
+        filtroSubcategoria.appendChild(opt);
     });
 
-    filtroNombre.addEventListener("input", filtrar);
-    filtroSubcategoria.addEventListener("change", filtrar);
+    filtrar();
+});
 
-    function filtrar() {
-        const nombre = filtroNombre.value.toLowerCase();
-        const categoria = filtroCategoria.value;
-        const subcategoria = filtroSubcategoria.value;
+[filtroNombre, filtroSubcategoria].forEach(el => {
+    el.addEventListener("input", filtrar);
+});
 
-        filas.forEach(fila => {
-            const okNombre = fila.dataset.nombre.includes(nombre);
-            const okCategoria = !categoria || fila.dataset.categoria === categoria;
-            const okSub = !subcategoria || fila.dataset.subcategoria === subcategoria;
+function filtrar() {
+    const nombre = filtroNombre.value.toLowerCase();
+    const categoria = filtroCategoria.value;
+    const sub = filtroSubcategoria.value;
 
-            fila.style.display = (okNombre && okCategoria && okSub) ? "" : "none";
-        });
+    filas.forEach(f => {
+        const okNombre = f.dataset.nombre.includes(nombre);
+        const okCat = !categoria || f.dataset.categoria === categoria;
+        const okSub = !sub || f.dataset.subcategoria === sub;
+
+        f.style.display = (okNombre && okCat && okSub) ? "" : "none";
+    });
+}
+
+function limpiarFiltros() {
+    filtroNombre.value = "";
+    filtroCategoria.value = "";
+    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas las subcategorías</option>";
+    filtrar();
+}
+
+function activarClienteManual() {
+    const input = document.getElementById("cliente_manual");
+    const select = document.getElementById("cliente_select");
+
+    input.classList.toggle("d-none");
+
+    if (!input.classList.contains("d-none")) {
+        select.disabled = true;
+        input.required = true;
+        input.focus();
+    } else {
+        select.disabled = false;
+        input.required = false;
+        input.value = "";
     }
-
-    function limpiarFiltros() {
-        filtroNombre.value = "";
-        filtroCategoria.value = "";
-        filtroSubcategoria.innerHTML = '<option value="">📁 Todas las subcategorías</option>';
-        filtrar();
-    }
-
-    function activarClienteManual() {
-        const input = document.getElementById("cliente_manual");
-        const select = document.getElementById("cliente_select");
-
-        input.classList.toggle("d-none");
-        select.disabled = !input.classList.contains("d-none");
-        input.required = !input.classList.contains("d-none");
-    }
+}
 </script>
 
 {% endblock %}
