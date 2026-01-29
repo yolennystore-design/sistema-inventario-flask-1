@@ -80,12 +80,12 @@
                     <input type="number"
                            name="precio"
                            value="{{ i.precio }}"
-                           min="0"
                            step="0.01"
+                           min="0"
                            class="form-control form-control-sm me-1"
                            style="width:90px"
                            required>
-                    <button class="btn btn-sm btn-warning">💲</button>
+                    <button class="btn btn-warning btn-sm">💲</button>
                 </form>
                 {% else %}
                 ${{ i.precio }}
@@ -95,7 +95,7 @@
             <td>
                 <a href="/ventas/eliminar_item/{{ i.id }}"
                    class="btn btn-danger btn-sm"
-                   onclick="return confirm('¿Eliminar este producto del carrito?')">
+                   onclick="return confirm('¿Eliminar producto del carrito?')">
                     ❌
                 </a>
             </td>
@@ -113,30 +113,35 @@
 
 <!-- ========================= CONFIRMAR VENTA ========================= -->
 <form method="POST" action="/ventas/confirmar" class="mt-3">
-
     <div class="row mb-3">
-        <!-- CLIENTE REGISTRADO -->
+
+        <!-- CLIENTE -->
         <div class="col-md-4">
-            <label class="form-label">Cliente registrado</label>
-            <select name="cliente_select" class="form-select">
-                <option value="">— Seleccione —</option>
+            <label class="form-label">Cliente</label>
+
+            <select id="cliente_select"
+                    name="cliente"
+                    class="form-select">
                 <option value="Público General">Público General</option>
                 {% for c in clientes %}
                 <option value="{{ c.nombre }}">{{ c.nombre }}</option>
                 {% endfor %}
             </select>
-        </div>
 
-        <!-- CLIENTE MANUAL -->
-        <div class="col-md-4">
-            <label class="form-label">Cliente manual</label>
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm mt-2"
+                    onclick="activarClienteManual()">
+                ✍️ Cliente manual
+            </button>
+
             <input type="text"
+                   id="cliente_manual"
                    name="cliente_manual"
-                   class="form-control"
-                   placeholder="Ej: Juan Pérez / WhatsApp / Invitado">
+                   class="form-control mt-2 d-none"
+                   placeholder="Nombre del cliente">
         </div>
 
-        <!-- TIPO DE PAGO -->
+        <!-- TIPO DE VENTA -->
         <div class="col-md-4">
             <label class="form-label">Tipo de pago</label><br>
             <input type="radio" name="tipo_venta" value="Contado" checked> Contado
@@ -155,7 +160,7 @@
 
         <a href="/ventas/vaciar_carrito"
            class="btn btn-secondary"
-           onclick="return confirm('¿Cancelar la venta y vaciar el carrito?')">
+           onclick="return confirm('¿Cancelar la venta?')">
             ❌ Cancelar Venta
         </a>
 
@@ -174,7 +179,9 @@
 <div class="mb-3">
     <a href="/ventas/eliminar_todas"
        class="btn btn-danger"
-       onclick="return confirm('Esto eliminará TODAS las ventas. ¿Continuar?')">
+       onclick="return confirm(
+           '⚠️ Esto eliminará TODAS las ventas y devolverá el stock.\n\n¿Continuar?'
+       )">
         🗑 Eliminar TODAS las Ventas
     </a>
 </div>
@@ -208,11 +215,11 @@
             <td class="d-flex gap-1">
                 <a href="/ventas/factura/{{ v }}"
                    target="_blank"
-                   class="btn btn-sm btn-secondary">🖨</a>
+                   class="btn btn-secondary btn-sm">🖨</a>
 
                 {% if session.rol == "admin" %}
                 <a href="/ventas/eliminar/{{ v }}"
-                   class="btn btn-sm btn-danger"
+                   class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Eliminar esta venta?')">
                     🗑
                 </a>
@@ -222,5 +229,24 @@
         {% endfor %}
     </tbody>
 </table>
+
+<script>
+    function activarClienteManual() {
+        const input = document.getElementById("cliente_manual");
+        const select = document.getElementById("cliente_select");
+
+        input.classList.toggle("d-none");
+
+        if (!input.classList.contains("d-none")) {
+            select.disabled = true;
+            input.required = true;
+            input.focus();
+        } else {
+            select.disabled = false;
+            input.required = false;
+            input.value = "";
+        }
+    }
+</script>
 
 {% endblock %}
