@@ -7,6 +7,20 @@ from app.utils.auditoria import registrar_log
 compras_bp = Blueprint("compras", __name__, url_prefix="/compras")
 
 # ======================
+# NORMALIZAR TIPO DE PAGO
+# ======================
+def normalizar_pago(tipo):
+    if not tipo:
+        return "contado"
+
+    tipo = tipo.lower().strip()
+
+    if "credit" in tipo:
+        return "credito"
+    return "contado"
+
+
+# ======================
 # CARGAR COMPRAS
 # ======================
 def cargar_compras():
@@ -75,11 +89,12 @@ def agregar():
     cantidad = int(request.form["cantidad"])
     costo = float(request.form["costo"])
     total = cantidad * costo
-    tipo_pago = request.form["tipo_pago"]
 
-    # 🔥 NUEVO
+    # 🔥 NORMALIZADO
+    tipo_pago = normalizar_pago(request.form["tipo_pago"])
+
     abonado = 0
-    pendiente = total if tipo_pago == "Crédito" else 0
+    pendiente = total if tipo_pago == "credito" else 0
 
     conn = get_db()
     cur = conn.cursor()
@@ -119,6 +134,7 @@ def agregar():
 
     return redirect(url_for("compras.index"))
 
+
 # ======================
 # ELIMINAR COMPRA
 # ======================
@@ -144,6 +160,10 @@ def eliminar(id):
 
     return redirect(url_for("compras.index"))
 
+
+# ======================
+# ABONAR A COMPRA A CRÉDITO
+# ======================
 @compras_bp.route("/abonar/<int:id>", methods=["GET", "POST"])
 def abonar(id):
     if session.get("rol") != "admin":

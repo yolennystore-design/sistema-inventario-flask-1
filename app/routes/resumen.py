@@ -157,3 +157,12 @@ def index():
         resumen=resumen,
         totales=totales
     )
+def normalizar_pago(tipo):
+    if not tipo:
+        return "contado"
+
+    tipo = tipo.lower().strip()
+
+    if "credit" in tipo:
+        return "credito"
+    return "contado"

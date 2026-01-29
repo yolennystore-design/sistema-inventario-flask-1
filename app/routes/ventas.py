@@ -29,6 +29,16 @@ VENTAS_FILE = "app/data/ventas.json"
 CARRITO_FILE = "app/data/carrito.json"
 CREDITOS_FILE = "app/data/creditos.json"
 
+def normalizar_pago(tipo):
+    if not tipo:
+        return "contado"
+
+    tipo = tipo.lower().strip()
+    tipo = tipo.replace("é", "e")
+
+    if "credit" in tipo:
+        return "credito"
+    return "contado"
 
 # ======================
 # UTILIDADES JSON
@@ -164,7 +174,8 @@ def confirmar():
     else:
         cliente = "Público General"
 
-    tipo_venta = request.form.get("tipo_venta", "Contado")
+    tipo_venta_raw = request.form.get("tipo_venta", "Contado")
+    tipo_pago = normalizar_pago(tipo_venta_raw)
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
 
@@ -185,11 +196,16 @@ def confirmar():
     venta = {
         "numero_factura": numero_factura,
         "cliente": cliente,
-        "tipo_venta": tipo_venta,
+
+        # 🔥 IMPORTANTE
+        "tipo_pago": tipo_pago,        # contado / credito
+        "tipo_venta": tipo_venta_raw,  # Contado / Crédito (visual)
+
         "items": carrito,
         "total": total,
         "fecha": fecha
     }
+
 
     ventas.append(venta)
     guardar_json(VENTAS_FILE, ventas)
