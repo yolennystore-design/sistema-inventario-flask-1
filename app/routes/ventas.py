@@ -233,9 +233,10 @@ def confirmar():
 
     registrar_log(
         usuario=session.get("usuario", "sistema"),
-        accion=f"Venta {numero_factura} ({tipo_venta})",
+        accion=f"Venta {numero_factura} ({tipo_venta_raw})",
         modulo="Ventas"
     )
+
 
     return redirect(url_for("ventas.index"))
 
