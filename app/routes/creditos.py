@@ -371,7 +371,7 @@ def pdf_credito(numero_factura):
     # =========================
     # NOTA FINAL
     # =========================
-    elementos.append(
+        elementos.append(
         Paragraph(
             "Este documento certifica el estado actual del crédito del cliente. "
             "Para cualquier aclaración, comuníquese con Yolenny Store.",
@@ -379,18 +379,18 @@ def pdf_credito(numero_factura):
         )
     )
 
-    elementos.append(Spacer(1, 20))
+    elementos.append(Spacer(1, 30))
+
+    # =========================
+    # FIRMA DEL CLIENTE
+    # =========================
+    elementos.append(Paragraph("______________________________", styles["Normal"]))
+    elementos.append(Spacer(1, 5))
+    elementos.append(Paragraph("<b>Firma del Cliente</b>", styles["Normal"]))
+
+    elementos.append(Spacer(1, 25))
     elementos.append(Paragraph("<i>¡Gracias por confiar en nosotros!</i>", styles["Italic"]))
 
-    doc.build(elementos)
-
-    buffer.seek(0)
-    return send_file(
-        buffer,
-        mimetype="application/pdf",
-        as_attachment=True,
-        download_name=f"credito_{numero_factura}.pdf"
-    )
 
 # ======================
 # 🗑 ELIMINAR CRÉDITO (ADMIN)
