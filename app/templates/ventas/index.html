@@ -4,15 +4,11 @@
 {% block content %}
 <h2 class="mb-3">🛒 Ventas</h2>
 
-<!-- =========================
-     FILTROS DE PRODUCTOS
-========================= -->
+<!-- ========================= FILTROS DE PRODUCTOS ========================= -->
 <div class="card mb-3">
     <div class="card-body row g-2">
         <div class="col-md-4">
-            <input type="text"
-                   id="filtroNombre"
-                   class="form-control"
+            <input type="text" id="filtroNombre" class="form-control"
                    placeholder="🔍 Buscar por nombre">
         </div>
 
@@ -57,7 +53,6 @@
             data-nombre="{{ p.nombre|lower }}"
             data-categoria="{{ p.categoria }}"
             data-subcategoria="{{ p.subcategoria }}">
-
             <td>{{ p.id }}</td>
             <td>{{ p.nombre }}</td>
             <td>${{ p.precio }}</td>
@@ -111,7 +106,8 @@
                     <input type="hidden" name="id" value="{{ i.id }}">
                     <input type="number" name="precio" value="{{ i.precio }}"
                            step="0.01" min="0"
-                           class="form-control form-control-sm me-1" style="width:90px" required>
+                           class="form-control form-control-sm me-1"
+                           style="width:90px" required>
                     <button class="btn btn-warning btn-sm">💲</button>
                 </form>
                 {% else %}
@@ -137,16 +133,32 @@
 <!-- ========================= CONFIRMAR VENTA ========================= -->
 <form method="POST" action="/ventas/confirmar" class="mt-3">
     <div class="row mb-3">
+
+        <!-- CLIENTE -->
         <div class="col-md-4">
             <label class="form-label">Cliente</label>
-            <select name="cliente" class="form-select">
+
+            <select id="cliente_select" name="cliente" class="form-select">
                 <option value="Público General">Público General</option>
                 {% for c in clientes %}
                 <option value="{{ c.nombre }}">{{ c.nombre }}</option>
                 {% endfor %}
             </select>
+
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm mt-2"
+                    onclick="toggleClienteManual()">
+                ✍️ Cliente manual
+            </button>
+
+            <input type="text"
+                   id="cliente_manual"
+                   name="cliente_manual"
+                   class="form-control mt-2 d-none"
+                   placeholder="Nombre del cliente">
         </div>
 
+        <!-- TIPO -->
         <div class="col-md-4">
             <label class="form-label">Tipo de pago</label><br>
             <input type="radio" name="tipo_venta" value="Contado" checked> Contado
@@ -161,7 +173,8 @@
             💾 Generar Venta
         </button>
 
-        <a href="/ventas/vaciar_carrito" class="btn btn-secondary"
+        <a href="/ventas/vaciar_carrito"
+           class="btn btn-secondary"
            onclick="return confirm('¿Cancelar la venta?')">
             ❌ Cancelar
         </a>
@@ -213,8 +226,7 @@
             <td>{{ ventas[v].fecha }}</td>
             <td><strong>${{ ventas[v].total }}</strong></td>
             <td class="d-flex gap-1">
-                <a href="/ventas/factura/{{ v }}"
-                   target="_blank"
+                <a href="/ventas/factura/{{ v }}" target="_blank"
                    class="btn btn-secondary btn-sm">🖨</a>
 
                 {% if session.rol == "admin" %}
@@ -275,6 +287,24 @@ function limpiarFiltros() {
     filtroCategoria.value = "";
     filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
     aplicarFiltros();
+}
+
+// ✍️ CLIENTE MANUAL
+function toggleClienteManual() {
+    const input = document.getElementById("cliente_manual");
+    const select = document.getElementById("cliente_select");
+
+    input.classList.toggle("d-none");
+
+    if (!input.classList.contains("d-none")) {
+        select.disabled = true;
+        input.required = true;
+        input.focus();
+    } else {
+        select.disabled = false;
+        input.required = false;
+        input.value = "";
+    }
 }
 </script>
 
