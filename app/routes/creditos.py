@@ -291,44 +291,44 @@ def pdf_credito(numero_factura):
     elementos.append(Spacer(1, 25))
 
     # =========================
-# PRODUCTOS DEL CRÉDITO
-# =========================
-if items:
-    elementos.append(
-        Paragraph("<b>Productos incluidos</b>", styles["Heading3"])
-    )
-    elementos.append(Spacer(1, 10))
+    # PRODUCTOS DEL CRÉDITO
+    # =========================
+    if items:
+        elementos.append(
+            Paragraph("<b>Productos incluidos</b>", styles["Heading3"])
+        )
+        elementos.append(Spacer(1, 10))
 
-    tabla_productos_data = [
-        ["Fecha", "Producto", "Cant.", "Precio", "Subtotal"]
-    ]
+        tabla_productos_data = [
+            ["Fecha", "Producto", "Cant.", "Precio", "Subtotal"]
+        ]
 
-    for i in items:
-        tabla_productos_data.append([
-            fecha,
-            i.get("nombre", ""),
-            str(i.get("cantidad", 0)),
-            f"RD$ {i.get('precio', 0):,.2f}",
-            f"RD$ {i.get('total', 0):,.2f}",
-        ])
+        for i in items:
+            tabla_productos_data.append([
+                fecha,
+                i.get("nombre", ""),
+                str(i.get("cantidad", 0)),
+                f"RD$ {i.get('precio', 0):,.2f}",
+                f"RD$ {i.get('total', 0):,.2f}",
+            ])
 
-    tabla_productos = Table(
-        tabla_productos_data,
-        colWidths=[90, 170, 50, 80, 80]
-    )
+        tabla_productos = Table(
+            tabla_productos_data,
+            colWidths=[90, 170, 50, 80, 80]
+        )
 
-    tabla_productos.setStyle(TableStyle([
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-    ]))
+        tabla_productos.setStyle(TableStyle([
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ]))
 
-    elementos.append(tabla_productos)
-    elementos.append(Spacer(1, 25))
+        elementos.append(tabla_productos)
+        elementos.append(Spacer(1, 25))
 
     # =========================
     # NOTA FINAL
