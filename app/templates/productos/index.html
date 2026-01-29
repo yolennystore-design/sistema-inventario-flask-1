@@ -118,11 +118,6 @@
                     ✏️ Editar
                 </a>
 
-                <a href="{{ url_for('productos.historial', id=p.id) }}"
-                   class="btn btn-sm btn-info mb-1">
-                    🧾 Historial
-                </a>
-
                 <a href="{{ url_for('productos.eliminar', id=p.id) }}"
                    class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Eliminar producto?')">
