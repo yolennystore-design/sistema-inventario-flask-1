@@ -15,8 +15,18 @@ def normalizar_pago(tipo):
 
     tipo = tipo.lower().strip()
 
-    if "credit" in tipo:
+    # quitar tildes
+    tipo = (
+        tipo.replace("é", "e")
+            .replace("á", "a")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+    )
+
+    if "credito" in tipo:
         return "credito"
+
     return "contado"
 
 
