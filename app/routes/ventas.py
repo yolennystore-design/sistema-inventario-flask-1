@@ -43,6 +43,12 @@ def normalizar_pago(tipo):
 # ======================
 # UTILIDADES JSON
 # ======================
+def cargar_json(ruta):
+    if not os.path.exists(ruta):
+        return []
+    with open(ruta, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 def cargar_ventas_db():
     conn = get_db()
     cur = conn.cursor()
