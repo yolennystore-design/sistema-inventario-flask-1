@@ -43,12 +43,20 @@ def normalizar_pago(tipo):
 # ======================
 # UTILIDADES JSON
 # ======================
-def cargar_json(ruta):
-    if not os.path.exists(ruta) or os.stat(ruta).st_size == 0:
-        return []
-    with open(ruta, "r", encoding="utf-8") as f:
-        return json.load(f)
+def cargar_ventas_db():
+    conn = get_db()
+    cur = conn.cursor()
 
+    cur.execute("""
+        SELECT *
+        FROM ventas
+        ORDER BY fecha DESC
+    """)
+
+    ventas = cur.fetchall()
+    cur.close()
+    conn.close()
+    return ventas
 
 def guardar_json(ruta, data):
     with open(ruta, "w", encoding="utf-8") as f:
@@ -238,31 +246,61 @@ def confirmar():
 # ======================
 # 🧾 FACTURA PDF TÉRMICA
 # ======================
-@ventas_bp.route("/factura/<int:index>")
-def factura(index):
-    ventas = cargar_json(VENTAS_FILE)
-    if index < 0 or index >= len(ventas):
+@ventas_bp.route("/factura/<numero_factura>")
+def factura(numero_factura):
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Obtener items de la venta
+    cur.execute("""
+        SELECT producto, cantidad, precio, total, fecha
+        FROM ventas
+        WHERE id IN (
+            SELECT id
+            FROM ventas
+            WHERE fecha = (
+                SELECT fecha
+                FROM ventas
+                WHERE id = (
+                    SELECT MIN(id)
+                    FROM ventas
+                )
+            )
+        )
+    """)
+
+    items = cur.fetchall()
+
+    # Obtener datos del crédito (si existe)
+    cur.execute("""
+        SELECT cliente, fecha
+        FROM creditos
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+
+    credito = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if not items:
         return redirect(url_for("ventas.index"))
 
-    venta = ventas[index]
-    items = obtener_items(venta)
+    cliente = credito["cliente"] if credito else "Público General"
+    fecha = credito["fecha"] if credito else ""
+    total = sum(i["total"] for i in items)
 
-    # 🔒 PROTECCIÓN CONTRA VENTAS ANTIGUAS
-    numero_factura = venta.get("numero_factura", f"SIN-{index+1:05d}")
-    cliente = venta.get("cliente", "N/A")
-    tipo_venta = venta.get("tipo_venta", "Contado")
-    fecha = venta.get("fecha", "")
-    total = venta.get("total", 0)
-
+    # ======================
+    # PDF TÉRMICO
+    # ======================
     buffer = BytesIO()
     ANCHO, ALTO = 165, 800
     c = canvas.Canvas(buffer, pagesize=(ANCHO, ALTO))
     y = ALTO - 20
 
-    # ===== ENCABEZADO =====
     c.setFont("Helvetica-Bold", 10)
     c.drawCentredString(ANCHO / 2, y, NOMBRE_EMPRESA)
-    y -= 12
+    y -= 15
 
     c.setFont("Helvetica", 7)
     c.drawCentredString(ANCHO / 2, y, "Moda y estilo que te acompaña")
@@ -271,12 +309,9 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # ===== DATOS =====
     c.drawString(5, y, f"Factura: {numero_factura}")
     y -= 10
     c.drawString(5, y, f"Cliente: {cliente}")
-    y -= 10
-    c.drawString(5, y, f"Tipo: {tipo_venta}")
     y -= 10
     c.drawString(5, y, f"Fecha: {fecha}")
     y -= 15
@@ -284,19 +319,17 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 10
 
-    # ===== PRODUCTOS =====
     c.setFont("Helvetica", 7)
     for i in items:
-        c.drawString(5, y, i.get("nombre", "")[:18])
+        c.drawString(5, y, i["producto"][:18])
         y -= 9
-        c.drawString(10, y, f"{i.get('cantidad',0)} x ${i.get('precio',0)}")
-        c.drawRightString(ANCHO - 5, y, f"${i.get('total',0)}")
+        c.drawString(10, y, f'{i["cantidad"]} x ${i["precio"]}')
+        c.drawRightString(ANCHO - 5, y, f'${i["total"]}')
         y -= 10
 
     c.line(5, y, ANCHO - 5, y)
     y -= 12
 
-    # ===== TOTAL =====
     c.setFont("Helvetica-Bold", 8)
     c.drawString(5, y, "TOTAL:")
     c.drawRightString(ANCHO - 5, y, f"${total}")
@@ -305,18 +338,18 @@ def factura(index):
     c.line(5, y, ANCHO - 5, y)
     y -= 15
 
-    # ===== MENSAJE FINAL =====
     c.setFont("Helvetica", 7)
     c.drawCentredString(ANCHO / 2, y, "Gracias por su compra")
     y -= 10
     c.drawCentredString(ANCHO / 2, y, "Conserve este comprobante")
 
     c.save()
-    pdf_bytes = buffer.getvalue()
+
+    pdf = buffer.getvalue()
     buffer.close()
 
     return send_file(
-        BytesIO(pdf_bytes),
+        BytesIO(pdf),
         download_name=f"factura_{numero_factura}.pdf",
         as_attachment=True,
         mimetype="application/pdf"
