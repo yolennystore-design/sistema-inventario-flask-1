@@ -81,14 +81,58 @@ def index():
     if "usuario" not in session:
         return redirect(url_for("auth.login"))
 
+    # ======================
+    # DATOS BASE
+    # ======================
     productos = cargar_productos()
     categorias = cargar_categorias()
     clientes = cargar_clientes()
+
+    # Carrito (SE MANTIENE EN JSON)
     carrito = cargar_json(CARRITO_FILE)
-    ventas = cargar_json(VENTAS_FILE)
+    total_carrito = sum(i["total"] for i in carrito)
 
-    total = sum(i["total"] for i in carrito)
+    # ======================
+    # VENTAS DESDE LA BD
+    # ======================
+    conn = get_db()
+    cur = conn.cursor()
 
+    # 🔹 Ventas CONTADO
+    cur.execute("""
+        SELECT
+            producto AS cliente,
+            'Contado' AS tipo,
+            fecha,
+            total,
+            NULL AS numero_factura
+        FROM ventas
+        ORDER BY fecha DESC
+    """)
+    ventas_contado = cur.fetchall()
+
+    # 🔹 Ventas CRÉDITO
+    cur.execute("""
+        SELECT
+            cliente,
+            'Crédito' AS tipo,
+            fecha,
+            monto AS total,
+            numero_factura
+        FROM creditos
+        ORDER BY fecha DESC
+    """)
+    ventas_credito = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    # 🔥 UNIFICAR TODAS LAS VENTAS
+    ventas = ventas_contado + ventas_credito
+
+    # ======================
+    # RENDER
+    # ======================
     return render_template(
         "ventas/index.html",
         productos=productos,
@@ -96,8 +140,9 @@ def index():
         clientes=clientes,
         carrito=carrito,
         ventas=ventas,
-        total=total
+        total=total_carrito
     )
+
 
 
 # ======================
