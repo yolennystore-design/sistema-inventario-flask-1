@@ -417,20 +417,37 @@ def eliminar_factura(numero_factura):
     conn = get_db()
     cur = conn.cursor()
 
-    # Obtener crédito
+    # ======================
+    # 1️⃣ OBTENER ITEMS DE LA VENTA
+    # ======================
     cur.execute("""
-        SELECT monto
-        FROM creditos
+        SELECT id_producto, cantidad
+        FROM ventas
         WHERE numero_factura = %s
     """, (numero_factura,))
-    credito = cur.fetchone()
+    items = cur.fetchall()
 
-    if not credito:
-        cur.close()
-        conn.close()
-        return redirect(url_for("ventas.index"))
+    # ======================
+    # 2️⃣ DEVOLVER STOCK
+    # ======================
+    for item in items:
+        cur.execute("""
+            UPDATE productos
+            SET cantidad = cantidad + %s
+            WHERE id = %s
+        """, (item["cantidad"], item["id_producto"]))
 
-    # Eliminar crédito
+    # ======================
+    # 3️⃣ ELIMINAR VENTAS
+    # ======================
+    cur.execute("""
+        DELETE FROM ventas
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+
+    # ======================
+    # 4️⃣ ELIMINAR CRÉDITO (SI EXISTE)
+    # ======================
     cur.execute("""
         DELETE FROM creditos
         WHERE numero_factura = %s
@@ -442,11 +459,12 @@ def eliminar_factura(numero_factura):
 
     registrar_log(
         usuario=session.get("usuario"),
-        accion=f"Eliminó venta {numero_factura}",
+        accion=f"Eliminó venta {numero_factura} y devolvió stock",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
+
 
 # ======================
 # ❌ ELIMINAR TODAS LAS VENTAS
