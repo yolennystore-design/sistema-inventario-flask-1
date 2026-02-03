@@ -101,12 +101,14 @@ def index():
     # 🔹 Ventas CONTADO
     cur.execute("""
         SELECT
-            producto AS cliente,
+            numero_factura,
+            cliente,
             'Contado' AS tipo,
-            fecha,
-            total,
-            NULL AS numero_factura
+            MAX(fecha) AS fecha,
+            SUM(total) AS total
         FROM ventas
+        WHERE tipo = 'contado'
+        GROUP BY numero_factura, cliente
         ORDER BY fecha DESC
     """)
     ventas_contado = cur.fetchall()
