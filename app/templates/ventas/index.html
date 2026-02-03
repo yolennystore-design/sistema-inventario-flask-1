@@ -183,6 +183,16 @@
 <!-- ========================= VENTAS REALIZADAS ========================= -->
 <h4>🖨 Ventas Realizadas</h4>
 
+{% if session.rol == "admin" %}
+<div class="mb-3">
+    <a href="/ventas/eliminar_todas"
+       class="btn btn-danger"
+       onclick="return confirm('⚠️ ¿Eliminar TODAS las ventas y devolver stock?')">
+        🗑 Eliminar TODAS las Ventas
+    </a>
+</div>
+{% endif %}
+
 <table class="table table-bordered align-middle">
     <thead class="table-light">
         <tr>
@@ -225,6 +235,7 @@
         {% endfor %}
     </tbody>
 </table>
+
 
 <!-- ========================= SCRIPTS ========================= -->
 <script>
