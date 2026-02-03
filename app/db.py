@@ -113,6 +113,19 @@ def crear_tablas():
         fecha TEXT
     )
     """)
+    # ======================
+    # MIGRACIONES SEGURAS (ventas)
+    # ======================
+    for col in [
+        "numero_factura TEXT",
+        "cliente TEXT",
+        "tipo TEXT"
+    ]:
+        try:
+            cur.execute(f"ALTER TABLE ventas ADD COLUMN {col}")
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # ======================
     # CRÉDITOS
@@ -185,4 +198,22 @@ def crear_tablas():
     """)
 
     conn.commit()
+    conn.close()
+def migrar_ventas():
+    conn = get_db()
+    cur = conn.cursor()
+
+    def try_add(sql):
+        try:
+            cur.execute(sql)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
+    # 🔹 Migraciones SEGURAS (solo se ejecutan una vez)
+    try_add("ALTER TABLE ventas ADD COLUMN numero_factura TEXT")
+    try_add("ALTER TABLE ventas ADD COLUMN cliente TEXT")
+    try_add("ALTER TABLE ventas ADD COLUMN tipo TEXT")
+
+    cur.close()
     conn.close()

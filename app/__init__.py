@@ -1,5 +1,5 @@
 from flask import Flask, render_template, session, redirect, url_for
-from app.db import crear_tablas
+from app.db import crear_tablas, migrar_ventas
 
 def create_app():
     app = Flask(
@@ -10,6 +10,7 @@ def create_app():
     app.secret_key = "super-secret-key-inventario"
 
     crear_tablas()
+    migrar_ventas()
 
     # ======================
     # BLUEPRINTS
