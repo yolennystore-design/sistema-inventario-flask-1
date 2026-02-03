@@ -97,11 +97,14 @@ def crear_tablas():
         conn.rollback()  # 🔥 ESTO ES LO QUE FALTABA
 
     # ======================
-    # VENTAS
+    # VENTAS (CORREGIDA)
     # ======================
     cur.execute(f"""
     CREATE TABLE IF NOT EXISTS ventas (
         id {id_type},
+        numero_factura TEXT,
+        cliente TEXT,
+        tipo TEXT,
         id_producto INTEGER,
         producto TEXT,
         cantidad INTEGER,
