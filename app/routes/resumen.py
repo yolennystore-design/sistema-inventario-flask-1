@@ -3,21 +3,8 @@
 from flask import Blueprint, render_template, session, redirect, url_for
 from app.db import get_db
 from app.utils.auditoria import registrar_log
-import json, os
 
 resumen_bp = Blueprint("resumen", __name__, url_prefix="/resumen")
-
-VENTAS_FILE = "app/data/ventas.json"
-
-
-# ======================
-# CARGAR VENTAS (JSON)
-# ======================
-def cargar_ventas():
-    if not os.path.exists(VENTAS_FILE):
-        return []
-    with open(VENTAS_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
 
 
 @resumen_bp.route("/")
@@ -25,10 +12,12 @@ def index():
     if "usuario" not in session:
         return redirect(url_for("auth.login"))
 
-    # ================= DATOS =================
     conn = get_db()
     cur = conn.cursor()
 
+    # ======================
+    # COMPRAS
+    # ======================
     cur.execute("""
         SELECT fecha, cantidad, costo, tipo_pago
         FROM compras
@@ -36,15 +25,31 @@ def index():
     """)
     compras = cur.fetchall()
 
+    # ======================
+    # VENTAS (DESDE BD, NO JSON)
+    # ======================
+    cur.execute("""
+        SELECT
+            numero_factura,
+            fecha,
+            tipo,
+            SUM(total) AS total,
+            SUM(cantidad) AS articulos
+        FROM ventas
+        GROUP BY numero_factura, fecha, tipo
+        ORDER BY fecha
+    """)
+    ventas = cur.fetchall()
+
     cur.close()
     conn.close()
-
-    ventas = cargar_ventas()
 
     resumen = []
     totales = {}
 
-    # ================= INIT MES =================
+    # ======================
+    # INIT MES
+    # ======================
     def init_mes(mes):
         totales.setdefault(mes, {
             "inversion_total": 0,
@@ -57,12 +62,16 @@ def index():
             "ganancia": 0
         })
 
-    # ================= COSTO ACTUAL =================
+    # ======================
+    # COSTO ACTUAL (ÚLTIMO COSTO)
+    # ======================
     costo_actual = 0
     for c in compras:
         costo_actual = float(c["costo"])
 
-    # ================= COMPRAS =================
+    # ======================
+    # PROCESAR COMPRAS
+    # ======================
     for c in compras:
         fecha = c["fecha"]
         mes = fecha[:7]
@@ -94,11 +103,16 @@ def index():
         else:
             totales[mes]["inversion_credito"] += inversion
 
-    # ================= VENTAS =================
+    # ======================
+    # PROCESAR VENTAS
+    # ======================
     for v in ventas:
-        fecha = v.get("fecha", "")
+        fecha = v["fecha"]
         mes = fecha[:7]
-        tipo_pago = v.get("tipo", v.get("tipo_pago", "contado")).lower()
+        tipo_pago = (v["tipo"] or "contado").lower()
+
+        total_venta = float(v["total"])
+        articulos = int(v["articulos"])
 
         init_mes(mes)
 
@@ -109,41 +123,29 @@ def index():
             "inversion_total": 0,
             "inversion_contado": 0,
             "inversion_credito": 0,
-            "inv_prod_vendidos": 0,
+            "inv_prod_vendidos": articulos * costo_actual,
             "ventas_contado": 0,
             "ventas_credito": 0,
-            "articulos_vendidos": 0,
-            "ganancia": 0
+            "articulos_vendidos": articulos,
+            "ganancia": total_venta - (articulos * costo_actual)
         }
 
-        items = v.get("items") or v.get("elementos") or []
+        totales[mes]["inv_prod_vendidos"] += fila["inv_prod_vendidos"]
+        totales[mes]["articulos_vendidos"] += articulos
+        totales[mes]["ganancia"] += fila["ganancia"]
 
-        for it in items:
-            cantidad = int(it.get("cantidad", 0))
-            precio = float(it.get("precio", 0))
-
-            costo_item = cantidad * costo_actual
-            total_item = cantidad * precio
-            ganancia_item = total_item - costo_item
-
-            fila["inv_prod_vendidos"] += costo_item
-            fila["articulos_vendidos"] += cantidad
-            fila["ganancia"] += ganancia_item
-
-            totales[mes]["inv_prod_vendidos"] += costo_item
-            totales[mes]["articulos_vendidos"] += cantidad
-            totales[mes]["ganancia"] += ganancia_item
-
-            if tipo_pago == "contado":
-                fila["ventas_contado"] += total_item
-                totales[mes]["ventas_contado"] += total_item
-            else:
-                fila["ventas_credito"] += total_item
-                totales[mes]["ventas_credito"] += total_item
+        if tipo_pago == "contado":
+            fila["ventas_contado"] = total_venta
+            totales[mes]["ventas_contado"] += total_venta
+        else:
+            fila["ventas_credito"] = total_venta
+            totales[mes]["ventas_credito"] += total_venta
 
         resumen.append(fila)
 
-    # ================= ORDER BY FECHA =================
+    # ======================
+    # ORDENAR POR FECHA
+    # ======================
     resumen.sort(key=lambda x: x["fecha"])
 
     registrar_log(
@@ -157,6 +159,7 @@ def index():
         resumen=resumen,
         totales=totales
     )
+
 def normalizar_pago(tipo):
     if not tipo:
         return "contado"
