@@ -200,6 +200,8 @@ def crear_tablas():
     conn.commit()
     conn.close()
 def migrar_ventas():
+    print(">>> EJECUTANDO migrar_ventas()")
+
     conn = get_db()
     cur = conn.cursor()
 
@@ -207,10 +209,11 @@ def migrar_ventas():
         try:
             cur.execute(sql)
             conn.commit()
-        except Exception:
+            print(f">>> OK: {sql}")
+        except Exception as e:
             conn.rollback()
+            print(f">>> YA EXISTE o ERROR: {sql} -> {e}")
 
-    # 🔹 Migraciones SEGURAS (solo se ejecutan una vez)
     try_add("ALTER TABLE ventas ADD COLUMN numero_factura TEXT")
     try_add("ALTER TABLE ventas ADD COLUMN cliente TEXT")
     try_add("ALTER TABLE ventas ADD COLUMN tipo TEXT")
