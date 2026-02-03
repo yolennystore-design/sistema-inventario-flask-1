@@ -456,32 +456,41 @@ def eliminar_todas():
     if session.get("rol") != "admin":
         return redirect(url_for("ventas.index"))
 
-    ventas = cargar_json(VENTAS_FILE)
-
     conn = get_db()
     cur = conn.cursor()
 
-    for venta in ventas:
-        for item in obtener_items(venta):
-            cur.execute(
-                "UPDATE productos SET cantidad = cantidad + %s WHERE id = %s",
-                (item["cantidad"], item["id"])
-            )
+    # 1️⃣ Devolver stock
+    cur.execute("""
+        SELECT id_producto, cantidad
+        FROM ventas
+    """)
+    items = cur.fetchall()
+
+    for i in items:
+        cur.execute("""
+            UPDATE productos
+            SET cantidad = cantidad + %s
+            WHERE id = %s
+        """, (i["cantidad"], i["id_producto"]))
+
+    # 2️⃣ Eliminar ventas
+    cur.execute("DELETE FROM ventas")
+
+    # 3️⃣ Eliminar créditos
+    cur.execute("DELETE FROM creditos")
 
     conn.commit()
     cur.close()
     conn.close()
 
-    guardar_json(VENTAS_FILE, [])
-    guardar_json(CARRITO_FILE, [])
-
     registrar_log(
-        usuario=session["usuario"],
-        accion="Eliminó todas las ventas",
+        usuario=session.get("usuario"),
+        accion="Eliminó TODAS las ventas",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
+
 # ======================
 # ❌ ELIMINAR ITEM DEL CARRITO
 # ======================
