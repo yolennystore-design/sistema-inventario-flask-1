@@ -309,7 +309,7 @@ def factura(numero_factura):
     cur = conn.cursor()
 
     # ======================
-    # OBTENER ITEMS DE LA FACTURA CORRECTA
+    # OBTENER ITEMS DE LA FACTURA
     # ======================
     cur.execute("""
         SELECT producto, cantidad, precio, total, fecha
@@ -317,28 +317,28 @@ def factura(numero_factura):
         WHERE numero_factura = %s
         ORDER BY id
     """, (numero_factura,))
-
     items = cur.fetchall()
 
     # ======================
-    # DATOS DEL CRÉDITO (SI EXISTE)
+    # OBTENER DATOS GENERALES DE LA VENTA
     # ======================
     cur.execute("""
-        SELECT cliente, fecha
-        FROM creditos
+        SELECT cliente, tipo, fecha
+        FROM ventas
         WHERE numero_factura = %s
+        LIMIT 1
     """, (numero_factura,))
-
-    credito = cur.fetchone()
+    venta = cur.fetchone()
 
     cur.close()
     conn.close()
 
-    if not items:
+    if not items or not venta:
         return redirect(url_for("ventas.index"))
 
-    cliente = credito["cliente"] if credito else "Público General"
-    fecha = credito["fecha"] if credito else items[0]["fecha"]
+    cliente = venta["cliente"] or "Público General"
+    tipo_venta = venta["tipo"].capitalize()
+    fecha = venta["fecha"]
     total = sum(i["total"] for i in items)
 
     # ======================
@@ -363,6 +363,8 @@ def factura(numero_factura):
     c.drawString(5, y, f"Factura: {numero_factura}")
     y -= 10
     c.drawString(5, y, f"Cliente: {cliente}")
+    y -= 10
+    c.drawString(5, y, f"Tipo: {tipo_venta}")
     y -= 10
     c.drawString(5, y, f"Fecha: {fecha}")
     y -= 15
@@ -403,6 +405,7 @@ def factura(numero_factura):
         as_attachment=True,
         mimetype="application/pdf"
     )
+
 
 # ======================
 # 🗑 ELIMINAR FACTURA
