@@ -409,40 +409,44 @@ def factura(numero_factura):
 # ======================
 # 🗑 ELIMINAR FACTURA
 # ======================
-@ventas_bp.route("/eliminar/<int:index>")
-def eliminar_factura(index):
+@ventas_bp.route("/eliminar/<numero_factura>")
+def eliminar_factura(numero_factura):
     if session.get("rol") != "admin":
         return redirect(url_for("ventas.index"))
-
-    ventas = cargar_json(VENTAS_FILE)
-    if index < 0 or index >= len(ventas):
-        return redirect(url_for("ventas.index"))
-
-    venta = ventas.pop(index)
 
     conn = get_db()
     cur = conn.cursor()
 
-    for item in obtener_items(venta):
-        cur.execute(
-            "UPDATE productos SET cantidad = cantidad + %s WHERE id = %s",
-            (item["cantidad"], item["id"])
-        )
+    # Obtener crédito
+    cur.execute("""
+        SELECT monto
+        FROM creditos
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+    credito = cur.fetchone()
+
+    if not credito:
+        cur.close()
+        conn.close()
+        return redirect(url_for("ventas.index"))
+
+    # Eliminar crédito
+    cur.execute("""
+        DELETE FROM creditos
+        WHERE numero_factura = %s
+    """, (numero_factura,))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    guardar_json(VENTAS_FILE, ventas)
-
     registrar_log(
-        usuario=session["usuario"],
-        accion=f"Eliminó factura {venta.get('numero_factura')}",
+        usuario=session.get("usuario"),
+        accion=f"Eliminó venta {numero_factura}",
         modulo="Ventas"
     )
 
     return redirect(url_for("ventas.index"))
-
 
 # ======================
 # ❌ ELIMINAR TODAS LAS VENTAS

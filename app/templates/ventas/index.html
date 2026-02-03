@@ -133,8 +133,6 @@
 <!-- ========================= CONFIRMAR VENTA ========================= -->
 <form method="POST" action="/ventas/confirmar" class="mt-3">
     <div class="row mb-3">
-
-        <!-- CLIENTE -->
         <div class="col-md-4">
             <label class="form-label">Cliente</label>
 
@@ -158,7 +156,6 @@
                    placeholder="Nombre del cliente">
         </div>
 
-        <!-- TIPO -->
         <div class="col-md-4">
             <label class="form-label">Tipo de pago</label><br>
             <input type="radio" name="tipo_venta" value="Contado" checked> Contado
@@ -175,13 +172,9 @@
 
         <a href="/ventas/vaciar_carrito"
            class="btn btn-secondary"
-           onclick="return confirm('¿Cancelar la venta?')">
-            ❌ Cancelar
-        </a>
+           onclick="return confirm('¿Cancelar la venta?')">❌ Cancelar</a>
 
-        <a href="/" class="btn btn-outline-primary">
-            ⬅ Volver al Inicio
-        </a>
+        <a href="/" class="btn btn-outline-primary">⬅ Volver al Inicio</a>
     </div>
 </form>
 
@@ -189,16 +182,6 @@
 
 <!-- ========================= VENTAS REALIZADAS ========================= -->
 <h4>🖨 Ventas Realizadas</h4>
-
-{% if session.rol == "admin" %}
-<div class="mb-3">
-    <a href="/ventas/eliminar_todas"
-       class="btn btn-danger"
-       onclick="return confirm('⚠️ Eliminar TODAS las ventas y devolver stock?')">
-        🗑 Eliminar TODAS las Ventas
-    </a>
-</div>
-{% endif %}
 
 <table class="table table-bordered align-middle">
     <thead class="table-light">
@@ -212,27 +195,30 @@
         </tr>
     </thead>
     <tbody>
-        {% for v in range(ventas|length) %}
+        {% for v in ventas %}
         <tr>
-            <td>{{ v + 1 }}</td>
-            <td>{{ ventas[v].cliente }}</td>
+            <td>{{ loop.index }}</td>
+            <td>{{ v.cliente }}</td>
             <td>
-                {% if ventas[v].tipo_venta == "Crédito" %}
+                {% if v.tipo == "Crédito" %}
                 <span class="badge bg-warning text-dark">Crédito</span>
                 {% else %}
                 <span class="badge bg-success">Contado</span>
                 {% endif %}
             </td>
-            <td>{{ ventas[v].fecha }}</td>
-            <td><strong>${{ ventas[v].total }}</strong></td>
+            <td>{{ v.fecha }}</td>
+            <td><strong>${{ v.total }}</strong></td>
             <td class="d-flex gap-1">
-                <a href="/ventas/factura/{{ v }}" target="_blank"
+                {% if v.numero_factura %}
+                <a href="/ventas/factura/{{ v.numero_factura }}"
+                   target="_blank"
                    class="btn btn-secondary btn-sm">🖨</a>
 
                 {% if session.rol == "admin" %}
-                <a href="/ventas/eliminar/{{ v }}"
+                <a href="/ventas/eliminar/{{ v.numero_factura }}"
                    class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Eliminar esta venta?')">🗑</a>
+                {% endif %}
                 {% endif %}
             </td>
         </tr>
@@ -289,7 +275,6 @@ function limpiarFiltros() {
     aplicarFiltros();
 }
 
-// ✍️ CLIENTE MANUAL
 function toggleClienteManual() {
     const input = document.getElementById("cliente_manual");
     const select = document.getElementById("cliente_select");
