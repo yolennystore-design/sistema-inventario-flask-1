@@ -243,9 +243,12 @@ def confirmar():
     for item in carrito:
         cur.execute("""
             INSERT INTO ventas
-            (id_producto, producto, cantidad, precio, total, fecha)
-            VALUES (%s,%s,%s,%s,%s,%s)
+            (numero_factura, cliente, tipo, id_producto, producto, cantidad, precio, total, fecha)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
+            numero_factura,
+            cliente,
+            tipo_pago,
             item["id"],
             item["nombre"],
             item["cantidad"],
@@ -253,6 +256,7 @@ def confirmar():
             item["total"],
             fecha
         ))
+
 
         # DESCONTAR STOCK
         cur.execute("""
@@ -302,27 +306,21 @@ def factura(numero_factura):
     conn = get_db()
     cur = conn.cursor()
 
-    # Obtener items de la venta
+    # ======================
+    # OBTENER ITEMS DE LA FACTURA CORRECTA
+    # ======================
     cur.execute("""
         SELECT producto, cantidad, precio, total, fecha
         FROM ventas
-        WHERE id IN (
-            SELECT id
-            FROM ventas
-            WHERE fecha = (
-                SELECT fecha
-                FROM ventas
-                WHERE id = (
-                    SELECT MIN(id)
-                    FROM ventas
-                )
-            )
-        )
-    """)
+        WHERE numero_factura = %s
+        ORDER BY id
+    """, (numero_factura,))
 
     items = cur.fetchall()
 
-    # Obtener datos del crédito (si existe)
+    # ======================
+    # DATOS DEL CRÉDITO (SI EXISTE)
+    # ======================
     cur.execute("""
         SELECT cliente, fecha
         FROM creditos
@@ -338,7 +336,7 @@ def factura(numero_factura):
         return redirect(url_for("ventas.index"))
 
     cliente = credito["cliente"] if credito else "Público General"
-    fecha = credito["fecha"] if credito else ""
+    fecha = credito["fecha"] if credito else items[0]["fecha"]
     total = sum(i["total"] for i in items)
 
     # ======================
@@ -396,11 +394,9 @@ def factura(numero_factura):
 
     c.save()
 
-    pdf = buffer.getvalue()
-    buffer.close()
-
+    buffer.seek(0)
     return send_file(
-        BytesIO(pdf),
+        buffer,
         download_name=f"factura_{numero_factura}.pdf",
         as_attachment=True,
         mimetype="application/pdf"
