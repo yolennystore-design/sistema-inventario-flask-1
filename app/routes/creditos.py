@@ -6,7 +6,6 @@ from flask import (
 )
 from io import BytesIO
 import os
-import json
 from datetime import datetime
 
 from reportlab.platypus import (
@@ -154,6 +153,7 @@ def pdf_credito(numero_factura):
     conn = get_db()
     cur = conn.cursor()
 
+    # ===== CRÉDITO =====
     cur.execute("""
         SELECT numero_factura, cliente, monto,
                abonado, pendiente, fecha, estado,
@@ -162,45 +162,28 @@ def pdf_credito(numero_factura):
         WHERE numero_factura = %s
     """, (numero_factura,))
     row = cur.fetchone()
-    cur.close()
-    conn.close()
 
     if not row:
+        cur.close()
+        conn.close()
         return redirect(url_for("creditos.index"))
 
     # ======================
-    # DATOS DEL CRÉDITO
+    # 👇 CORRECCIÓN CLAVE
+    # PRODUCTOS DESDE LA TABLA ventas
     # ======================
-    numero_factura = row["numero_factura"]
-    cliente = row["cliente"]
-    monto = float(row["monto"])
-    abonado = float(row["abonado"])
-    pendiente = float(row["pendiente"])
-    fecha = row["fecha"]
-    estado = row.get("estado", "Pendiente")
-    fecha_ultimo_abono = (
-        str(row["fecha_ultimo_abono"])
-        if row.get("fecha_ultimo_abono")
-        else "Sin abonos"
-    )
+    cur.execute("""
+        SELECT producto AS nombre, cantidad, precio, total
+        FROM ventas
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+    items = cur.fetchall()
+
+    cur.close()
+    conn.close()
 
     # ======================
-    # PRODUCTOS DE LA VENTA
-    # ======================
-    items = []
-    ruta_ventas = "app/data/ventas.json"
-    if os.path.exists(ruta_ventas):
-        with open(ruta_ventas, "r", encoding="utf-8") as f:
-            ventas = json.load(f)
-            venta = next(
-                (v for v in ventas if v.get("numero_factura") == numero_factura),
-                None
-            )
-            if venta:
-                items = venta.get("items", [])
-
-    # ======================
-    # PDF
+    # PDF (NO SE TOCA DISEÑO)
     # ======================
     buffer = BytesIO()
     doc = SimpleDocTemplate(
@@ -215,7 +198,6 @@ def pdf_credito(numero_factura):
     styles = getSampleStyleSheet()
     elementos = []
 
-    # LOGO
     logo = "app/static/logo.png"
     if os.path.exists(logo):
         elementos.append(Image(logo, 100, 60))
@@ -225,18 +207,12 @@ def pdf_credito(numero_factura):
     elementos.append(Paragraph("Comprobante de Crédito", styles["Heading2"]))
     elementos.append(Spacer(1, 20))
 
-    # ======================
-    # DATOS GENERALES
-    # ======================
-    tabla_datos = Table(
-        [
-            ["Factura No.", numero_factura],
-            ["Cliente", cliente],
-            ["Fecha", fecha],
-            ["Estado del crédito", estado],
-        ],
-        colWidths=[150, 300]
-    )
+    tabla_datos = Table([
+        ["Factura No.", row["numero_factura"]],
+        ["Cliente", row["cliente"]],
+        ["Fecha", row["fecha"]],
+        ["Estado del crédito", row["estado"]],
+    ], colWidths=[150, 300])
 
     tabla_datos.setStyle(TableStyle([
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
@@ -247,30 +223,24 @@ def pdf_credito(numero_factura):
     elementos.append(tabla_datos)
     elementos.append(Spacer(1, 20))
 
-    # ======================
-    # RESUMEN DEL CRÉDITO
-    # ======================
-    elementos.append(Paragraph("<b>Resumen del Crédito</b>", styles["Heading3"]))
-    elementos.append(Spacer(1, 10))
-
     detalle = "<br/>".join([
         f"{i['nombre']} ({i['cantidad']} x RD$ {i['precio']:,.2f}) = RD$ {i['total']:,.2f}"
         for i in items
     ]) if items else "—"
 
-    tabla_resumen = Table(
+    tabla_resumen = Table([
+        ["Detalle", "Monto Total", "Total Abonado", "Saldo Pendiente", "Último Abono"],
         [
-            ["Detalle", "Monto Total", "Total Abonado", "Saldo Pendiente", "Último Abono"],
-            [
-                Paragraph(detalle, styles["Normal"]),
-                f"RD$ {monto:,.2f}",
-                f"RD$ {abonado:,.2f}",
-                f"RD$ {pendiente:,.2f}",
-                Paragraph(fecha_ultimo_abono.replace(" ", "<br/>"), styles["Normal"]),
-            ]
-        ],
-        colWidths=[200, 90, 90, 90, 110]
-    )
+            Paragraph(detalle, styles["Normal"]),
+            f"RD$ {row['monto']:,.2f}",
+            f"RD$ {row['abonado']:,.2f}",
+            f"RD$ {row['pendiente']:,.2f}",
+            Paragraph(
+                (str(row["fecha_ultimo_abono"]) if row["fecha_ultimo_abono"] else "Sin abonos").replace(" ", "<br/>"),
+                styles["Normal"]
+            ),
+        ]
+    ], colWidths=[200, 90, 90, 90, 110])
 
     tabla_resumen.setStyle(TableStyle([
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
@@ -282,32 +252,24 @@ def pdf_credito(numero_factura):
     elementos.append(tabla_resumen)
     elementos.append(Spacer(1, 25))
 
-    # ======================
-    # PRODUCTOS INCLUIDOS (CUADRO COMO EN LA FOTO)
-    # ======================
     elementos.append(Paragraph("<b>Productos incluidos</b>", styles["Heading3"]))
     elementos.append(Spacer(1, 10))
 
-    tabla_productos_data = [
-        ["Fecha", "Producto", "Cant.", "Precio", "Subtotal"]
-    ]
+    tabla_productos_data = [["Fecha", "Producto", "Cant.", "Precio", "Subtotal"]]
 
     if items:
         for i in items:
             tabla_productos_data.append([
-                fecha,
-                i.get("nombre", ""),
-                str(i.get("cantidad", 0)),
-                f"RD$ {i.get('precio', 0):,.2f}",
-                f"RD$ {i.get('total', 0):,.2f}",
+                row["fecha"],
+                i["nombre"],
+                str(i["cantidad"]),
+                f"RD$ {i['precio']:,.2f}",
+                f"RD$ {i['total']:,.2f}",
             ])
     else:
         tabla_productos_data.append(["—", "Sin productos", "—", "—", "—"])
 
-    tabla_productos = Table(
-        tabla_productos_data,
-        colWidths=[100, 180, 50, 90, 90]
-    )
+    tabla_productos = Table(tabla_productos_data, colWidths=[100, 180, 50, 90, 90])
 
     tabla_productos.setStyle(TableStyle([
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
@@ -322,9 +284,6 @@ def pdf_credito(numero_factura):
     elementos.append(tabla_productos)
     elementos.append(Spacer(1, 25))
 
-    # ======================
-    # FIRMA
-    # ======================
     elementos.append(Paragraph(
         "Este documento certifica el estado actual del crédito del cliente. Para cualquier aclaración, comuniquese con Yolenny store.",
         styles["Normal"]
@@ -345,7 +304,6 @@ def pdf_credito(numero_factura):
         download_name=f"credito_{numero_factura}.pdf"
     )
 
-
 # ======================
 # 🗑 ELIMINAR CRÉDITO
 # ======================
@@ -360,21 +318,18 @@ def eliminar_credito(id):
     cur.execute("SELECT numero_factura FROM creditos WHERE id = %s", (id,))
     row = cur.fetchone()
 
-    if not row:
-        conn.close()
-        return redirect(url_for("creditos.index"))
+    if row:
+        cur.execute("DELETE FROM creditos WHERE id = %s", (id,))
+        conn.commit()
 
-    cur.execute("DELETE FROM creditos WHERE id = %s", (id,))
-    conn.commit()
+        registrar_log(
+            usuario=session["usuario"],
+            accion=f"Eliminó crédito factura {row['numero_factura']}",
+            modulo="Créditos"
+        )
 
     cur.close()
     conn.close()
-
-    registrar_log(
-        usuario=session["usuario"],
-        accion=f"Eliminó crédito factura {row['numero_factura']}",
-        modulo="Créditos"
-    )
 
     flash("🗑 Crédito eliminado correctamente", "success")
     return redirect(url_for("creditos.index"))
