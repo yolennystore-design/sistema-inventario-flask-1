@@ -220,17 +220,29 @@
             <td><strong>${{ v.total }}</strong></td>
             <td class="d-flex gap-1">
                 {% if v.numero_factura %}
+
+                <!-- 🖨 Factura -->
                 <a href="/ventas/factura/{{ v.numero_factura }}"
                    target="_blank"
                    class="btn btn-secondary btn-sm">🖨</a>
 
+                <!-- 💵 Abonar (solo si es Crédito) -->
+                {% if v.tipo == "Crédito" and session.rol == "admin" %}
+                <a href="/creditos?cliente={{ v.cliente }}"
+                   class="btn btn-success btn-sm"
+                   title="Registrar abono">💵</a>
+                {% endif %}
+
+                <!-- 🗑 Eliminar -->
                 {% if session.rol == "admin" %}
                 <a href="/ventas/eliminar/{{ v.numero_factura }}"
                    class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Eliminar esta venta?')">🗑</a>
                 {% endif %}
+
                 {% endif %}
             </td>
+
         </tr>
         {% endfor %}
     </tbody>
