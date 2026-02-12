@@ -104,15 +104,20 @@ def index():
             totales[mes]["inversion_credito"] += inversion
 
     # ======================
-    # PROCESAR VENTAS
+    # PROCESAR VENTAS (POR PRODUCTO)
     # ======================
     for v in ventas:
         fecha = v["fecha"]
         mes = fecha[:7]
         tipo_pago = (v["tipo"] or "contado").lower()
 
-        total_venta = float(v["total"])
-        articulos = int(v["articulos"])
+        cantidad = float(v["cantidad"])
+        precio_venta = float(v["precio_venta"])
+        precio_compra = float(v["precio_compra"])
+
+        venta_total = precio_venta * cantidad
+        inversion_producto = precio_compra * cantidad
+        ganancia = venta_total - inversion_producto
 
         init_mes(mes)
 
@@ -123,25 +128,24 @@ def index():
             "inversion_total": 0,
             "inversion_contado": 0,
             "inversion_credito": 0,
-            "inv_prod_vendidos": articulos * costo_actual,
-            "ventas_contado": 0,
-            "ventas_credito": 0,
-            "articulos_vendidos": articulos,
-            "ganancia": total_venta - (articulos * costo_actual)
+            "inv_prod_vendidos": inversion_producto,
+            "ventas_contado": venta_total if tipo_pago == "contado" else 0,
+            "ventas_credito": venta_total if tipo_pago == "credito" else 0,
+            "articulos_vendidos": cantidad,
+            "ganancia": ganancia
         }
 
-        totales[mes]["inv_prod_vendidos"] += fila["inv_prod_vendidos"]
-        totales[mes]["articulos_vendidos"] += articulos
-        totales[mes]["ganancia"] += fila["ganancia"]
+        totales[mes]["inv_prod_vendidos"] += inversion_producto
+        totales[mes]["articulos_vendidos"] += cantidad
+        totales[mes]["ganancia"] += ganancia
 
         if tipo_pago == "contado":
-            fila["ventas_contado"] = total_venta
-            totales[mes]["ventas_contado"] += total_venta
+            totales[mes]["ventas_contado"] += venta_total
         else:
-            fila["ventas_credito"] = total_venta
-            totales[mes]["ventas_credito"] += total_venta
+            totales[mes]["ventas_credito"] += venta_total
 
         resumen.append(fila)
+
 
     # ======================
     # ORDENAR POR FECHA
