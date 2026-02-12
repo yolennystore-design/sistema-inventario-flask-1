@@ -219,35 +219,70 @@
             <td>{{ v.fecha }}</td>
             <td><strong>${{ v.total }}</strong></td>
             <td class="d-flex gap-1">
-                {% if v.numero_factura %}
 
-                <!-- 🖨 Factura -->
                 <a href="/ventas/factura/{{ v.numero_factura }}"
                    target="_blank"
                    class="btn btn-secondary btn-sm">🖨</a>
 
-                <!-- 💵 Abonar (solo si es Crédito) -->
                 {% if v.tipo == "Crédito" and session.rol == "admin" %}
-                <a href="/creditos?cliente={{ v.cliente }}"
-                   class="btn btn-success btn-sm"
-                   title="Registrar abono">💵</a>
+                <button class="btn btn-success btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#abonarModal{{ loop.index }}">
+                    💵
+                </button>
                 {% endif %}
 
-                <!-- 🗑 Eliminar -->
                 {% if session.rol == "admin" %}
                 <a href="/ventas/eliminar/{{ v.numero_factura }}"
                    class="btn btn-danger btn-sm"
                    onclick="return confirm('¿Eliminar esta venta?')">🗑</a>
                 {% endif %}
 
-                {% endif %}
             </td>
-
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
+<!-- ========================= MODALES DE ABONO ========================= -->
+{% for v in ventas %}
+{% if v.tipo == "Crédito" %}
+<div class="modal fade" id="abonarModal{{ loop.index }}" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST"
+              action="/ventas/abonar/{{ v.numero_factura }}"
+              class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">💵 Abonar crédito</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Cliente:</strong> {{ v.cliente }}</p>
+                <p><strong>Factura:</strong> {{ v.numero_factura }}</p>
+
+                <label class="form-label">Monto a abonar</label>
+                <input type="number"
+                       name="abono"
+                       class="form-control"
+                       min="1"
+                       step="0.01"
+                       required>
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">💾 Guardar Abono</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
 
 <!-- ========================= SCRIPTS ========================= -->
 <script>

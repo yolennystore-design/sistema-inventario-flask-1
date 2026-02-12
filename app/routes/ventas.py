@@ -535,3 +535,66 @@ def factura_por_numero(numero):
 
     index = ventas.index(venta)
     return redirect(url_for("ventas.factura", index=index))
+@ventas_bp.route("/abonar/<numero_factura>", methods=["POST"])
+def abonar_desde_ventas(numero_factura):
+    if "usuario" not in session or session.get("rol") != "admin":
+        return redirect(url_for("ventas.index"))
+
+    abono = float(request.form.get("abono", 0))
+    if abono <= 0:
+        return redirect(url_for("ventas.index"))
+
+    fecha_abono = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    # Obtener crédito
+    cur.execute("""
+        SELECT abonado, pendiente
+        FROM creditos
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+    row = cur.fetchone()
+
+    if not row:
+        cur.close()
+        conn.close()
+        return redirect(url_for("ventas.index"))
+
+    abonado = float(row["abonado"])
+    pendiente = float(row["pendiente"])
+
+    if abono > pendiente:
+        abono = pendiente
+
+    nuevo_abonado = abonado + abono
+    nuevo_pendiente = pendiente - abono
+    estado = "Pagado" if nuevo_pendiente == 0 else "Pendiente"
+
+    cur.execute("""
+        UPDATE creditos
+        SET abonado = %s,
+            pendiente = %s,
+            estado = %s,
+            fecha_ultimo_abono = %s
+        WHERE numero_factura = %s
+    """, (
+        nuevo_abonado,
+        nuevo_pendiente,
+        estado,
+        fecha_abono,
+        numero_factura
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    registrar_log(
+        usuario=session["usuario"],
+        accion=f"Abono RD${abono:,.2f} a factura {numero_factura}",
+        modulo="Ventas"
+    )
+
+    return redirect(url_for("ventas.index"))
