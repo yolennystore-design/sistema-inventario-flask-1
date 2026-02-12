@@ -26,17 +26,22 @@ def index():
     compras = cur.fetchall()
 
     # ======================
-    # VENTAS (DESDE BD, NO JSON)
+    # VENTAS (POR PRODUCTO, CON COSTO REAL)
     # ======================
     cur.execute("""
         SELECT
             v.fecha,
             v.tipo,
-            v.cantidad AS cantidad,
+            v.cantidad,
             v.precio AS precio_venta,
-            p.costo AS precio_compra
+            (
+                SELECT c.costo
+                FROM compras c
+                WHERE c.id_producto = v.id_producto
+                ORDER BY c.fecha DESC
+                LIMIT 1
+            ) AS precio_compra
         FROM ventas v
-        JOIN productos p ON p.id = v.id_producto
         ORDER BY v.fecha
     """)
     ventas = cur.fetchall()
@@ -61,13 +66,6 @@ def index():
             "articulos_vendidos": 0,
             "ganancia": 0
         })
-
-    # ======================
-    # COSTO ACTUAL (ÚLTIMO COSTO)
-    # ======================
-    costo_actual = 0
-    for c in compras:
-        costo_actual = float(c["costo"])
 
     # ======================
     # PROCESAR COMPRAS
@@ -104,7 +102,7 @@ def index():
             totales[mes]["inversion_credito"] += inversion
 
     # ======================
-    # PROCESAR VENTAS (POR PRODUCTO)
+    # PROCESAR VENTAS (GANANCIA REAL)
     # ======================
     for v in ventas:
         fecha = v["fecha"]
@@ -113,7 +111,7 @@ def index():
 
         cantidad = float(v["cantidad"])
         precio_venta = float(v["precio_venta"])
-        precio_compra = float(v["precio_compra"])
+        precio_compra = float(v["precio_compra"] or 0)
 
         venta_total = precio_venta * cantidad
         inversion_producto = precio_compra * cantidad
@@ -146,7 +144,6 @@ def index():
 
         resumen.append(fila)
 
-
     # ======================
     # ORDENAR POR FECHA
     # ======================
@@ -164,12 +161,12 @@ def index():
         totales=totales
     )
 
+
 def normalizar_pago(tipo):
     if not tipo:
         return "contado"
 
     tipo = tipo.lower().strip()
-
     if "credit" in tipo:
         return "credito"
     return "contado"
