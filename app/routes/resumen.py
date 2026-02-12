@@ -30,14 +30,14 @@ def index():
     # ======================
     cur.execute("""
         SELECT
-            numero_factura,
-            fecha,
-            tipo,
-            SUM(total) AS total,
-            SUM(cantidad) AS articulos
-        FROM ventas
-        GROUP BY numero_factura, fecha, tipo
-        ORDER BY fecha
+            v.fecha,
+            v.tipo,
+            v.cantidad AS cantidad,
+            v.precio AS precio_venta,
+            p.costo AS precio_compra
+        FROM ventas v
+        JOIN productos p ON p.id = v.id_producto
+        ORDER BY v.fecha
     """)
     ventas = cur.fetchall()
 
