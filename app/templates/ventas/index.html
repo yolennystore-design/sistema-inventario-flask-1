@@ -297,7 +297,10 @@
 <!-- ========================= SCRIPTS ========================= -->
 <script>
 const categorias = {{ categorias | tojson }};
-const filas = document.querySelectorAll(".producto-row");
+    const filas = document.querySelectorAll(".producto-row");
+    // 🔒 Ocultar todos los productos al cargar
+    filas.forEach(f => f.style.display = "none");
+
 
 const filtroNombre = document.getElementById("filtroNombre");
 const filtroCategoria = document.getElementById("filtroCategoria");
@@ -321,27 +324,37 @@ filtroCategoria.addEventListener("change", () => {
     el.addEventListener("input", aplicarFiltros)
 );
 
-function aplicarFiltros() {
-    const nombre = filtroNombre.value.toLowerCase();
-    const categoria = filtroCategoria.value;
-    const sub = filtroSubcategoria.value;
+    function aplicarFiltros() {
+        const nombre = filtroNombre.value.toLowerCase().trim();
+        const categoria = filtroCategoria.value;
+        const sub = filtroSubcategoria.value;
 
-    filas.forEach(f => {
-        const ok =
-            f.dataset.nombre.includes(nombre) &&
-            (!categoria || f.dataset.categoria === categoria) &&
-            (!sub || f.dataset.subcategoria === sub);
+        // ❗ Si no hay ningún filtro → NO mostrar nada
+        if (!nombre && !categoria && !sub) {
+            filas.forEach(f => f.style.display = "none");
+            return;
+        }
 
-        f.style.display = ok ? "" : "none";
-    });
-}
+        filas.forEach(f => {
+            const ok =
+                (!nombre || f.dataset.nombre.includes(nombre)) &&
+                (!categoria || f.dataset.categoria === categoria) &&
+                (!sub || f.dataset.subcategoria === sub);
+
+            f.style.display = ok ? "" : "none";
+        });
+    }
+
 
 function limpiarFiltros() {
-    filtroNombre.value = "";
-    filtroCategoria.value = "";
-    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
-    aplicarFiltros();
+     filtroNombre.value = "";
+     filtroCategoria.value = "";
+     filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
+
+     filas.forEach(f => f.style.display = "none");
 }
+
+
 
 function toggleClienteManual() {
     const input = document.getElementById("cliente_manual");
