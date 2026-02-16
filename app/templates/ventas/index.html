@@ -4,7 +4,7 @@
 {% block content %}
 <h2 class="mb-3">🛒 Ventas</h2>
 
-<!-- ========================= FILTROS ========================= -->
+<!-- ========================= FILTROS DE PRODUCTOS ========================= -->
 <div class="card mb-3">
     <div class="card-body row g-2">
         <div class="col-md-4">
@@ -28,7 +28,9 @@
         </div>
 
         <div class="col-md-2">
-            <button class="btn btn-secondary w-100" onclick="limpiarFiltros()">🔄 Limpiar</button>
+            <button class="btn btn-secondary w-100" onclick="limpiarFiltros()">
+                🔄 Limpiar
+            </button>
         </div>
     </div>
 </div>
@@ -93,11 +95,25 @@
         </tr>
     </thead>
     <tbody>
+        {% if carrito %}
         {% for i in carrito %}
         <tr>
             <td>{{ i.nombre }}</td>
             <td>{{ i.cantidad }}</td>
-            <td>${{ i.precio }}</td>
+            <td>
+                {% if session.rol == "admin" %}
+                <form method="POST" action="/ventas/actualizar_precio" class="d-flex">
+                    <input type="hidden" name="id" value="{{ i.id }}">
+                    <input type="number" name="precio" value="{{ i.precio }}"
+                           step="0.01" min="0"
+                           class="form-control form-control-sm me-1"
+                           style="width:90px" required>
+                    <button class="btn btn-warning btn-sm">💲</button>
+                </form>
+                {% else %}
+                ${{ i.precio }}
+                {% endif %}
+            </td>
             <td>${{ i.total }}</td>
             <td>
                 <a href="/ventas/eliminar_item/{{ i.id }}"
@@ -105,25 +121,39 @@
                    onclick="return confirm('¿Eliminar producto del carrito?')">❌</a>
             </td>
         </tr>
+        {% endfor %}
         {% else %}
         <tr>
-            <td colspan="5" class="text-center text-muted">🛒 Carrito vacío</td>
+            <td colspan="5" class="text-center text-muted">🛒 El carrito está vacío</td>
         </tr>
-        {% endfor %}
+        {% endif %}
     </tbody>
 </table>
 
-<!-- ========================= CONFIRMAR ========================= -->
-<form method="POST" action="/ventas/confirmar">
+<!-- ========================= CONFIRMAR VENTA ========================= -->
+<form method="POST" action="/ventas/confirmar" class="mt-3">
     <div class="row mb-3">
         <div class="col-md-4">
             <label class="form-label">Cliente</label>
-            <select name="cliente_select" class="form-select">
+
+            <select id="cliente_select" name="cliente_select" class="form-select">
                 <option value="Público General">Público General</option>
                 {% for c in clientes %}
                 <option value="{{ c.nombre }}">{{ c.nombre }}</option>
                 {% endfor %}
             </select>
+
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm mt-2"
+                    onclick="toggleClienteManual()">
+                ✍️ Cliente manual
+            </button>
+
+            <input type="text"
+                   id="cliente_manual"
+                   name="cliente_manual"
+                   class="form-control mt-2 d-none"
+                   placeholder="Nombre del cliente">
         </div>
 
         <div class="col-md-4">
@@ -131,39 +161,131 @@
             <input type="radio" name="tipo_venta" value="Contado" checked> Contado
             <input type="radio" name="tipo_venta" value="Crédito" class="ms-3"> Crédito
         </div>
-
-        <div class="col-md-4" id="abonoBox" style="display:none;">
-            <label class="form-label">Abono inicial</label>
-            <input type="number" id="abono" name="abono"
-                   class="form-control" min="0" step="0.01">
-        </div>
     </div>
 
     <h4>Total: <strong>${{ total }}</strong></h4>
-    <button class="btn btn-success">💾 Generar Venta</button>
+
+    <div class="d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-success" {% if not carrito %}disabled{% endif %}>
+            💾 Generar Venta
+        </button>
+
+        <a href="/ventas/vaciar_carrito"
+           class="btn btn-secondary"
+           onclick="return confirm('¿Cancelar la venta?')">❌ Cancelar</a>
+
+        <a href="/" class="btn btn-outline-primary">⬅ Volver al Inicio</a>
+    </div>
 </form>
+
+<hr>
+
+<!-- ========================= VENTAS REALIZADAS ========================= -->
+<h4>🖨 Ventas Realizadas</h4>
+
+{% if session.rol == "admin" %}
+<div class="mb-3">
+    <a href="/ventas/eliminar_todas"
+       class="btn btn-danger"
+       onclick="return confirm('⚠️ ¿Eliminar TODAS las ventas y devolver stock?')">
+        🗑 Eliminar TODAS las Ventas
+    </a>
+</div>
+{% endif %}
+
+<table class="table table-bordered align-middle">
+    <thead class="table-light">
+        <tr>
+            <th>#</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for v in ventas %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ v.cliente }}</td>
+            <td>
+                {% if v.tipo == "Crédito" %}
+                <span class="badge bg-warning text-dark">Crédito</span>
+                {% else %}
+                <span class="badge bg-success">Contado</span>
+                {% endif %}
+            </td>
+            <td>{{ v.fecha }}</td>
+            <td><strong>${{ v.total }}</strong></td>
+            <td class="d-flex gap-1">
+
+                <a href="/ventas/factura/{{ v.numero_factura }}"
+                   target="_blank"
+                   class="btn btn-secondary btn-sm">🖨</a>
+
+                {% if v.tipo == "Crédito" and session.rol == "admin" %}
+                <button class="btn btn-success btn-sm"
+                        data-bs-toggle="modal"
+                        data-bs-target="#abonarModal{{ loop.index }}">
+                    💵
+                </button>
+                {% endif %}
+
+                {% if session.rol == "admin" %}
+                <a href="/ventas/eliminar/{{ v.numero_factura }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar esta venta?')">🗑</a>
+                {% endif %}
+
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ========================= MODALES DE ABONO ========================= -->
+{% for v in ventas %}
+{% if v.tipo == "Crédito" %}
+<div class="modal fade" id="abonarModal{{ loop.index }}" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST"
+              action="/ventas/abonar/{{ v.numero_factura }}"
+              class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">💵 Abonar crédito</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Cliente:</strong> {{ v.cliente }}</p>
+                <p><strong>Factura:</strong> {{ v.numero_factura }}</p>
+
+                <label class="form-label">Monto a abonar</label>
+                <input type="number"
+                       name="abono"
+                       class="form-control"
+                       min="1"
+                       step="0.01"
+                       required>
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">💾 Guardar Abono</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
 
 <!-- ========================= SCRIPTS ========================= -->
 <script>
-    /* ===== ABONO DINÁMICO ===== */
-    const radiosPago = document.querySelectorAll('input[name="tipo_venta"]');
-    const abonoBox = document.getElementById("abonoBox");
-    const abonoInput = document.getElementById("abono");
-
-    radiosPago.forEach(r => {
-        r.addEventListener("change", () => {
-            if (r.value === "Crédito" && r.checked) {
-                abonoBox.style.display = "block";
-            } else {
-                abonoBox.style.display = "none";
-                abonoInput.value = "";
-            }
-        });
-    });
-</script>
-
-<script>
-/* ===== FILTROS ===== */
 const categorias = {{ categorias | tojson }};
 const filas = document.querySelectorAll(".producto-row");
 
@@ -175,8 +297,12 @@ filtroCategoria.addEventListener("change", () => {
     filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
     const cat = categorias.find(c => c.nombre === filtroCategoria.value);
     if (!cat) return;
+
     cat.subcategorias.forEach(s => {
-        filtroSubcategoria.innerHTML += `<option>${s.nombre}</option>`;
+        const opt = document.createElement("option");
+        opt.value = s.nombre;
+        opt.textContent = s.nombre;
+        filtroSubcategoria.appendChild(opt);
     });
     aplicarFiltros();
 });
@@ -187,9 +313,41 @@ filtroCategoria.addEventListener("change", () => {
 
 function aplicarFiltros() {
     const nombre = filtroNombre.value.toLowerCase();
+    const categoria = filtroCategoria.value;
+    const sub = filtroSubcategoria.value;
+
     filas.forEach(f => {
-        f.style.display = f.dataset.nombre.includes(nombre) ? "" : "none";
+        const ok =
+            f.dataset.nombre.includes(nombre) &&
+            (!categoria || f.dataset.categoria === categoria) &&
+            (!sub || f.dataset.subcategoria === sub);
+
+        f.style.display = ok ? "" : "none";
     });
+}
+
+function limpiarFiltros() {
+    filtroNombre.value = "";
+    filtroCategoria.value = "";
+    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
+    aplicarFiltros();
+}
+
+function toggleClienteManual() {
+    const input = document.getElementById("cliente_manual");
+    const select = document.getElementById("cliente_select");
+
+    input.classList.toggle("d-none");
+
+    if (!input.classList.contains("d-none")) {
+        select.disabled = true;
+        input.required = true;
+        input.focus();
+    } else {
+        select.disabled = false;
+        input.required = false;
+        input.value = "";
+    }
 }
 </script>
 
