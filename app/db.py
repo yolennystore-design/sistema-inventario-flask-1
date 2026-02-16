@@ -31,14 +31,12 @@ def get_db():
        - SOLO si no existe DATABASE_URL
     """
 
-    # PostgreSQL (Render)
     if DATABASE_URL:
         return psycopg2.connect(
             DATABASE_URL,
             cursor_factory=RealDictCursor
         )
 
-    # SQLite (Local)
     conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -47,7 +45,6 @@ def get_db():
 # ======================
 # CREAR TABLAS
 # ======================
-
 def crear_tablas():
     conn = get_db()
     cur = conn.cursor()
@@ -87,17 +84,15 @@ def crear_tablas():
     )
     """)
 
-    # ======================
     # MIGRACIÓN SEGURA (direccion)
-    # ======================
     try:
         cur.execute("ALTER TABLE clientes ADD COLUMN direccion TEXT")
         conn.commit()
     except Exception:
-        conn.rollback()  # 🔥 ESTO ES LO QUE FALTABA
+        conn.rollback()
 
     # ======================
-    # VENTAS (CORREGIDA)
+    # VENTAS
     # ======================
     cur.execute(f"""
     CREATE TABLE IF NOT EXISTS ventas (
@@ -110,16 +105,17 @@ def crear_tablas():
         cantidad INTEGER,
         precio REAL,
         total REAL,
-        fecha TEXT
+        fecha TEXT,
+        eliminado BOOLEAN DEFAULT FALSE
     )
     """)
-    # ======================
+
     # MIGRACIONES SEGURAS (ventas)
-    # ======================
     for col in [
         "numero_factura TEXT",
         "cliente TEXT",
-        "tipo TEXT"
+        "tipo TEXT",
+        "eliminado BOOLEAN DEFAULT FALSE"
     ]:
         try:
             cur.execute(f"ALTER TABLE ventas ADD COLUMN {col}")
@@ -139,18 +135,22 @@ def crear_tablas():
         abonado REAL DEFAULT 0,
         pendiente REAL NOT NULL,
         estado TEXT DEFAULT 'Pendiente',
-        fecha TEXT
+        fecha TEXT,
+        fecha_ultimo_abono TEXT,
+        eliminado BOOLEAN DEFAULT FALSE
     )
     """)
-    # ======================
-    # MIGRACIÓN SEGURA (fecha_ultimo_abono)
-    # ======================
-    try:
-        cur.execute("ALTER TABLE creditos ADD COLUMN fecha_ultimo_abono TEXT")
-        conn.commit()
-    except Exception:
-        conn.rollback()
 
+    # MIGRACIONES SEGURAS (creditos)
+    for col in [
+        "fecha_ultimo_abono TEXT",
+        "eliminado BOOLEAN DEFAULT FALSE"
+    ]:
+        try:
+            cur.execute(f"ALTER TABLE creditos ADD COLUMN {col}")
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # ======================
     # COMPRAS
@@ -199,6 +199,11 @@ def crear_tablas():
 
     conn.commit()
     conn.close()
+
+
+# ======================
+# MIGRACIÓN EXPLÍCITA VENTAS
+# ======================
 def migrar_ventas():
     print(">>> EJECUTANDO migrar_ventas()")
 
@@ -217,6 +222,9 @@ def migrar_ventas():
     try_add("ALTER TABLE ventas ADD COLUMN numero_factura TEXT")
     try_add("ALTER TABLE ventas ADD COLUMN cliente TEXT")
     try_add("ALTER TABLE ventas ADD COLUMN tipo TEXT")
+    try_add("ALTER TABLE ventas ADD COLUMN eliminado BOOLEAN DEFAULT FALSE")
+
+    try_add("ALTER TABLE creditos ADD COLUMN eliminado BOOLEAN DEFAULT FALSE")
 
     cur.close()
     conn.close()
