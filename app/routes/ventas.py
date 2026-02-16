@@ -223,24 +223,28 @@ def confirmar():
     cliente_manual = request.form.get("cliente_manual", "").strip()
     cliente_select = request.form.get("cliente_select", "").strip()
 
-    cliente = (
-        cliente_manual
-        or cliente_select
-        or "Público General"
-    )
+    cliente = cliente_manual or cliente_select or "Público General"
 
     tipo_venta_raw = request.form.get("tipo_venta", "Contado")
     tipo_pago = normalizar_pago(tipo_venta_raw)
 
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
+
+    # 🔹 ABONO INICIAL
+    abono_inicial = float(request.form.get("abono", 0) or 0)
+    if abono_inicial < 0:
+        abono_inicial = 0
+    if abono_inicial > total:
+        abono_inicial = total
+
     numero_factura = f"YS-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     conn = get_db()
     cur = conn.cursor()
 
     # ======================
-    # GUARDAR VENTAS EN BD
+    # GUARDAR ITEMS DE VENTA
     # ======================
     for item in carrito:
         cur.execute("""
@@ -259,7 +263,6 @@ def confirmar():
             fecha
         ))
 
-
         # DESCONTAR STOCK
         cur.execute("""
             UPDATE productos
@@ -268,18 +271,23 @@ def confirmar():
         """, (item["cantidad"], item["id"]))
 
     # ======================
-    # REGISTRAR CRÉDITO
+    # REGISTRAR CRÉDITO (CON ABONO)
     # ======================
     if tipo_pago == "credito":
+        pendiente = total - abono_inicial
+        estado = "Pagado" if pendiente == 0 else "Pendiente"
+
         cur.execute("""
             INSERT INTO creditos
             (numero_factura, cliente, monto, abonado, pendiente, estado, fecha)
-            VALUES (%s,%s,%s,0,%s,'Pendiente',%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
         """, (
             numero_factura,
             cliente,
             total,
-            total,
+            abono_inicial,
+            pendiente,
+            estado,
             fecha
         ))
 
@@ -287,9 +295,7 @@ def confirmar():
     cur.close()
     conn.close()
 
-    # ======================
     # LIMPIAR CARRITO
-    # ======================
     guardar_json(CARRITO_FILE, [])
 
     registrar_log(
