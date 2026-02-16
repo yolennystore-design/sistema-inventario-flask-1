@@ -108,6 +108,7 @@ def index():
             SUM(total) AS total
         FROM ventas
         WHERE tipo = 'contado'
+          AND eliminado = 0
         GROUP BY numero_factura, cliente
         ORDER BY fecha DESC
     """)
@@ -122,9 +123,26 @@ def index():
             monto AS total,
             numero_factura
         FROM creditos
+        WHERE eliminado = 0
         ORDER BY fecha DESC
     """)
     ventas_credito = cur.fetchall()
+    
+    cur.execute("""
+        SELECT
+            numero_factura,
+            cliente,
+            tipo,
+            eliminado,
+            MAX(fecha) AS fecha,
+            SUM(total) AS total
+        FROM ventas
+        GROUP BY numero_factura, cliente, eliminado, tipo
+        ORDER BY fecha DESC
+    """)
+    ventas = cur.fetchall()
+
+    ventas_eliminadas = cur.fetchall()
 
     cur.close()
     conn.close()
@@ -142,6 +160,7 @@ def index():
         clientes=clientes,
         carrito=carrito,
         ventas=ventas,
+        ventas_eliminadas=ventas_eliminadas,  # 👈 ESTA ES LA CLAVE
         total=total_carrito
     )
 
@@ -448,7 +467,24 @@ def eliminar_factura(numero_factura):
     cur = conn.cursor()
 
     # ======================
-    # 1️⃣ OBTENER ITEMS DE LA VENTA
+    # 1️⃣ VERIFICAR SI YA ESTÁ ELIMINADA
+    # ======================
+    cur.execute("""
+        SELECT eliminado
+        FROM ventas
+        WHERE numero_factura = %s
+        LIMIT 1
+    """, (numero_factura,))
+    venta = cur.fetchone()
+
+    if not venta or venta["eliminado"]:
+        # Ya estaba eliminada → no tocar stock otra vez
+        cur.close()
+        conn.close()
+        return redirect(url_for("ventas.index"))
+
+    # ======================
+    # 2️⃣ OBTENER ITEMS DE LA VENTA
     # ======================
     cur.execute("""
         SELECT id_producto, cantidad
@@ -458,7 +494,7 @@ def eliminar_factura(numero_factura):
     items = cur.fetchall()
 
     # ======================
-    # 2️⃣ DEVOLVER STOCK
+    # 3️⃣ DEVOLVER STOCK
     # ======================
     for item in items:
         cur.execute("""
@@ -468,18 +504,17 @@ def eliminar_factura(numero_factura):
         """, (item["cantidad"], item["id_producto"]))
 
     # ======================
-    # 3️⃣ ELIMINAR VENTAS
+    # 4️⃣ MARCAR COMO ELIMINADA (SOFT DELETE)
     # ======================
     cur.execute("""
-        DELETE FROM ventas
+        UPDATE ventas
+        SET eliminado = 1
         WHERE numero_factura = %s
     """, (numero_factura,))
 
-    # ======================
-    # 4️⃣ ELIMINAR CRÉDITO (SI EXISTE)
-    # ======================
     cur.execute("""
-        DELETE FROM creditos
+        UPDATE creditos
+        SET eliminado = 1
         WHERE numero_factura = %s
     """, (numero_factura,))
 
@@ -489,7 +524,7 @@ def eliminar_factura(numero_factura):
 
     registrar_log(
         usuario=session.get("usuario"),
-        accion=f"Eliminó venta {numero_factura} y devolvió stock",
+        accion=f"Venta {numero_factura} eliminada y stock devuelto",
         modulo="Ventas"
     )
 
@@ -624,6 +659,37 @@ def abonar_desde_ventas(numero_factura):
     registrar_log(
         usuario=session["usuario"],
         accion=f"Abono RD${abono:,.2f} a factura {numero_factura}",
+        modulo="Ventas"
+    )
+
+    return redirect(url_for("ventas.index"))
+@ventas_bp.route("/recuperar/<numero_factura>")
+def recuperar_venta(numero_factura):
+    if session.get("rol") != "admin":
+        return redirect(url_for("ventas.index"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE ventas
+        SET eliminado = FALSE
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+
+    cur.execute("""
+        UPDATE creditos
+        SET eliminado = FALSE
+        WHERE numero_factura = %s
+    """, (numero_factura,))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    registrar_log(
+        usuario=session.get("usuario"),
+        accion=f"Venta {numero_factura} recuperada",
         modulo="Ventas"
     )
 

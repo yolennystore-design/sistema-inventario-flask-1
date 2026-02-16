@@ -243,9 +243,18 @@
                 {% endif %}
 
                 {% if session.rol == "admin" %}
-                <a href="/ventas/eliminar/{{ v.numero_factura }}"
-                   class="btn btn-danger btn-sm"
-                   onclick="return confirm('¿Eliminar esta venta?')">🗑</a>
+                    {% if not v.eliminado %}
+                    <a href="/ventas/eliminar/{{ v.numero_factura }}"
+                       class="btn btn-danger btn-sm"
+                       onclick="return confirm('¿Eliminar esta venta?')">
+                        🗑
+                    </a>
+                    {% else %}
+                    <a href="/ventas/recuperar/{{ v.numero_factura }}"
+                       class="btn btn-warning btn-sm">
+                        ♻ Recuperar
+                    </a>
+                    {% endif %}
                 {% endif %}
 
             </td>
