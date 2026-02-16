@@ -230,21 +230,23 @@ def confirmar():
 
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
     total = sum(i["total"] for i in carrito)
-
-    # 🔹 ABONO INICIAL
-    abono_inicial = float(request.form.get("abono", 0) or 0)
-    if abono_inicial < 0:
-        abono_inicial = 0
-    if abono_inicial > total:
-        abono_inicial = total
-
     numero_factura = f"YS-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+    # ✅ ABONO INICIAL (NUEVO)
+    abono = float(request.form.get("abono", 0) or 0)
+    if abono < 0:
+        abono = 0
+    if abono > total:
+        abono = total
+
+    pendiente = total - abono
+    estado = "Pagado" if pendiente == 0 else "Pendiente"
 
     conn = get_db()
     cur = conn.cursor()
 
     # ======================
-    # GUARDAR ITEMS DE VENTA
+    # GUARDAR VENTAS
     # ======================
     for item in carrito:
         cur.execute("""
@@ -271,12 +273,9 @@ def confirmar():
         """, (item["cantidad"], item["id"]))
 
     # ======================
-    # REGISTRAR CRÉDITO (CON ABONO)
+    # REGISTRAR CRÉDITO (CORREGIDO)
     # ======================
     if tipo_pago == "credito":
-        pendiente = total - abono_inicial
-        estado = "Pagado" if pendiente == 0 else "Pendiente"
-
         cur.execute("""
             INSERT INTO creditos
             (numero_factura, cliente, monto, abonado, pendiente, estado, fecha)
@@ -285,9 +284,9 @@ def confirmar():
             numero_factura,
             cliente,
             total,
-            abono_inicial,
-            pendiente,
-            estado,
+            abono,        # ✅ ABONADO REAL
+            pendiente,    # ✅ PENDIENTE REAL
+            estado,       # ✅ ESTADO CORRECTO
             fecha
         ))
 
@@ -295,7 +294,6 @@ def confirmar():
     cur.close()
     conn.close()
 
-    # LIMPIAR CARRITO
     guardar_json(CARRITO_FILE, [])
 
     registrar_log(

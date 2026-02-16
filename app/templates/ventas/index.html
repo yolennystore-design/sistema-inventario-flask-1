@@ -161,6 +161,16 @@
             <input type="radio" name="tipo_venta" value="Contado" checked> Contado
             <input type="radio" name="tipo_venta" value="Crédito" class="ms-3"> Crédito
         </div>
+        <div class="col-md-4 mt-2" id="abonoBox" style="display:none;">
+            <label class="form-label">Abono inicial</label>
+            <input type="number"
+                   name="abono"
+                   id="abono"
+                   class="form-control"
+                   min="0"
+                   step="0.01"
+                   placeholder="Monto abonado">
+        </div>
     </div>
 
     <h4>Total: <strong>${{ total }}</strong></h4>
@@ -348,7 +358,21 @@ function toggleClienteManual() {
         input.required = false;
         input.value = "";
     }
-}
+    }
+    const radiosPago = document.querySelectorAll('input[name="tipo_venta"]');
+    const abonoBox = document.getElementById("abonoBox");
+    const abonoInput = document.getElementById("abono");
+
+    radiosPago.forEach(r => {
+        r.addEventListener("change", () => {
+            if (r.value === "Crédito" && r.checked) {
+                abonoBox.style.display = "block";
+            } else {
+                abonoBox.style.display = "none";
+                abonoInput.value = "";
+            }
+        });
+    });
 </script>
 
 {% endblock %}
