@@ -334,6 +334,23 @@ def factura(numero_factura):
     """, (numero_factura,))
     venta = cur.fetchone()
 
+    # 🔹 SI ES CRÉDITO, BUSCAR ABONO Y PENDIENTE
+    abono = 0
+    pendiente = 0
+
+    if venta["tipo"] == "credito":
+        cur.execute("""
+            SELECT abonado, pendiente
+            FROM creditos
+            WHERE numero_factura = %s
+        """, (numero_factura,))
+        credito = cur.fetchone()
+
+        if credito:
+            abono = float(credito["abonado"])
+            pendiente = float(credito["pendiente"])
+
+
     cur.close()
     conn.close()
 
@@ -368,10 +385,19 @@ def factura(numero_factura):
     y -= 10
     c.drawString(5, y, f"Cliente: {cliente}")
     y -= 10
-    c.drawString(5, y, f"Tipo: {tipo}")   # ✅ AQUÍ SE MUESTRA
+    c.drawString(5, y, f"Tipo: {tipo}")
     y -= 10
     c.drawString(5, y, f"Fecha: {fecha}")
-    y -= 15
+    y -= 10
+
+    # 🔹 MOSTRAR ABONO SOLO SI ES CRÉDITO
+    if tipo == "Crédito":
+        c.drawString(5, y, f"Abono: ${abono:,.2f}")
+        y -= 10
+        c.drawString(5, y, f"Pendiente: ${pendiente:,.2f}")
+        y -= 10
+
+    y -= 5
 
     c.line(5, y, ANCHO - 5, y)
     y -= 10
