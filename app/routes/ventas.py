@@ -105,13 +105,15 @@ def index():
             cliente,
             'Contado' AS tipo,
             MAX(fecha) AS fecha,
-            SUM(total) AS total
+            SUM(total) AS total,
+            FALSE AS eliminado
         FROM ventas
         WHERE tipo = 'contado'
-          AND eliminado = 0
+          AND eliminado = FALSE
         GROUP BY numero_factura, cliente
         ORDER BY fecha DESC
     """)
+
     ventas_contado = cur.fetchall()
 
     # 🔹 Ventas CRÉDITO
@@ -123,7 +125,7 @@ def index():
             monto AS total,
             numero_factura
         FROM creditos
-        WHERE eliminado = 0
+        WHERE eliminado = FALSE
         ORDER BY fecha DESC
     """)
     ventas_credito = cur.fetchall()
