@@ -2,8 +2,8 @@
 
 import os
 import sqlite3
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 
 # ======================
 # CONFIGURACIÓN
@@ -23,31 +23,28 @@ def get_db():
     PRIORIDAD DE CONEXIÓN
 
     1️⃣ PostgreSQL (Render / Producción)
-       - Usa DATABASE_URL
-       - Persistente
+       - Usa DATABASE_URL (Internal DB URL)
+       - psycopg v3
 
     2️⃣ SQLite (Desarrollo local)
        - Usa database.db
-       - SOLO si no existe DATABASE_URL
     """
 
-    # PostgreSQL (Render)
     if DATABASE_URL:
-        return psycopg2.connect(
+        return psycopg.connect(
             DATABASE_URL,
-            cursor_factory=RealDictCursor
+            row_factory=dict_row,
+            connect_timeout=5
         )
 
-    # SQLite (Local)
     conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 # ======================
-# CREAR TABLAS
+# CREAR TABLAS (SOLO LOCAL)
 # ======================
-
 def crear_tablas():
     conn = get_db()
     cur = conn.cursor()
@@ -87,17 +84,15 @@ def crear_tablas():
     )
     """)
 
-    # ======================
     # MIGRACIÓN SEGURA (direccion)
-    # ======================
     try:
         cur.execute("ALTER TABLE clientes ADD COLUMN direccion TEXT")
         conn.commit()
     except Exception:
-        conn.rollback()  # 🔥 ESTO ES LO QUE FALTABA
+        conn.rollback()
 
     # ======================
-    # VENTAS (CORREGIDA)
+    # VENTAS
     # ======================
     cur.execute(f"""
     CREATE TABLE IF NOT EXISTS ventas (
@@ -113,19 +108,6 @@ def crear_tablas():
         fecha TEXT
     )
     """)
-    # ======================
-    # MIGRACIONES SEGURAS (ventas)
-    # ======================
-    for col in [
-        "numero_factura TEXT",
-        "cliente TEXT",
-        "tipo TEXT"
-    ]:
-        try:
-            cur.execute(f"ALTER TABLE ventas ADD COLUMN {col}")
-            conn.commit()
-        except Exception:
-            conn.rollback()
 
     # ======================
     # CRÉDITOS
@@ -139,18 +121,10 @@ def crear_tablas():
         abonado REAL DEFAULT 0,
         pendiente REAL NOT NULL,
         estado TEXT DEFAULT 'Pendiente',
-        fecha TEXT
+        fecha TEXT,
+        fecha_ultimo_abono TEXT
     )
     """)
-    # ======================
-    # MIGRACIÓN SEGURA (fecha_ultimo_abono)
-    # ======================
-    try:
-        cur.execute("ALTER TABLE creditos ADD COLUMN fecha_ultimo_abono TEXT")
-        conn.commit()
-    except Exception:
-        conn.rollback()
-
 
     # ======================
     # COMPRAS
@@ -198,7 +172,13 @@ def crear_tablas():
     """)
 
     conn.commit()
+    cur.close()
     conn.close()
+
+
+# ======================
+# MIGRACIÓN MANUAL (SOLO LOCAL)
+# ======================
 def migrar_ventas():
     print(">>> EJECUTANDO migrar_ventas()")
 
