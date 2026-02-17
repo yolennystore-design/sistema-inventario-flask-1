@@ -1,5 +1,4 @@
 from flask import Flask, render_template, session, redirect, url_for
-from app.db import crear_tablas, migrar_ventas
 
 def create_app():
     app = Flask(
@@ -7,14 +6,13 @@ def create_app():
         template_folder="templates",
         static_folder="static"
     )
+
     app.secret_key = "super-secret-key-inventario"
 
-    crear_tablas()
-    migrar_ventas()
+    # 🚫 NUNCA crear tablas en Render
+    # crear_tablas()
+    # migrar_ventas()
 
-    # ======================
-    # BLUEPRINTS
-    # ======================
     from app.routes.auth import auth_bp
     from app.routes.clientes import clientes_bp
     from app.routes.productos import productos_bp
@@ -26,7 +24,7 @@ def create_app():
     from app.routes.auditoria import auditoria_bp
     from app.routes.categorias import categorias_bp
     from app.routes.resumen import resumen_bp
-    from app.routes.gastos import gastos_bp   # ✅ SOLO IMPORTAR
+    from app.routes.gastos import gastos_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(clientes_bp)
@@ -39,7 +37,7 @@ def create_app():
     app.register_blueprint(auditoria_bp)
     app.register_blueprint(categorias_bp)
     app.register_blueprint(resumen_bp)
-    app.register_blueprint(gastos_bp)          # ✅ REGISTRAR
+    app.register_blueprint(gastos_bp)
 
     @app.route("/")
     def dashboard():
