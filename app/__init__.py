@@ -1,4 +1,6 @@
 from flask import Flask, render_template, session, redirect, url_for
+import os
+
 from app.db import crear_tablas, migrar_ventas
 
 def create_app():
@@ -7,10 +9,15 @@ def create_app():
         template_folder="templates",
         static_folder="static"
     )
+
     app.secret_key = "super-secret-key-inventario"
 
-    crear_tablas()
-    migrar_ventas()
+    # ======================
+    # ⚠️ SOLO EN DESARROLLO (NO RENDER)
+    # ======================
+    if not os.getenv("DATABASE_URL"):
+        crear_tablas()
+        migrar_ventas()
 
     # ======================
     # BLUEPRINTS
@@ -26,7 +33,7 @@ def create_app():
     from app.routes.auditoria import auditoria_bp
     from app.routes.categorias import categorias_bp
     from app.routes.resumen import resumen_bp
-    from app.routes.gastos import gastos_bp   # ✅ SOLO IMPORTAR
+    from app.routes.gastos import gastos_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(clientes_bp)
@@ -39,7 +46,7 @@ def create_app():
     app.register_blueprint(auditoria_bp)
     app.register_blueprint(categorias_bp)
     app.register_blueprint(resumen_bp)
-    app.register_blueprint(gastos_bp)          # ✅ REGISTRAR
+    app.register_blueprint(gastos_bp)
 
     @app.route("/")
     def dashboard():
