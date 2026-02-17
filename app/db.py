@@ -23,14 +23,10 @@ def get_db():
         if "sslmode=" not in dsn:
             dsn += "?sslmode=require"
 
-        return psycopg2.connect(
+        return psycopg.connect(
             dsn,
-            cursor_factory=RealDictCursor,
-            connect_timeout=5,
-            keepalives=1,
-            keepalives_idle=30,
-            keepalives_interval=10,
-            keepalives_count=5
+            row_factory=dict_row,
+            connect_timeout=5
         )
 
     conn = sqlite3.connect(SQLITE_PATH)
