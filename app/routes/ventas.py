@@ -510,15 +510,17 @@ def eliminar_factura(numero_factura):
     # ======================
     cur.execute("""
         UPDATE ventas
-        SET eliminado = 1
+        SET eliminado = TRUE
         WHERE numero_factura = %s
     """, (numero_factura,))
 
+
     cur.execute("""
         UPDATE creditos
-        SET eliminado = 1
+        SET eliminado = TRUE
         WHERE numero_factura = %s
     """, (numero_factura,))
+
 
     conn.commit()
     cur.close()
