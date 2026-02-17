@@ -25,7 +25,12 @@ def get_db():
 
         return psycopg2.connect(
             dsn,
-            cursor_factory=RealDictCursor
+            cursor_factory=RealDictCursor,
+            connect_timeout=5,
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=10,
+            keepalives_count=5
         )
 
     conn = sqlite3.connect(SQLITE_PATH)
