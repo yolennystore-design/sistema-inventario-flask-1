@@ -14,7 +14,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 
-
 # ======================
 # CONEXIÓN A LA BD
 # ======================
@@ -24,17 +23,17 @@ def get_db():
 
     1️⃣ PostgreSQL (Render / Producción)
        - Usa DATABASE_URL
-       - Persistente
+       - SSL obligatorio
 
     2️⃣ SQLite (Desarrollo local)
        - Usa database.db
-       - SOLO si no existe DATABASE_URL
     """
 
     if DATABASE_URL:
         return psycopg2.connect(
             DATABASE_URL,
-            cursor_factory=RealDictCursor
+            cursor_factory=RealDictCursor,
+            sslmode="require"   # 🔐 CLAVE PARA RENDER
         )
 
     conn = sqlite3.connect(SQLITE_PATH)
@@ -43,12 +42,21 @@ def get_db():
 
 
 # ======================
-# CREAR TABLAS
+# CREAR TABLAS (SEGURO)
 # ======================
 def crear_tablas():
-    conn = get_db()
-    cur = conn.cursor()
+    """
+    ⚠️ Esta función NO debe tumbar la app si falla la BD.
+    Se ejecuta solo cuando la conexión es exitosa.
+    """
 
+    try:
+        conn = get_db()
+    except Exception as e:
+        print("⚠️ No se pudo conectar a la BD:", e)
+        return
+
+    cur = conn.cursor()
     is_sqlite = isinstance(conn, sqlite3.Connection)
 
     id_type = (
@@ -198,6 +206,7 @@ def crear_tablas():
     """)
 
     conn.commit()
+    cur.close()
     conn.close()
 
 
@@ -207,7 +216,12 @@ def crear_tablas():
 def migrar_ventas():
     print(">>> EJECUTANDO migrar_ventas()")
 
-    conn = get_db()
+    try:
+        conn = get_db()
+    except Exception as e:
+        print("⚠️ No se pudo conectar:", e)
+        return
+
     cur = conn.cursor()
 
     def try_add(sql):
