@@ -161,16 +161,6 @@
             <input type="radio" name="tipo_venta" value="Contado" checked> Contado
             <input type="radio" name="tipo_venta" value="Crédito" class="ms-3"> Crédito
         </div>
-        <div class="col-md-4 mt-2" id="abonoBox" style="display:none;">
-            <label class="form-label">Abono inicial</label>
-            <input type="number"
-                   name="abono"
-                   id="abono"
-                   class="form-control"
-                   min="0"
-                   step="0.01"
-                   placeholder="Monto abonado">
-        </div>
     </div>
 
     <h4>Total: <strong>${{ total }}</strong></h4>
@@ -243,18 +233,9 @@
                 {% endif %}
 
                 {% if session.rol == "admin" %}
-                    {% if not v.eliminado %}
-                    <a href="/ventas/eliminar/{{ v.numero_factura }}"
-                       class="btn btn-danger btn-sm"
-                       onclick="return confirm('¿Eliminar esta venta?')">
-                        🗑
-                    </a>
-                    {% else %}
-                    <a href="/ventas/recuperar/{{ v.numero_factura }}"
-                       class="btn btn-warning btn-sm">
-                        ♻ Recuperar
-                    </a>
-                    {% endif %}
+                <a href="/ventas/eliminar/{{ v.numero_factura }}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('¿Eliminar esta venta?')">🗑</a>
                 {% endif %}
 
             </td>
@@ -306,10 +287,7 @@
 <!-- ========================= SCRIPTS ========================= -->
 <script>
 const categorias = {{ categorias | tojson }};
-    const filas = document.querySelectorAll(".producto-row");
-    // 🔒 Ocultar todos los productos al cargar
-    filas.forEach(f => f.style.display = "none");
-
+const filas = document.querySelectorAll(".producto-row");
 
 const filtroNombre = document.getElementById("filtroNombre");
 const filtroCategoria = document.getElementById("filtroCategoria");
@@ -333,37 +311,27 @@ filtroCategoria.addEventListener("change", () => {
     el.addEventListener("input", aplicarFiltros)
 );
 
-    function aplicarFiltros() {
-        const nombre = filtroNombre.value.toLowerCase().trim();
-        const categoria = filtroCategoria.value;
-        const sub = filtroSubcategoria.value;
+function aplicarFiltros() {
+    const nombre = filtroNombre.value.toLowerCase();
+    const categoria = filtroCategoria.value;
+    const sub = filtroSubcategoria.value;
 
-        // ❗ Si no hay ningún filtro → NO mostrar nada
-        if (!nombre && !categoria && !sub) {
-            filas.forEach(f => f.style.display = "none");
-            return;
-        }
+    filas.forEach(f => {
+        const ok =
+            f.dataset.nombre.includes(nombre) &&
+            (!categoria || f.dataset.categoria === categoria) &&
+            (!sub || f.dataset.subcategoria === sub);
 
-        filas.forEach(f => {
-            const ok =
-                (!nombre || f.dataset.nombre.includes(nombre)) &&
-                (!categoria || f.dataset.categoria === categoria) &&
-                (!sub || f.dataset.subcategoria === sub);
-
-            f.style.display = ok ? "" : "none";
-        });
-    }
-
-
-function limpiarFiltros() {
-     filtroNombre.value = "";
-     filtroCategoria.value = "";
-     filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
-
-     filas.forEach(f => f.style.display = "none");
+        f.style.display = ok ? "" : "none";
+    });
 }
 
-
+function limpiarFiltros() {
+    filtroNombre.value = "";
+    filtroCategoria.value = "";
+    filtroSubcategoria.innerHTML = "<option value=''>📁 Todas</option>";
+    aplicarFiltros();
+}
 
 function toggleClienteManual() {
     const input = document.getElementById("cliente_manual");
@@ -380,21 +348,7 @@ function toggleClienteManual() {
         input.required = false;
         input.value = "";
     }
-    }
-    const radiosPago = document.querySelectorAll('input[name="tipo_venta"]');
-    const abonoBox = document.getElementById("abonoBox");
-    const abonoInput = document.getElementById("abono");
-
-    radiosPago.forEach(r => {
-        r.addEventListener("change", () => {
-            if (r.value === "Crédito" && r.checked) {
-                abonoBox.style.display = "block";
-            } else {
-                abonoBox.style.display = "none";
-                abonoInput.value = "";
-            }
-        });
-    });
+}
 </script>
 
 {% endblock %}

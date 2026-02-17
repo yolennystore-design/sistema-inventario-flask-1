@@ -2,8 +2,8 @@
 
 import os
 import sqlite3
-import psycopg
-from psycopg.rows import dict_row
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 # ======================
 # CONFIGURACIÓN
@@ -14,38 +14,44 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 
+
 # ======================
 # CONEXIÓN A LA BD
 # ======================
 def get_db():
+    """
+    PRIORIDAD DE CONEXIÓN
+
+    1️⃣ PostgreSQL (Render / Producción)
+       - Usa DATABASE_URL
+       - Persistente
+
+    2️⃣ SQLite (Desarrollo local)
+       - Usa database.db
+       - SOLO si no existe DATABASE_URL
+    """
+
+    # PostgreSQL (Render)
     if DATABASE_URL:
-        return psycopg.connect(
+        return psycopg2.connect(
             DATABASE_URL,
-            row_factory=dict_row,
-            connect_timeout=5
+            cursor_factory=RealDictCursor
         )
 
+    # SQLite (Local)
     conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 # ======================
-# CREAR TABLAS (SEGURO)
+# CREAR TABLAS
 # ======================
+
 def crear_tablas():
-    """
-    ⚠️ Esta función NO debe tumbar la app si falla la BD.
-    Se ejecuta solo cuando la conexión es exitosa.
-    """
-
-    try:
-        conn = get_db()
-    except Exception as e:
-        print("⚠️ No se pudo conectar a la BD:", e)
-        return
-
+    conn = get_db()
     cur = conn.cursor()
+
     is_sqlite = isinstance(conn, sqlite3.Connection)
 
     id_type = (
@@ -81,15 +87,17 @@ def crear_tablas():
     )
     """)
 
+    # ======================
     # MIGRACIÓN SEGURA (direccion)
+    # ======================
     try:
         cur.execute("ALTER TABLE clientes ADD COLUMN direccion TEXT")
         conn.commit()
     except Exception:
-        conn.rollback()
+        conn.rollback()  # 🔥 ESTO ES LO QUE FALTABA
 
     # ======================
-    # VENTAS
+    # VENTAS (CORREGIDA)
     # ======================
     cur.execute(f"""
     CREATE TABLE IF NOT EXISTS ventas (
@@ -102,17 +110,16 @@ def crear_tablas():
         cantidad INTEGER,
         precio REAL,
         total REAL,
-        fecha TEXT,
-        eliminado BOOLEAN DEFAULT FALSE
+        fecha TEXT
     )
     """)
-
+    # ======================
     # MIGRACIONES SEGURAS (ventas)
+    # ======================
     for col in [
         "numero_factura TEXT",
         "cliente TEXT",
-        "tipo TEXT",
-        "eliminado BOOLEAN DEFAULT FALSE"
+        "tipo TEXT"
     ]:
         try:
             cur.execute(f"ALTER TABLE ventas ADD COLUMN {col}")
@@ -132,22 +139,18 @@ def crear_tablas():
         abonado REAL DEFAULT 0,
         pendiente REAL NOT NULL,
         estado TEXT DEFAULT 'Pendiente',
-        fecha TEXT,
-        fecha_ultimo_abono TEXT,
-        eliminado BOOLEAN DEFAULT FALSE
+        fecha TEXT
     )
     """)
+    # ======================
+    # MIGRACIÓN SEGURA (fecha_ultimo_abono)
+    # ======================
+    try:
+        cur.execute("ALTER TABLE creditos ADD COLUMN fecha_ultimo_abono TEXT")
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
-    # MIGRACIONES SEGURAS (creditos)
-    for col in [
-        "fecha_ultimo_abono TEXT",
-        "eliminado BOOLEAN DEFAULT FALSE"
-    ]:
-        try:
-            cur.execute(f"ALTER TABLE creditos ADD COLUMN {col}")
-            conn.commit()
-        except Exception:
-            conn.rollback()
 
     # ======================
     # COMPRAS
@@ -195,22 +198,11 @@ def crear_tablas():
     """)
 
     conn.commit()
-    cur.close()
     conn.close()
-
-
-# ======================
-# MIGRACIÓN EXPLÍCITA VENTAS
-# ======================
 def migrar_ventas():
     print(">>> EJECUTANDO migrar_ventas()")
 
-    try:
-        conn = get_db()
-    except Exception as e:
-        print("⚠️ No se pudo conectar:", e)
-        return
-
+    conn = get_db()
     cur = conn.cursor()
 
     def try_add(sql):
@@ -225,9 +217,6 @@ def migrar_ventas():
     try_add("ALTER TABLE ventas ADD COLUMN numero_factura TEXT")
     try_add("ALTER TABLE ventas ADD COLUMN cliente TEXT")
     try_add("ALTER TABLE ventas ADD COLUMN tipo TEXT")
-    try_add("ALTER TABLE ventas ADD COLUMN eliminado BOOLEAN DEFAULT FALSE")
-
-    try_add("ALTER TABLE creditos ADD COLUMN eliminado BOOLEAN DEFAULT FALSE")
 
     cur.close()
     conn.close()

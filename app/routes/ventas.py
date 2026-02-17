@@ -105,15 +105,12 @@ def index():
             cliente,
             'Contado' AS tipo,
             MAX(fecha) AS fecha,
-            SUM(total) AS total,
-            FALSE AS eliminado
+            SUM(total) AS total
         FROM ventas
         WHERE tipo = 'contado'
-          AND eliminado = FALSE
         GROUP BY numero_factura, cliente
         ORDER BY fecha DESC
     """)
-
     ventas_contado = cur.fetchall()
 
     # 🔹 Ventas CRÉDITO
@@ -125,26 +122,9 @@ def index():
             monto AS total,
             numero_factura
         FROM creditos
-        WHERE eliminado = FALSE
         ORDER BY fecha DESC
     """)
     ventas_credito = cur.fetchall()
-    
-    cur.execute("""
-        SELECT
-            numero_factura,
-            cliente,
-            tipo,
-            eliminado,
-            MAX(fecha) AS fecha,
-            SUM(total) AS total
-        FROM ventas
-        GROUP BY numero_factura, cliente, eliminado, tipo
-        ORDER BY fecha DESC
-    """)
-    ventas = cur.fetchall()
-
-    ventas_eliminadas = cur.fetchall()
 
     cur.close()
     conn.close()
@@ -162,7 +142,6 @@ def index():
         clientes=clientes,
         carrito=carrito,
         ventas=ventas,
-        ventas_eliminadas=ventas_eliminadas,  # 👈 ESTA ES LA CLAVE
         total=total_carrito
     )
 
@@ -244,7 +223,11 @@ def confirmar():
     cliente_manual = request.form.get("cliente_manual", "").strip()
     cliente_select = request.form.get("cliente_select", "").strip()
 
-    cliente = cliente_manual or cliente_select or "Público General"
+    cliente = (
+        cliente_manual
+        or cliente_select
+        or "Público General"
+    )
 
     tipo_venta_raw = request.form.get("tipo_venta", "Contado")
     tipo_pago = normalizar_pago(tipo_venta_raw)
@@ -253,21 +236,11 @@ def confirmar():
     total = sum(i["total"] for i in carrito)
     numero_factura = f"YS-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    # ✅ ABONO INICIAL (NUEVO)
-    abono = float(request.form.get("abono", 0) or 0)
-    if abono < 0:
-        abono = 0
-    if abono > total:
-        abono = total
-
-    pendiente = total - abono
-    estado = "Pagado" if pendiente == 0 else "Pendiente"
-
     conn = get_db()
     cur = conn.cursor()
 
     # ======================
-    # GUARDAR VENTAS
+    # GUARDAR VENTAS EN BD
     # ======================
     for item in carrito:
         cur.execute("""
@@ -286,6 +259,7 @@ def confirmar():
             fecha
         ))
 
+
         # DESCONTAR STOCK
         cur.execute("""
             UPDATE productos
@@ -294,20 +268,18 @@ def confirmar():
         """, (item["cantidad"], item["id"]))
 
     # ======================
-    # REGISTRAR CRÉDITO (CORREGIDO)
+    # REGISTRAR CRÉDITO
     # ======================
     if tipo_pago == "credito":
         cur.execute("""
             INSERT INTO creditos
             (numero_factura, cliente, monto, abonado, pendiente, estado, fecha)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
+            VALUES (%s,%s,%s,0,%s,'Pendiente',%s)
         """, (
             numero_factura,
             cliente,
             total,
-            abono,        # ✅ ABONADO REAL
-            pendiente,    # ✅ PENDIENTE REAL
-            estado,       # ✅ ESTADO CORRECTO
+            total,
             fecha
         ))
 
@@ -315,6 +287,9 @@ def confirmar():
     cur.close()
     conn.close()
 
+    # ======================
+    # LIMPIAR CARRITO
+    # ======================
     guardar_json(CARRITO_FILE, [])
 
     registrar_log(
@@ -355,23 +330,6 @@ def factura(numero_factura):
     """, (numero_factura,))
     venta = cur.fetchone()
 
-    # 🔹 SI ES CRÉDITO, BUSCAR ABONO Y PENDIENTE
-    abono = 0
-    pendiente = 0
-
-    if venta["tipo"] == "credito":
-        cur.execute("""
-            SELECT abonado, pendiente
-            FROM creditos
-            WHERE numero_factura = %s
-        """, (numero_factura,))
-        credito = cur.fetchone()
-
-        if credito:
-            abono = float(credito["abonado"])
-            pendiente = float(credito["pendiente"])
-
-
     cur.close()
     conn.close()
 
@@ -406,19 +364,10 @@ def factura(numero_factura):
     y -= 10
     c.drawString(5, y, f"Cliente: {cliente}")
     y -= 10
-    c.drawString(5, y, f"Tipo: {tipo}")
+    c.drawString(5, y, f"Tipo: {tipo}")   # ✅ AQUÍ SE MUESTRA
     y -= 10
     c.drawString(5, y, f"Fecha: {fecha}")
-    y -= 10
-
-    # 🔹 MOSTRAR ABONO SOLO SI ES CRÉDITO
-    if tipo == "Crédito":
-        c.drawString(5, y, f"Abono: ${abono:,.2f}")
-        y -= 10
-        c.drawString(5, y, f"Pendiente: ${pendiente:,.2f}")
-        y -= 10
-
-    y -= 5
+    y -= 15
 
     c.line(5, y, ANCHO - 5, y)
     y -= 10
@@ -469,24 +418,7 @@ def eliminar_factura(numero_factura):
     cur = conn.cursor()
 
     # ======================
-    # 1️⃣ VERIFICAR SI YA ESTÁ ELIMINADA
-    # ======================
-    cur.execute("""
-        SELECT eliminado
-        FROM ventas
-        WHERE numero_factura = %s
-        LIMIT 1
-    """, (numero_factura,))
-    venta = cur.fetchone()
-
-    if not venta or venta["eliminado"]:
-        # Ya estaba eliminada → no tocar stock otra vez
-        cur.close()
-        conn.close()
-        return redirect(url_for("ventas.index"))
-
-    # ======================
-    # 2️⃣ OBTENER ITEMS DE LA VENTA
+    # 1️⃣ OBTENER ITEMS DE LA VENTA
     # ======================
     cur.execute("""
         SELECT id_producto, cantidad
@@ -496,7 +428,7 @@ def eliminar_factura(numero_factura):
     items = cur.fetchall()
 
     # ======================
-    # 3️⃣ DEVOLVER STOCK
+    # 2️⃣ DEVOLVER STOCK
     # ======================
     for item in items:
         cur.execute("""
@@ -506,21 +438,20 @@ def eliminar_factura(numero_factura):
         """, (item["cantidad"], item["id_producto"]))
 
     # ======================
-    # 4️⃣ MARCAR COMO ELIMINADA (SOFT DELETE)
+    # 3️⃣ ELIMINAR VENTAS
     # ======================
     cur.execute("""
-        UPDATE ventas
-        SET eliminado = TRUE
+        DELETE FROM ventas
         WHERE numero_factura = %s
     """, (numero_factura,))
 
-
+    # ======================
+    # 4️⃣ ELIMINAR CRÉDITO (SI EXISTE)
+    # ======================
     cur.execute("""
-        UPDATE creditos
-        SET eliminado = TRUE
+        DELETE FROM creditos
         WHERE numero_factura = %s
     """, (numero_factura,))
-
 
     conn.commit()
     cur.close()
@@ -528,7 +459,7 @@ def eliminar_factura(numero_factura):
 
     registrar_log(
         usuario=session.get("usuario"),
-        accion=f"Venta {numero_factura} eliminada y stock devuelto",
+        accion=f"Eliminó venta {numero_factura} y devolvió stock",
         modulo="Ventas"
     )
 
@@ -663,37 +594,6 @@ def abonar_desde_ventas(numero_factura):
     registrar_log(
         usuario=session["usuario"],
         accion=f"Abono RD${abono:,.2f} a factura {numero_factura}",
-        modulo="Ventas"
-    )
-
-    return redirect(url_for("ventas.index"))
-@ventas_bp.route("/recuperar/<numero_factura>")
-def recuperar_venta(numero_factura):
-    if session.get("rol") != "admin":
-        return redirect(url_for("ventas.index"))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-        UPDATE ventas
-        SET eliminado = FALSE
-        WHERE numero_factura = %s
-    """, (numero_factura,))
-
-    cur.execute("""
-        UPDATE creditos
-        SET eliminado = FALSE
-        WHERE numero_factura = %s
-    """, (numero_factura,))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    registrar_log(
-        usuario=session.get("usuario"),
-        accion=f"Venta {numero_factura} recuperada",
         modulo="Ventas"
     )
 
