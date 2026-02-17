@@ -18,22 +18,14 @@ SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 # CONEXIÓN A LA BD
 # ======================
 def get_db():
-    """
-    PRIORIDAD DE CONEXIÓN
-
-    1️⃣ PostgreSQL (Render / Producción)
-       - Usa DATABASE_URL
-       - SSL obligatorio
-
-    2️⃣ SQLite (Desarrollo local)
-       - Usa database.db
-    """
-
     if DATABASE_URL:
+        dsn = DATABASE_URL
+        if "sslmode=" not in dsn:
+            dsn += "?sslmode=require"
+
         return psycopg2.connect(
-            DATABASE_URL,
-            cursor_factory=RealDictCursor,
-            sslmode="require"   # 🔐 CLAVE PARA RENDER
+            dsn,
+            cursor_factory=RealDictCursor
         )
 
     conn = sqlite3.connect(SQLITE_PATH)
