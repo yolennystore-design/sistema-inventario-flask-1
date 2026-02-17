@@ -2,8 +2,8 @@
 
 import os
 import sqlite3
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 
 # ======================
 # CONFIGURACIÓN
@@ -32,7 +32,6 @@ def get_db():
     conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
 
 # ======================
 # CREAR TABLAS (SEGURO)
