@@ -19,12 +19,8 @@ SQLITE_PATH = os.path.join(BASE_DIR, "database.db")
 # ======================
 def get_db():
     if DATABASE_URL:
-        dsn = DATABASE_URL
-        if "sslmode=" not in dsn:
-            dsn += "?sslmode=require"
-
         return psycopg.connect(
-            dsn,
+            DATABASE_URL,
             row_factory=dict_row,
             connect_timeout=5
         )
@@ -32,6 +28,7 @@ def get_db():
     conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
 
 # ======================
 # CREAR TABLAS (SEGURO)
